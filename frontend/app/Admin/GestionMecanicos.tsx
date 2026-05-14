@@ -30,6 +30,17 @@ import NavbarAdmin from '@/components/nadvarAdmin/nadvarAdmin';
 // Hoja de estilos específica de esta pantalla
 import styles from '@/Styles/GestionMecanicos';
 
+// Validaciones reutilizables para formularios
+import {
+  validarDosPalabras,
+  validarSoloNumeros,
+  validarTextoYNumeros,
+  validarObligatorio,
+  validarCorreoGmail,
+  validarCorreoMecanic,
+  validarContrasena,
+} from '@/utils/validaciones';
+
 
 // TIPOS
 // Posibles estados de disponibilidad de un mecánico en el taller
@@ -138,6 +149,20 @@ type FormState = {
   contraseña: string;
 };
 
+// Errores de validación del formulario del modal
+type FormErrors = {
+  nombres: string;
+  apellidos: string;
+  edad: string;
+  correo: string;
+  correoEmpresarial: string;
+  especialidadCatalogo: string;
+  especialidadOtro: string;
+  añosExperiencia: string;
+  estadoLaboral: string;
+  contraseña: string;
+};
+
 // FUNCIONES AUXILIARES
 // Retorna un FormState vacío para inicializar el formulario de registro
 function formVacio(): FormState {
@@ -186,14 +211,14 @@ function textoEspecialidad(m: Mecanico): string {
 // Cada estado tiene su propio color de fondo
 function pillLaboral(estado: EstadoLaboral) {
   if (estado === 'Disponible') return [styles.pill, styles.pillDisponible]; // Verde
-  if (estado === 'Ocupado')    return [styles.pill, styles.pillOcupado];    // Naranja
+  if (estado === 'Ocupado') return [styles.pill, styles.pillOcupado];    // Naranja
   return [styles.pill, styles.pillLabInactivo];                             // Gris
 }
 
 // Retorna el array de estilos para el texto del pill de estado laboral
 function pillLaboralText(estado: EstadoLaboral) {
   if (estado === 'Disponible') return [styles.pillText, styles.pillDisponibleText];
-  if (estado === 'Ocupado')    return [styles.pillText, styles.pillOcupadoText];
+  if (estado === 'Ocupado') return [styles.pillText, styles.pillOcupadoText];
   return [styles.pillText, styles.pillLabInactivoText];
 }
 
@@ -226,6 +251,20 @@ export default function GestionMecanicosScreen() {
   // Controla si la contraseña en el modal se muestra en texto plano
   const [showModalPassword, setShowModalPassword] = useState(false);
 
+  // Errores del formulario de registro/edición
+  const [errors, setErrors] = useState<FormErrors>({
+    nombres: '',
+    apellidos: '',
+    edad: '',
+    correo: '',
+    correoEmpresarial: '',
+    especialidadCatalogo: '',
+    especialidadOtro: '',
+    añosExperiencia: '',
+    estadoLaboral: '',
+    contraseña: '',
+  });
+
   // FUNCIONES DE CONTROL DEL MODAL
 
   // Cierra todos los dropdowns abiertos dentro del modal
@@ -241,6 +280,18 @@ export default function GestionMecanicosScreen() {
     setModo('crear');
     setEditandoId(null);
     setForm(formVacio());          // Formulario vacío para nuevo mecánico
+    setErrors({
+      nombres: '',
+      apellidos: '',
+      edad: '',
+      correo: '',
+      correoEmpresarial: '',
+      especialidadCatalogo: '',
+      especialidadOtro: '',
+      añosExperiencia: '',
+      estadoLaboral: '',
+      contraseña: '',
+    });
     setModalVisible(true);
   };
 
@@ -251,6 +302,18 @@ export default function GestionMecanicosScreen() {
     setModo('editar');
     setEditandoId(m.id);           // Guarda el ID para saber qué mecánico actualizar
     setForm(mecanicoAForm(m));     // Pre-llena el formulario con los datos actuales
+    setErrors({
+      nombres: '',
+      apellidos: '',
+      edad: '',
+      correo: '',
+      correoEmpresarial: '',
+      especialidadCatalogo: '',
+      especialidadOtro: '',
+      añosExperiencia: '',
+      estadoLaboral: '',
+      contraseña: '',
+    });
     setModalVisible(true);
   };
 
@@ -261,95 +324,88 @@ export default function GestionMecanicosScreen() {
     setModalVisible(false);
     setEditandoId(null);
     setForm(formVacio());          // Limpia el formulario al cerrar
+    setErrors({
+      nombres: '',
+      apellidos: '',
+      edad: '',
+      correo: '',
+      correoEmpresarial: '',
+      especialidadCatalogo: '',
+      especialidadOtro: '',
+      añosExperiencia: '',
+      estadoLaboral: '',
+      contraseña: '',
+    });
   };
 
   //FUNCIÓN GUARDAR
 
   // Valida los datos del formulario y guarda el mecánico (crear o editar)
   const guardar = () => {
-    // Validación: nombres y apellidos son obligatorios
-    if (!form.nombres.trim() || !form.apellidos.trim()) {
-      Alert.alert('Datos incompletos', 'Ingresa nombres y apellidos.');
-      return;
-    }
+    const errorNombres = validarDosPalabras(form.nombres, 'Los nombres');
+    const errorApellidos = validarDosPalabras(form.apellidos, 'Los apellidos');
+    const errorEdad = validarSoloNumeros(form.edad, 'La edad');
+    const errorCorreo = validarCorreoGmail(form.correo);
+    const errorCorreoEmpresarial = validarCorreoMecanic(form.correoEmpresarial);
+    const errorEspecialidadCatalogo = validarObligatorio(form.especialidadCatalogo, 'La especialidad');
+    const errorEspecialidadOtro =
+      form.especialidadCatalogo === 'Otros'
+        ? validarTextoYNumeros(form.especialidadOtro, 'La especialidad')
+        : null;
+    const errorAñosExperiencia = validarSoloNumeros(form.añosExperiencia, 'Los años de experiencia');
+    const errorEstadoLaboral = validarObligatorio(form.estadoLaboral, 'El estado laboral');
+    const errorContraseña = validarContrasena(form.contraseña);
 
-    // Parsea la edad a número entero para validarla
-    const edad = parseInt(form.edad, 10);
-    // Parsea los años de experiencia a número entero
-    const años = parseInt(form.añosExperiencia, 10);
+    const edad = Number.isNaN(parseInt(form.edad, 10)) ? NaN : parseInt(form.edad, 10);
+    const años = Number.isNaN(parseInt(form.añosExperiencia, 10)) ? NaN : parseInt(form.añosExperiencia, 10);
 
-    // Validación: edad debe ser un número entre 16 y 80
-    if (Number.isNaN(edad) || edad < 16 || edad > 80) {
-      Alert.alert('Edad inválida', 'Ingresa una edad válida (16–80).');
-      return;
-    }
+    const errorEdadRango = !Number.isNaN(edad) && (edad < 16 || edad > 80)
+      ? 'La edad debe estar entre 16 y 80 años.'
+      : null;
+    const errorAñosRango = !Number.isNaN(años) && años < 0
+      ? 'Los años de experiencia no pueden ser negativos.'
+      : null;
 
-    // Validación: años de experiencia no puede ser negativo
-    if (Number.isNaN(años) || años < 0) {
-      Alert.alert('Experiencia', 'Ingresa años de experiencia válidos.');
-      return;
-    }
+    const nuevosErrores: FormErrors = {
+      nombres: errorNombres ?? '',
+      apellidos: errorApellidos ?? '',
+      edad: errorEdad ?? errorEdadRango ?? '',
+      correo: errorCorreo ?? '',
+      correoEmpresarial: errorCorreoEmpresarial ?? '',
+      especialidadCatalogo: errorEspecialidadCatalogo ?? '',
+      especialidadOtro: errorEspecialidadOtro ?? '',
+      añosExperiencia: errorAñosExperiencia ?? errorAñosRango ?? '',
+      estadoLaboral: errorEstadoLaboral ?? '',
+      contraseña: errorContraseña ?? '',
+    };
 
-    // Validación: correo personal debe tener formato válido
-    if (!form.correo.trim() || !form.correo.includes('@')) {
-      Alert.alert('Correo', 'Ingresa un correo electrónico válido.');
-      return;
-    }
+    setErrors(nuevosErrores);
 
-    // Validación: correo empresarial debe tener formato válido
-    if (!form.correoEmpresarial.trim() || !form.correoEmpresarial.includes('@')) {
-      Alert.alert('Correo empresarial', 'Ingresa un correo empresarial válido.');
-      return;
-    }
+    const hayErrores = Object.values(nuevosErrores).some((value) => value.length > 0);
+    if (hayErrores) return;
 
-    // Validación: si la especialidad es "Otros", debe describirse
-    if (form.especialidadCatalogo === 'Otros' && !form.especialidadOtro.trim()) {
-      Alert.alert('Especialidad', 'Describe la especialidad en el campo correspondiente.');
-      return;
-    }
-
-    // Validación: al crear un mecánico, la contraseña es obligatoria
-    if (modo === 'crear' && !form.contraseña.trim()) {
-      Alert.alert('Contraseña', 'Ingresa una contraseña para el mecánico.');
-      return;
-    }
-
-    // Al editar: si el campo contraseña está vacío, conserva la contraseña anterior
-    const prevPwd =
-      modo === 'editar' && editandoId
-        ? lista.find((x) => x.id === editandoId)?.contraseña
-        : undefined;
-
-    // Construye el objeto Mecanico con los datos validados del formulario
     const base: Mecanico = {
-      id: editandoId ?? `m-${Date.now()}`, // Nuevo ID basado en timestamp si es creación
+      id: editandoId ?? `m-${Date.now()}`,
       nombres: form.nombres.trim(),
       apellidos: form.apellidos.trim(),
-      edad,                                // Número parseado
+      edad,
       correo: form.correo.trim(),
-      correoEmpresarial: form.correoEmpresarial.trim().toLowerCase(), // Siempre en minúsculas
+      correoEmpresarial: form.correoEmpresarial.trim().toLowerCase(),
       especialidadCatalogo: form.especialidadCatalogo,
-      // Solo guarda especialidadOtro si la especialidad es "Otros"
       especialidadOtro: form.especialidadCatalogo === 'Otros' ? form.especialidadOtro.trim() : '',
-      añosExperiencia: años,               // Número parseado
+      añosExperiencia: años,
       estadoLaboral: form.estadoLaboral,
       cuentaActiva: form.cuentaActiva,
-      // Si está editando y no cambió la contraseña, conserva la anterior
-      contraseña:
-        modo === 'editar' && !form.contraseña.trim() && editandoId && prevPwd
-          ? prevPwd
-          : form.contraseña.trim(),
+      contraseña: form.contraseña.trim(),
     };
 
     if (modo === 'crear') {
-      // Agrega el nuevo mecánico al final de la lista
       setLista((prev) => [...prev, base]);
     } else if (editandoId) {
-      // Reemplaza el mecánico editado manteniendo el mismo ID
       setLista((prev) => prev.map((x) => (x.id === editandoId ? { ...base, id: editandoId } : x)));
     }
 
-    cerrarModal(); // Cierra el modal después de guardar
+    cerrarModal();
   };
 
   //FUNCIÓN ELIMINAR
@@ -612,33 +668,36 @@ export default function GestionMecanicosScreen() {
                 {/* Campo: Nombres */}
                 <Text style={[styles.label, styles.labelFirstInSection]}>Nombres</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.nombres ? styles.inputError : null]}
                   placeholder="Nombres"
                   placeholderTextColor="#64748B"
                   value={form.nombres}
-                  onChangeText={(t) => setForm((p) => ({ ...p, nombres: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, nombres: t })); setErrors((e) => ({ ...e, nombres: '' })); }}
                 />
+                {errors.nombres ? <Text style={styles.errorText}>{errors.nombres}</Text> : null}
 
                 {/* Campo: Apellidos */}
                 <Text style={styles.label}>Apellidos</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.apellidos ? styles.inputError : null]}
                   placeholder="Apellidos"
                   placeholderTextColor="#64748B"
                   value={form.apellidos}
-                  onChangeText={(t) => setForm((p) => ({ ...p, apellidos: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, apellidos: t })); setErrors((e) => ({ ...e, apellidos: '' })); }}
                 />
+                {errors.apellidos ? <Text style={styles.errorText}>{errors.apellidos}</Text> : null}
 
                 {/* Campo: Edad — teclado numérico */}
                 <Text style={styles.label}>Edad</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.edad ? styles.inputError : null]}
                   placeholder="Edad"
                   placeholderTextColor="#64748B"
                   keyboardType="number-pad"
                   value={form.edad}
-                  onChangeText={(t) => setForm((p) => ({ ...p, edad: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, edad: t })); setErrors((e) => ({ ...e, edad: '' })); }}
                 />
+                {errors.edad ? <Text style={styles.errorText}>{errors.edad}</Text> : null}
               </View>
 
               {/*SECCIÓN: CONTACTO*/}
@@ -648,26 +707,28 @@ export default function GestionMecanicosScreen() {
                 {/* Campo: Correo personal */}
                 <Text style={[styles.label, styles.labelFirstInSection]}>Correo electrónico</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.correo ? styles.inputError : null]}
                   placeholder="correo@ejemplo.com"
                   placeholderTextColor="#64748B"
                   keyboardType="email-address"
                   autoCapitalize="none"           // No capitaliza automáticamente
                   value={form.correo}
-                  onChangeText={(t) => setForm((p) => ({ ...p, correo: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, correo: t })); setErrors((e) => ({ ...e, correo: '' })); }}
                 />
+                {errors.correo ? <Text style={styles.errorText}>{errors.correo}</Text> : null}
 
                 {/* Campo: Correo empresarial (@mecanic.com) */}
                 <Text style={styles.label}>Correo empresarial</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.correoEmpresarial ? styles.inputError : null]}
                   placeholder="nombre@mecanic.com"
                   placeholderTextColor="#64748B"
                   keyboardType="email-address"
                   autoCapitalize="none"
                   value={form.correoEmpresarial}
-                  onChangeText={(t) => setForm((p) => ({ ...p, correoEmpresarial: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, correoEmpresarial: t })); setErrors((e) => ({ ...e, correoEmpresarial: '' })); }}
                 />
+                {errors.correoEmpresarial ? <Text style={styles.errorText}>{errors.correoEmpresarial}</Text> : null}
               </View>
 
               {/*SECCIÓN: PERFIL PROFESIONAL*/}
@@ -676,7 +737,7 @@ export default function GestionMecanicosScreen() {
 
                 {/* Dropdown de especialidad: abre/cierra al presionar */}
                 <Pressable
-                  style={[styles.dropdown, espDropdown && styles.dropdownOpen]}
+                  style={[styles.dropdown, espDropdown && styles.dropdownOpen, errors.especialidadCatalogo ? styles.inputError : null]}
                   onPress={() => {
                     setEstadoDropdown(false); // Cierra el otro dropdown si está abierto
                     setEspDropdown((v) => !v);
@@ -707,6 +768,7 @@ export default function GestionMecanicosScreen() {
                         ]}
                         onPress={() => {
                           setForm((p) => ({ ...p, especialidadCatalogo: opt }));
+                          setErrors((e) => ({ ...e, especialidadCatalogo: '' }));
                           setEspDropdown(false); // Cierra el dropdown al seleccionar
                         }}
                       >
@@ -715,31 +777,34 @@ export default function GestionMecanicosScreen() {
                     ))}
                   </ScrollView>
                 )}
+                {errors.especialidadCatalogo ? <Text style={styles.errorText}>{errors.especialidadCatalogo}</Text> : null}
 
                 {/* Campo extra: solo visible cuando la especialidad es "Otros" */}
                 {form.especialidadCatalogo === 'Otros' && (
                   <>
                     <Text style={styles.label}>Describe la especialidad</Text>
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, errors.especialidadOtro ? styles.inputError : null]}
                       placeholder="Ej.: preparación de rally, GLP…"
                       placeholderTextColor="#64748B"
                       value={form.especialidadOtro}
-                      onChangeText={(t) => setForm((p) => ({ ...p, especialidadOtro: t }))}
+                      onChangeText={(t) => { setForm((p) => ({ ...p, especialidadOtro: t })); setErrors((e) => ({ ...e, especialidadOtro: '' })); }}
                     />
+                    {errors.especialidadOtro ? <Text style={styles.errorText}>{errors.especialidadOtro}</Text> : null}
                   </>
                 )}
 
                 {/* Campo: Años de experiencia */}
                 <Text style={styles.label}>Años de experiencia</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, errors.añosExperiencia ? styles.inputError : null]}
                   placeholder="Años"
                   placeholderTextColor="#64748B"
                   keyboardType="number-pad"
                   value={form.añosExperiencia}
-                  onChangeText={(t) => setForm((p) => ({ ...p, añosExperiencia: t }))}
+                  onChangeText={(t) => { setForm((p) => ({ ...p, añosExperiencia: t })); setErrors((e) => ({ ...e, añosExperiencia: '' })); }}
                 />
+                {errors.añosExperiencia ? <Text style={styles.errorText}>{errors.añosExperiencia}</Text> : null}
               </View>
 
               {/*SECCIÓN: DISPONIBILIDAD EN TALLER*/}
@@ -753,7 +818,7 @@ export default function GestionMecanicosScreen() {
 
                 {/* Dropdown de estado laboral */}
                 <Pressable
-                  style={[styles.dropdown, estadoDropdown && styles.dropdownOpen]}
+                  style={[styles.dropdown, estadoDropdown && styles.dropdownOpen, errors.estadoLaboral ? styles.inputError : null]}
                   onPress={() => {
                     setEspDropdown(false); // Cierra el otro dropdown si está abierto
                     setEstadoDropdown((v) => !v);
@@ -778,6 +843,7 @@ export default function GestionMecanicosScreen() {
                         ]}
                         onPress={() => {
                           setForm((p) => ({ ...p, estadoLaboral: opt }));
+                          setErrors((e) => ({ ...e, estadoLaboral: '' }));
                           setEstadoDropdown(false);
                         }}
                       >
@@ -786,6 +852,7 @@ export default function GestionMecanicosScreen() {
                     ))}
                   </View>
                 )}
+                {errors.estadoLaboral ? <Text style={styles.errorText}>{errors.estadoLaboral}</Text> : null}
               </View>
 
               {/*SECCIÓN: CONTRASEÑA */}
@@ -794,18 +861,18 @@ export default function GestionMecanicosScreen() {
 
                 {/* Etiqueta dinámica: indica que en edición el campo vacío conserva la contraseña */}
                 <Text style={styles.label}>
-                  {modo === 'editar' ? 'Contraseña (vacío = sin cambios)' : 'Contraseña'}
+                  {modo === 'editar' ? 'Contraseña' : 'Contraseña'}
                 </Text>
 
                 {/* Fila: input de contraseña + botón ojo para mostrar/ocultar */}
-                <View style={styles.modalPasswordRow}>
+                <View style={[styles.modalPasswordRow, errors.contraseña ? styles.inputError : null]}>
                   <TextInput
                     style={styles.modalPasswordInput}
                     placeholder="••••••••"
                     placeholderTextColor="#64748B"
                     secureTextEntry={!showModalPassword} // Oculta el texto si showModalPassword es false
                     value={form.contraseña}
-                    onChangeText={(t) => setForm((p) => ({ ...p, contraseña: t }))}
+                    onChangeText={(t) => { setForm((p) => ({ ...p, contraseña: t })); setErrors((e) => ({ ...e, contraseña: '' })); }}
                   />
 
                   {/* Botón ojo: alterna entre mostrar y ocultar la contraseña */}
@@ -822,6 +889,8 @@ export default function GestionMecanicosScreen() {
                     />
                   </Pressable>
                 </View>
+                {/* Mensaje de error de contraseña */}
+                {errors.contraseña ? <Text style={styles.errorText}>{errors.contraseña}</Text> : null}
               </View>
 
               {/* Botón guardar: ejecuta la función guardar() con validaciones

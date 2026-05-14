@@ -159,4 +159,13 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
+
+  // Mensaje de éxito inline — verde, se muestra debajo del botón sin modal
+  successText: {
+    color: '#22C55E',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
 });

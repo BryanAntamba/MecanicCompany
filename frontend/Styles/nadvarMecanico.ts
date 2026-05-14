@@ -43,30 +43,26 @@ export default StyleSheet.create({
     lineHeight: 24,
   },
 
-  // Menú desplegable flotante sobre el contenido
+  // Menú desplegable — fluye debajo del navbar (no flotante)
   menu: {
-    position: 'absolute',
-    top: 76,                     // Justo debajo de la navbar
-    left: 0,
-    right: 0,
-    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+    backgroundColor: 'rgba(17, 24, 39, 0.8)',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    zIndex: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
     elevation: 8,
   },
 
-  // Cada opción del menú
+  // Cada opción del menú — idéntico al de nadvarCliente (sin borderRadius)
   menuItem: {
     paddingVertical: 12,
     paddingHorizontal: 10,
-    borderRadius: 8,
   },
 
-  // Opción activa resaltada con fondo azul semitransparente
-  menuItemActive: {
-    backgroundColor: 'rgba(37, 99, 235, 0.15)',
-  },
+  // Opción activa: sin fondo extra, solo el texto cambia de color
+  menuItemActive: {},
 
   // Texto de cada opción del menú
   menuItemText: {
@@ -75,22 +71,23 @@ export default StyleSheet.create({
     fontWeight: '600',
   },
 
-  // Texto de la opción activa en azul
+  // Texto de la opción activa — subrayado sutil con color blanco brillante
   menuItemTextActive: {
-    color: '#2563EB',
+    color: '#FFFFFF',
+    opacity: 0.7,
   },
 
-  // Línea divisoria entre opciones de navegación y cerrar sesión
+  // Línea divisoria — casi invisible para mantener el estilo limpio del cliente
   menuDivider: {
     height: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     marginVertical: 4,
     marginHorizontal: 10,
   },
 
-  // Texto de "Cerrar sesión" en rojo para diferenciarse visualmente
+  // Texto de "Cerrar sesión" — mismo color blanco que el resto del menú
   menuItemLogout: {
-    color: '#EF4444',
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',
   },

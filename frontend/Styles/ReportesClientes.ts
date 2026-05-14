@@ -205,7 +205,7 @@ export default StyleSheet.create({
   formRow: { flexDirection: 'row', gap: 10 },
 
   // Input que ocupa la mitad del ancho en una fila
-  inputHalf: { flex: 1 },
+  inputHalf: { flex: 1, overflow: 'hidden' },
 
   // Botón selector (dropdown) cerrado
   dropdown: {
@@ -253,9 +253,12 @@ export default StyleSheet.create({
   errorText: {
     color: '#EF4444',
     fontSize: 12,
-    marginTop: -10,
-    marginBottom: 8,
+    marginTop: 6,
+    marginBottom: 10,
     marginLeft: 4,
+    marginRight: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
 
   // Campo con error — borde rojo

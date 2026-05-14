@@ -40,6 +40,8 @@ type Mantenimiento = {
   marca: string;              // Marca del vehículo
   modelo: string;             // Modelo del vehículo
   placa: string;              // Placa del vehículo
+  año: string;                // Año de fabricación
+  kilometraje: string;        // Kilometraje actual del vehículo
   fechaServicio: string;      // Fecha en que se realizó el servicio
   mecanicoAsignado: string;   // Nombre del mecánico que atendió
   diagnostico: string;        // Diagnóstico inicial del problema
@@ -82,6 +84,7 @@ const MOCK_HISTORIAL: RegistroHistorial[] = [
     mecanicoNombre: 'Bryan Justicia',
     mantenimiento: {
       marca: 'Toyota', modelo: 'Corolla', placa: 'ABC-1234',
+      año: '2019', kilometraje: '85000',
       fechaServicio: '10/05/2026', mecanicoAsignado: 'Bryan Justicia',
       diagnostico: 'Ruido al frenar, desgaste de pastillas.',
       trabajoRealizado: 'Revisión de frenos',
@@ -101,6 +104,7 @@ const MOCK_HISTORIAL: RegistroHistorial[] = [
     mecanicoNombre: 'Luis Ramírez',
     mantenimiento: {
       marca: 'Chevrolet', modelo: 'Aveo', placa: 'XYZ-5678',
+      año: '2021', kilometraje: '42000',
       fechaServicio: '08/05/2026', mecanicoAsignado: 'Luis Ramírez',
       diagnostico: 'Pérdida de potencia al acelerar.',
       trabajoRealizado: 'Diagnóstico computarizado',
@@ -325,6 +329,8 @@ export default function HistorialScreen() {
                       {campo('Marca', m.marca)}
                       {campo('Modelo', m.modelo)}
                       {campo('Placa', m.placa)}
+                      {campo('Año', m.año)}
+                      {campo('Kilometraje (km)', m.kilometraje)}
                       {campo('Fecha del servicio', m.fechaServicio)}
                     </View>
 

@@ -54,6 +54,8 @@ import styles from '@/Styles';
 
 // Importa las funciones de validación reutilizables
 import {
+  validarDosPalabras,
+  validarCuatroPalabras,
   validarSoloTexto,
   validarTelefono,
   validarCorreoGmail,
@@ -124,7 +126,7 @@ export default function HomeScreen() {
   // Estado y animación para el logo del video de fondo
   const [videoBgPosition, setVideoBgPosition] = useState(0);
   const videoBgLogoOpacity = useRef(new Animated.Value(0)).current;
-  const videoBgLogoScale   = useRef(new Animated.Value(0.6)).current;
+  const videoBgLogoScale = useRef(new Animated.Value(0.6)).current;
   const videoBgLogoTriggered = useRef(false);
 
   const triggerVideoBgLogo = () => {
@@ -132,7 +134,7 @@ export default function HomeScreen() {
     videoBgLogoTriggered.current = true;
     Animated.parallel([
       Animated.timing(videoBgLogoOpacity, { toValue: 1, duration: 700, useNativeDriver: true }),
-      Animated.spring(videoBgLogoScale,   { toValue: 1, friction: 5,   useNativeDriver: true }),
+      Animated.spring(videoBgLogoScale, { toValue: 1, friction: 5, useNativeDriver: true }),
     ]).start();
   };
 
@@ -179,19 +181,19 @@ export default function HomeScreen() {
   const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
 
   // Estados de error del formulario — uno por campo
-  const [errName, setErrName]         = useState('');
-  const [errPhone, setErrPhone]       = useState('');
-  const [errEmail, setErrEmail]       = useState('');
-  const [errBrand, setErrBrand]       = useState('');
-  const [errModel, setErrModel]       = useState('');
-  const [errYear, setErrYear]         = useState('');
-  const [errPlate, setErrPlate]       = useState('');
-  const [errMileage, setErrMileage]   = useState('');
-  const [errService, setErrService]   = useState('');
-  const [errOther, setErrOther]       = useState('');
-  const [errDetails, setErrDetails]   = useState('');
-  const [errDate, setErrDate]         = useState('');
-  const [errTime, setErrTime]         = useState('');
+  const [errName, setErrName] = useState('');
+  const [errPhone, setErrPhone] = useState('');
+  const [errEmail, setErrEmail] = useState('');
+  const [errBrand, setErrBrand] = useState('');
+  const [errModel, setErrModel] = useState('');
+  const [errYear, setErrYear] = useState('');
+  const [errPlate, setErrPlate] = useState('');
+  const [errMileage, setErrMileage] = useState('');
+  const [errService, setErrService] = useState('');
+  const [errOther, setErrOther] = useState('');
+  const [errDetails, setErrDetails] = useState('');
+  const [errDate, setErrDate] = useState('');
+  const [errTime, setErrTime] = useState('');
 
   // Estado: fecha seleccionada para la cita
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
@@ -277,9 +279,9 @@ export default function HomeScreen() {
 
   // Valores animados para la imagen HammerSobreSaliendo
   // Entra desde la izquierda (translateX negativo) hacia el lado derecho, de invisible a visible
-  const hammerOpacity    = useRef(new Animated.Value(0)).current;
+  const hammerOpacity = useRef(new Animated.Value(0)).current;
   const hammerTranslateX = useRef(new Animated.Value(400)).current; // desde el lado derecho
-  const hammerTriggered  = useRef(false);
+  const hammerTriggered = useRef(false);
 
   // Posición Y de la imagen del hammer (para detectar cuándo entra en pantalla)
   const [hammerPosition, setHammerPosition] = useState(0);
@@ -398,19 +400,19 @@ export default function HomeScreen() {
 
   const onSend = () => {
     // Valida cada campo y guarda el error en su estado individual
-    const eName    = validarSoloTexto(form.name, 'El nombre completo');
-    const ePhone   = validarTelefono(form.phone);
-    const eEmail   = validarCorreoGmail(form.email);
-    const eBrand   = validarSoloTexto(form.brand, 'La marca');
-    const eModel   = validarTextoYNumeros(form.model, 'El modelo');
-    const eYear    = validarAño(form.year);
-    const ePlate   = validarPlaca(form.plate);
+    const eName = validarCuatroPalabras(form.name, 'El nombre completo');
+    const ePhone = validarTelefono(form.phone);
+    const eEmail = validarCorreoGmail(form.email);
+    const eBrand = validarSoloTexto(form.brand, 'La marca');
+    const eModel = validarTextoYNumeros(form.model, 'El modelo');
+    const eYear = validarAño(form.year);
+    const ePlate = validarPlaca(form.plate);
     const eMileage = validarSoloNumeros(form.mileage, 'El kilometraje');
     const eService = validarObligatorio(form.service, 'El tipo de servicio');
-    const eOther   = form.service === 'Otro' ? validarTextoYNumeros(form.otherService, 'La descripción del servicio') : null;
+    const eOther = form.service === 'Otro' ? validarTextoYNumeros(form.otherService, 'La descripción del servicio') : null;
     const eDetails = validarTextoYNumeros(form.details, 'La descripción del problema');
-    const eDate    = !appointmentDate ? 'La fecha de la cita es obligatoria.' : null;
-    const eTime    = !appointmentTime ? 'La hora de la cita es obligatoria.' : null;
+    const eDate = !appointmentDate ? 'La fecha de la cita es obligatoria.' : null;
+    const eTime = !appointmentTime ? 'La hora de la cita es obligatoria.' : null;
 
     setErrName(eName ?? '');
     setErrPhone(ePhone ?? '');
@@ -428,7 +430,7 @@ export default function HomeScreen() {
 
     // Si hay algún error, no envía
     if ([eName, ePhone, eEmail, eBrand, eModel, eYear, ePlate, eMileage,
-         eService, eOther, eDetails, eDate, eTime].some(Boolean)) return;
+      eService, eOther, eDetails, eDate, eTime].some(Boolean)) return;
 
     Alert.alert('Solicitud enviada', 'Tu registro ha sido enviado al mecánico. Pronto recibirás una confirmación.');
     setForm({ name: '', phone: '', email: '', brand: '', model: '', year: '', plate: '', mileage: '', service: '', otherService: '', details: '' });
@@ -511,55 +513,25 @@ export default function HomeScreen() {
 
         {/* Carrusel hero + video en un solo bloque para que no aparezca franja negra entre ambos */}
         <View style={styles.heroVideoBlock}>
-        {/*Seccion de carrucel*/}
-        <View style={styles.hero} onLayout={(event) => setHeroWidth(event.nativeEvent.layout.width)}>
+          {/*Seccion de carrucel*/}
+          <View style={styles.hero} onLayout={(event) => setHeroWidth(event.nativeEvent.layout.width)}>
 
-          {/* ScrollView horizontal animado */}
-          <Animated.ScrollView
-            ref={sliderRef as any}
-            style={styles.heroSlider}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onMomentumScrollEnd={onSlideScrollEnd}
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-              { useNativeDriver: true },
-            )}
-            scrollEventThrottle={16}
-          >
-            {slideImages.map((image, index) => {
-              const opacity = scrollX.interpolate({
-                inputRange: [
-                  (index - 1) * heroWidth,
-                  index * heroWidth,
-                  (index + 1) * heroWidth,
-                ],
-                outputRange: [0, 1, 0],
-                extrapolate: 'clamp',
-              });
-              return (
-                <Animated.View key={index} style={[styles.heroSlide, { width: heroWidth, opacity }]}>
-                  <Image
-                    source={image}
-                    contentFit="cover"
-                    style={styles.heroImage}
-                  />
-                </Animated.View>
-              );
-            })}
-          </Animated.ScrollView>
-
-          {/* Capa oscura sobre todas las imágenes */}
-          <View style={styles.heroOverlay} />
-
-          {/* Texto y botón — overlay único fuera del ScrollView, no se repite */}
-          <View style={styles.heroTextOverlay}>
-            {/* Cada título tiene su propia opacidad interpolada desde scrollX,
-                igual que las imágenes — se desvanece exactamente al mismo tiempo */}
-            <View style={styles.heroTitleContainer}>
-              {slideMessages.map((msg, index) => {
-                const titleOpacity = scrollX.interpolate({
+            {/* ScrollView horizontal animado */}
+            <Animated.ScrollView
+              ref={sliderRef as any}
+              style={styles.heroSlider}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              onMomentumScrollEnd={onSlideScrollEnd}
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                { useNativeDriver: true },
+              )}
+              scrollEventThrottle={16}
+            >
+              {slideImages.map((image, index) => {
+                const opacity = scrollX.interpolate({
                   inputRange: [
                     (index - 1) * heroWidth,
                     index * heroWidth,
@@ -569,88 +541,118 @@ export default function HomeScreen() {
                   extrapolate: 'clamp',
                 });
                 return (
-                  <Animated.Text
-                    key={index}
-                    style={[
-                      styles.heroText,
-                      styles.heroTitleAbsolute,
-                      { opacity: titleOpacity },
-                    ]}
-                  >
-                    {msg}
-                  </Animated.Text>
+                  <Animated.View key={index} style={[styles.heroSlide, { width: heroWidth, opacity }]}>
+                    <Image
+                      source={image}
+                      contentFit="cover"
+                      style={styles.heroImage}
+                    />
+                  </Animated.View>
                 );
               })}
+            </Animated.ScrollView>
+
+            {/* Capa oscura sobre todas las imágenes */}
+            <View style={styles.heroOverlay} />
+
+            {/* Texto y botón — overlay único fuera del ScrollView, no se repite */}
+            <View style={styles.heroTextOverlay}>
+              {/* Cada título tiene su propia opacidad interpolada desde scrollX,
+                igual que las imágenes — se desvanece exactamente al mismo tiempo */}
+              <View style={styles.heroTitleContainer}>
+                {slideMessages.map((msg, index) => {
+                  const titleOpacity = scrollX.interpolate({
+                    inputRange: [
+                      (index - 1) * heroWidth,
+                      index * heroWidth,
+                      (index + 1) * heroWidth,
+                    ],
+                    outputRange: [0, 1, 0],
+                    extrapolate: 'clamp',
+                  });
+                  return (
+                    <Animated.Text
+                      key={index}
+                      style={[
+                        styles.heroText,
+                        styles.heroTitleAbsolute,
+                        { opacity: titleOpacity },
+                      ]}
+                    >
+                      {msg}
+                    </Animated.Text>
+                  );
+                })}
+              </View>
+
+              {/* Subtítulo estático — no cambia ni parpadea */}
+              <Text style={styles.heroCaption}>
+                Tu vehículo en manos expertas y listo para tus próximos viajes.
+              </Text>
+
+              {/* Botón estático centrado */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.heroCitaButton,
+                  pressed && styles.heroCitaButtonPressed,
+                ]}
+                onPress={() => scrollRef.current?.scrollTo({ y: formPosition, animated: true })}
+              >
+                {({ pressed }) => (
+                  <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
+                    SOLICITA TU CITA
+                  </Text>
+                )}
+              </Pressable>
             </View>
 
-            {/* Subtítulo estático — no cambia ni parpadea */}
-            <Text style={styles.heroCaption}>
-              Tu vehículo en manos expertas y listo para tus próximos viajes.
-            </Text>
-
-            {/* Botón estático centrado */}
-            <Pressable
-              style={({ pressed }) => [
-                styles.heroCitaButton,
-                pressed && styles.heroCitaButtonPressed,
-              ]}
-              onPress={() => scrollRef.current?.scrollTo({ y: formPosition, animated: true })}
-            >
-              {({ pressed }) => (
-                <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
-                  SOLICITA TU CITA
-                </Text>
-              )}
-            </Pressable>
+            {/* Indicadores de puntos eliminados */}
           </View>
 
-          {/* Indicadores de puntos eliminados */}
-        </View>
-
-        {/* ── SECCIÓN VIDEO DE FONDO ──
+          {/* ── SECCIÓN VIDEO DE FONDO ──
             Pegado al carrusel (sin marginTop), video más alto y más oscuro.
             logotipoTransparente con animación de aparición + Subtitulo1.png grande debajo. */}
-        <View style={styles.videoBgSection}>
+          <View style={styles.videoBgSection}>
 
-          {/* Video de fondo en loop, silenciado, sin controles */}
-          <Video
-            source={require('../../assets/videos/videoplayback.webm')}
-            style={styles.videoBg}
-            resizeMode={ResizeMode.COVER}
-            isLooping
-            isMuted
-            shouldPlay
-          />
+            {/* Video de fondo en loop, silenciado, sin controles */}
+            <Video
+              source={require('../../assets/videos/videoplayback.webm')}
+              style={styles.videoBg}
+              resizeMode={ResizeMode.COVER}
+              isLooping
+              isMuted
+              shouldPlay
+            />
 
-          {/* Capa oscura más intensa sobre el video */}
-          <View style={styles.videoBgOverlay} />
+            {/* Capa oscura más intensa sobre el video */}
+            <View style={styles.videoBgOverlay} />
 
-          {/* Contenido encima del video */}
-          <View
-            style={styles.videoBgContent}
-            onLayout={(e) => {
-              // Captura posición para disparar animación al hacer scroll
-              setVideoBgPosition(e.nativeEvent.layout.y);
-            }}
-          >
-            {/* logotipoTransparente con animación fade+scale al entrar en pantalla */}
-            <Animated.View style={{
-              opacity: videoBgLogoOpacity,
-              transform: [{ scale: videoBgLogoScale }],
-            }}>
-              <Image
-                source={require('../../assets/images/logotipoTransparente.png')}
-                contentFit="contain"
-                style={styles.videoBgIcon}
-              />
-            </Animated.View>
+            {/* Contenido encima del video */}
+            <View
+              style={styles.videoBgContent}
+              onLayout={(e) => {
+                // Captura posición para disparar animación al hacer scroll
+                setVideoBgPosition(e.nativeEvent.layout.y);
+              }}
+            >
+              {/* logotipoTransparente con animación fade+scale al entrar en pantalla */}
+              <Animated.View style={{
+                opacity: videoBgLogoOpacity,
+                transform: [{ scale: videoBgLogoScale }],
+              }}>
+                <Image
+                  source={require('../../assets/images/logotipoTransparente.png')}
+                  contentFit="contain"
+                  style={styles.videoBgIcon}
+                />
+              </Animated.View>
 
-            {/* Frase inspiracional debajo del logo — sin comillas */}
-            <Text style={styles.videoBgPhrase}>
-              Tu vehículo merece el mejor cuidado.{'\n'}Nosotros lo hacemos posible.
-            </Text>
+              {/* Frase inspiracional debajo del logo — sin comillas */}
+              <Text style={styles.videoBgPhrase}>
+                Tu vehículo merece el mejor cuidado.{'\n'}Nosotros lo hacemos posible.
+              </Text>
+            </View>
           </View>
-        </View>
         </View>
 
         {/*Seccion nosotros*/}
@@ -1127,17 +1129,17 @@ export default function HomeScreen() {
                       if (!day) return <View key={`b-${i}`} style={styles.calendarCell} />;
                       // Obtiene la fecha de hoy sin hora para comparaciones correctas
                       const today = new Date(); today.setHours(0, 0, 0, 0);
-                      const isPast     = day < today;                                           // Día pasado
+                      const isPast = day < today;                                           // Día pasado
                       const isSelected = appointmentDate?.toDateString() === day.toDateString(); // Seleccionado
-                      const isToday    = day.toDateString() === today.toDateString();            // Hoy
+                      const isToday = day.toDateString() === today.toDateString();            // Hoy
                       return (
                         <Pressable
                           key={i}
                           style={[
                             styles.calendarCell,
-                            isToday    && styles.calendarCellToday,    // Borde azul si es hoy
+                            isToday && styles.calendarCellToday,    // Borde azul si es hoy
                             isSelected && styles.calendarCellSelected, // Fondo azul si seleccionado
-                            isPast     && styles.calendarCellPast,     // Opacidad reducida si pasado
+                            isPast && styles.calendarCellPast,     // Opacidad reducida si pasado
                           ]}
                           // Selecciona el día y cierra el modal (solo si no es pasado)
                           onPress={() => { if (!isPast) { setAppointmentDate(day); setCalendarVisible(false); } }}
@@ -1145,9 +1147,9 @@ export default function HomeScreen() {
                         >
                           <Text style={[
                             styles.calendarCellText,
-                            isToday    && styles.calendarCellTodayText,
+                            isToday && styles.calendarCellTodayText,
                             isSelected && styles.calendarCellSelectedText,
-                            isPast     && styles.calendarCellPastText,
+                            isPast && styles.calendarCellPastText,
                           ]}>
                             {day.getDate()} {/* Número del día del mes */}
                           </Text>

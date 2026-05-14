@@ -1,9 +1,7 @@
-// ─────────────────────────────────────────────────────────────────────────────
 // nadvarCliente.tsx
 // Barra de navegación de la sección del cliente (pantalla principal index.tsx
 // y Contactanos.tsx). Incluye un easter egg: 10 taps en el logo abren el login
 // oculto para que el admin o mecánico puedan acceder sin que el cliente lo note.
-// ─────────────────────────────────────────────────────────────────────────────
 
 // Componente Image optimizado de expo-image
 import { Image } from 'expo-image';

@@ -1,17 +1,17 @@
 import { StyleSheet } from 'react-native';
 
-// Estilos exclusivos del componente NavbarCliente
+// Estilos del componente NavbarCliente — idénticos a nadvarMecanico.ts
 export default StyleSheet.create({
 
   // Barra de navegación superior
   navBar: {
-    paddingTop: 48,              // Espacio para la barra de estado del dispositivo
-    paddingHorizontal: 16,       // Relleno lateral
-    paddingBottom: 12,           // Espacio inferior
-    backgroundColor: '#000000', // Fondo negro
-    flexDirection: 'row',        // Elementos en fila horizontal
-    alignItems: 'center',        // Alineación vertical centrada
-    justifyContent: 'space-between', // Logo a la izquierda, menú a la derecha
+    paddingTop: 48,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    backgroundColor: '#000000',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 
   // Imagen del logo
@@ -55,22 +55,25 @@ export default StyleSheet.create({
     lineHeight: 24,
   },
 
-  // Menú desplegable flotante
+  // Menú desplegable flotante por encima del contenido
   menu: {
-    position: 'absolute',
-    top: 76,
+    position: 'absolute', // Hace que flote
+    top: 96,              // Debajo del navbar
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(17, 24, 39, 0.8)',
-    borderRadius: 0,
+
+    zIndex: 9999,         // Prioridad visual alta
+    elevation: 20,        // Android
+
+    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+
     paddingVertical: 12,
     paddingHorizontal: 16,
+
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.18,
+    shadowOpacity: 0.25,
     shadowRadius: 18,
-    elevation: 8,
-    zIndex: 20,
   },
 
   // Cada opción del menú desplegable
@@ -79,8 +82,32 @@ export default StyleSheet.create({
     paddingHorizontal: 10,
   },
 
+  // Opción activa: sin fondo extra, solo el texto cambia de color
+  menuItemActive: {},
+
   // Texto de cada opción del menú
   menuItemText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+
+  // Texto de la opción activa — blanco con opacidad reducida
+  menuItemTextActive: {
+    color: '#FFFFFF',
+    opacity: 0.7,
+  },
+
+  // Línea divisoria — casi invisible para mantener el estilo limpio
+  menuDivider: {
+    height: 1,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    marginVertical: 4,
+    marginHorizontal: 10,
+  },
+
+  // Texto de "Cerrar sesión" — mismo color blanco que el resto del menú
+  menuItemLogout: {
     color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '600',

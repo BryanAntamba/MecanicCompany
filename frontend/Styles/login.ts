@@ -162,4 +162,13 @@ export default StyleSheet.create({
   buttonTextPressed: {
     color: '#FFFFFF',
   },
+
+  // Error general de credenciales — centrado debajo del botón, sin modal
+  errorTextCentered: {
+    color: '#EF4444',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 12,
+  },
 });

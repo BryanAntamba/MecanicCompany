@@ -439,6 +439,19 @@ export default StyleSheet.create({
     fontSize: 15,
   },
 
+  // Borde rojo para inputs o dropdowns con error de validación
+  inputError: {
+    borderColor: '#f87171',
+  },
+
+  // Texto de error que aparece debajo de un campo validado
+  errorText: {
+    color: '#f87171',
+    fontSize: 12,
+    marginTop: 5,
+    marginBottom: -4,
+  },
+
   // Fila del switch de cuenta activa (etiqueta + switch)
   switchRow: {
     flexDirection: 'row',

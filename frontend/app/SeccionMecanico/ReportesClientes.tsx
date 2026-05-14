@@ -8,7 +8,6 @@ import { useState } from 'react';
 
 // Componentes nativos de React Native
 import {
-  Alert,                // Diálogos nativos del sistema operativo
   KeyboardAvoidingView, // Evita que el teclado tape los inputs en iOS
   Modal,                // Superposición de contenido sobre la pantalla principal
   Platform,             // Detecta el sistema operativo (iOS / Android)
@@ -27,6 +26,24 @@ import NavbarMecanico from '@/components/nadvarMecanico/nadvarMecanico';
 
 // Hoja de estilos compartida entre ReportesClientes e historial
 import styles from '@/Styles/ReportesClientes';
+
+// Validación del nombre completo en el modal de edición
+import {
+  validarNombreCompleto,
+  validarTelefono,
+  validarCorreoGmail,
+  validarSoloTexto,
+  validarModelo,
+  validarAño,
+  validarPlaca,
+  validarSoloNumeros,
+  validarObligatorio,
+  validarOtroServicio,
+  validarTextoYNumeros,
+  validarFecha,
+  validarCosto,
+  validarCostoObligatorio,
+} from '@/utils/validaciones';
 
 
 // TIPOS
@@ -150,10 +167,23 @@ export default function ReportesClientesScreen() {
   const [lista, setLista] = useState<Solicitud[]>(MOCK_SOLICITUDES);
 
   // ESTADOS DEL MODAL EDITAR SOLICITUD 
-  const [editModal, setEditModal]           = useState(false);           // Visibilidad del modal
-  const [editId, setEditId]                 = useState<string | null>(null); // ID de la solicitud en edición
-  const [editForm, setEditForm]             = useState<Partial<Solicitud>>({}); // Datos del formulario de edición
-  const [editServDropdown, setEditServDropdown] = useState(false);       // Dropdown de tipo de servicio abierto
+  const [editModal, setEditModal]           = useState(false);
+  const [editId, setEditId]                 = useState<string | null>(null);
+  const [editForm, setEditForm]             = useState<Partial<Solicitud>>({});
+  const [editServDropdown, setEditServDropdown] = useState(false);
+
+  // Estados de error — uno por campo del modal de edición
+  const [errNombre, setErrNombre]           = useState('');
+  const [errTelefono, setErrTelefono]       = useState('');
+  const [errCorreo, setErrCorreo]           = useState('');
+  const [errMarca, setErrMarca]             = useState('');
+  const [errModelo, setErrModelo]           = useState('');
+  const [errAño, setErrAño]                 = useState('');
+  const [errPlaca, setErrPlaca]             = useState('');
+  const [errKm, setErrKm]                   = useState('');
+  const [errServicio, setErrServicio]       = useState('');
+  const [errOtroServicio, setErrOtroServicio] = useState('');
+  const [errDescripcion, setErrDescripcion] = useState('');
 
   // ESTADOS DEL MODAL REGISTRO/EDITAR MANTENIMIENTO
   const [maintModal, setMaintModal]         = useState(false);           // Visibilidad del modal
@@ -161,6 +191,25 @@ export default function ReportesClientesScreen() {
   const [maintForm, setMaintForm]           = useState<Mantenimiento>(formMantVacio()); // Datos del formulario
   const [mecDropdown, setMecDropdown]       = useState(false);           // Dropdown de mecánico abierto
   const [trabajoDropdown, setTrabajoDropdown] = useState(false);         // Dropdown de trabajo abierto
+
+  // Estados de error del modal de mantenimiento
+  const [errMaintMarca, setErrMaintMarca]       = useState('');
+  const [errMaintModelo, setErrMaintModelo]     = useState('');
+  const [errMaintPlaca, setErrMaintPlaca]       = useState('');
+  const [errMaintAño, setErrMaintAño]           = useState('');
+  const [errMaintKm, setErrMaintKm]             = useState('');
+  const [errMaintFechaServ, setErrMaintFechaServ] = useState('');
+  const [errMaintMecAsinado, setErrMaintMecAsinado] = useState('');
+  const [errMaintDiagnost, setErrMaintDiagnost] = useState('');
+  const [errMaintTrabajo, setErrMaintTrabajo]   = useState('');
+  const [errMaintOtroTrabajo, setErrMaintOtroTrabajo] = useState('');
+  const [errMaintRepuestos, setErrMaintRepuestos] = useState('');
+  const [errMaintDiagReal, setErrMaintDiagReal] = useState('');
+  const [errMaintManoObra, setErrMaintManoObra] = useState('');
+  const [errMaintCostoRep, setErrMaintCostoRep] = useState('');
+  const [errMaintObserv, setErrMaintObserv]     = useState('');
+  const [errMaintFechaInit, setErrMaintFechaInit] = useState('');
+  const [errMaintFechaFinal, setErrMaintFechaFinal] = useState('');
 
   // ESTADOS DEL MODAL ENVIAR REPORTE
   const [sendModal, setSendModal]           = useState(false);           // Visibilidad del modal
@@ -174,19 +223,51 @@ export default function ReportesClientesScreen() {
   // FUNCIÓN: ABRIR MODAL EDITAR
   // Pre-llena el formulario con los datos actuales de la solicitud
   const abrirEditar = (s: Solicitud) => {
-    setEditId(s.id);                    // Guarda el ID para saber qué solicitud actualizar
-    setEditForm({ ...s });              // Copia todos los datos de la solicitud al formulario
-    setEditServDropdown(false);         // Cierra el dropdown si estaba abierto
-    setEditModal(true);                 // Abre el modal
+    setEditId(s.id);
+    setEditForm({ ...s });
+    setEditServDropdown(false);
+    // Limpia todos los errores al abrir el modal
+    setErrNombre(''); setErrTelefono(''); setErrCorreo('');
+    setErrMarca(''); setErrModelo(''); setErrAño('');
+    setErrPlaca(''); setErrKm(''); setErrServicio('');
+    setErrOtroServicio(''); setErrDescripcion('');
+    setEditModal(true);
   };
 
-  // FUNCIÓN: GUARDAR EDICIÓN 
-  // Actualiza la solicitud en la lista con los datos del formulario
   const guardarEditar = () => {
-    if (!editId) return;                // Seguridad: no hace nada si no hay ID
-    // Reemplaza la solicitud con el ID correspondiente manteniendo los demás sin cambios
+    if (!editId) return;
+
+    const eNombre      = validarNombreCompleto(editForm.nombre ?? '');
+    const eTelefono    = validarTelefono(editForm.telefono ?? '');
+    const eCorreo      = validarCorreoGmail(editForm.correo ?? '');
+    const eMarca       = validarSoloTexto(editForm.marca ?? '', 'La marca');
+    const eModelo      = validarModelo(editForm.modelo ?? '');
+    const eAño         = validarAño(editForm.año ?? '');
+    const ePlaca       = validarPlaca(editForm.placa ?? '');
+    const eKm          = validarSoloNumeros(editForm.kilometraje ?? '', 'El kilometraje');
+    const eServicio    = validarObligatorio(editForm.tipoServicio, 'El tipo de servicio');
+    const eOtroServ    = editForm.tipoServicio === 'Otro'
+                          ? validarOtroServicio(editForm.otroServicio ?? '')
+                          : null;
+    const eDescripcion = validarTextoYNumeros(editForm.descripcionProblema ?? '', 'La descripción');
+
+    setErrNombre(eNombre ?? '');
+    setErrTelefono(eTelefono ?? '');
+    setErrCorreo(eCorreo ?? '');
+    setErrMarca(eMarca ?? '');
+    setErrModelo(eModelo ?? '');
+    setErrAño(eAño ?? '');
+    setErrPlaca(ePlaca ?? '');
+    setErrKm(eKm ?? '');
+    setErrServicio(eServicio ?? '');
+    setErrOtroServicio(eOtroServ ?? '');
+    setErrDescripcion(eDescripcion ?? '');
+
+    if ([eNombre, eTelefono, eCorreo, eMarca, eModelo, eAño, ePlaca, eKm,
+         eServicio, eOtroServ, eDescripcion].some(Boolean)) return;
+
     setLista((prev) => prev.map((x) => x.id === editId ? { ...x, ...editForm } as Solicitud : x));
-    setEditModal(false);                // Cierra el modal
+    setEditModal(false);
   };
 
   // FUNCIÓN: ABRIR MODAL MANTENIMIENTO
@@ -200,6 +281,13 @@ export default function ReportesClientesScreen() {
     );
     setMecDropdown(false);
     setTrabajoDropdown(false);
+    // Limpia todos los errores al abrir el modal
+    setErrMaintMarca(''); setErrMaintModelo(''); setErrMaintPlaca('');
+    setErrMaintAño(''); setErrMaintKm('');
+    setErrMaintFechaServ(''); setErrMaintMecAsinado(''); setErrMaintDiagnost('');
+    setErrMaintTrabajo(''); setErrMaintOtroTrabajo(''); setErrMaintRepuestos('');
+    setErrMaintDiagReal(''); setErrMaintManoObra(''); setErrMaintCostoRep('');
+    setErrMaintObserv(''); setErrMaintFechaInit(''); setErrMaintFechaFinal('');
     setMaintModal(true);
   };
 
@@ -207,6 +295,52 @@ export default function ReportesClientesScreen() {
   // Guarda el registro de mantenimiento y cambia el estado a "Completado"
   const guardarMantenimiento = () => {
     if (!maintId) return;
+
+    const eMarca       = validarSoloTexto(maintForm.marca ?? '', 'La marca');
+    const eModelo      = validarModelo(maintForm.modelo ?? '');
+    const ePlaca       = validarPlaca(maintForm.placa ?? '');
+    const eAño         = validarAño((maintForm as any).año ?? '');
+    const eKm          = validarSoloNumeros((maintForm as any).kilometraje ?? '', 'El kilometraje');
+    const eFechaServ   = validarFecha(maintForm.fechaServicio ?? '');
+    const eMecAsignado = validarObligatorio(maintForm.mecanicoAsignado, 'El mecánico asignado');
+    const eDiagnost    = validarTextoYNumeros(maintForm.diagnostico ?? '', 'El diagnóstico');
+    const eTrabajo     = validarObligatorio(maintForm.trabajoRealizado, 'El trabajo realizado');
+    const eOtroTrab    = maintForm.trabajoRealizado === 'Otros'
+                          ? validarOtroServicio(maintForm.otroTrabajo ?? '')
+                          : null;
+    const eRepuestos   = validarTextoYNumeros(maintForm.repuestosUtilizados ?? '', 'Los repuestos utilizados');
+    const eDiagReal    = validarTextoYNumeros(maintForm.diagnosticoRealizado ?? '', 'El diagnóstico realizado');
+    const eManoObra    = validarCostoObligatorio(maintForm.costoManoObra ?? '', 'El costo de mano de obra');
+    const eCostoRep    = validarCostoObligatorio(maintForm.costoRepuestos ?? '', 'El costo de repuestos');
+    const eObserv      = validarTextoYNumeros(maintForm.observaciones ?? '', 'Las observaciones');
+    const eFechaInit   = validarFecha(maintForm.fechaInicio ?? '');
+    const eFechaFinal  = validarFecha(maintForm.fechaFinalizacion ?? '');
+
+    setErrMaintMarca(eMarca ?? '');
+    setErrMaintModelo(eModelo ?? '');
+    setErrMaintPlaca(ePlaca ?? '');
+    setErrMaintAño(eAño ?? '');
+    setErrMaintKm(eKm ?? '');
+    setErrMaintFechaServ(eFechaServ ?? '');
+    setErrMaintMecAsinado(eMecAsignado ?? '');
+    setErrMaintDiagnost(eDiagnost ?? '');
+    setErrMaintTrabajo(eTrabajo ?? '');
+    setErrMaintOtroTrabajo(eOtroTrab ?? '');
+    setErrMaintRepuestos(eRepuestos ?? '');
+    setErrMaintDiagReal(eDiagReal ?? '');
+    setErrMaintManoObra(eManoObra ?? '');
+    setErrMaintCostoRep(eCostoRep ?? '');
+    setErrMaintObserv(eObserv ?? '');
+    setErrMaintFechaInit(eFechaInit ?? '');
+    setErrMaintFechaFinal(eFechaFinal ?? '');
+
+    const errores = [eMarca, eModelo, ePlaca, eAño, eKm, eFechaServ, eMecAsignado, eDiagnost, eTrabajo,
+         eOtroTrab, eRepuestos, eDiagReal, eManoObra, eCostoRep, eObserv, eFechaInit, eFechaFinal].filter(Boolean);
+    
+    if (errores.length > 0) {
+      return;
+    }
+
     setLista((prev) => prev.map((x) =>
       x.id === maintId
         ? { ...x, mantenimiento: { ...maintForm }, estado: 'Completado' as EstadoSolicitud }
@@ -415,47 +549,108 @@ export default function ReportesClientesScreen() {
               {/* SECCIÓN: DATOS PERSONALES */}
               <View style={[styles.modalSection, styles.modalSectionFirst]}>
                 <Text style={styles.modalSectionTitle}>Datos personales</Text>
+
                 <Text style={[styles.label, styles.labelFirstInSection]}>Nombre completo</Text>
-                <TextInput style={styles.input} placeholder="Nombre completo" placeholderTextColor="#64748B"
-                  value={editForm.nombre} onChangeText={(t) => setEditForm((p) => ({ ...p, nombre: t }))} />
+                <TextInput
+                  style={[styles.input, errNombre ? styles.inputError : null]}
+                  placeholder="Nombre y apellido (mín. 2 palabras)"
+                  placeholderTextColor="#64748B"
+                  value={editForm.nombre}
+                  onChangeText={(t) => { setEditForm((p) => ({ ...p, nombre: t })); setErrNombre(''); }}
+                />
+                {errNombre ? <Text style={styles.errorText}>{errNombre}</Text> : null}
+
                 <Text style={styles.label}>Teléfono</Text>
-                <TextInput style={styles.input} placeholder="Teléfono" placeholderTextColor="#64748B" keyboardType="phone-pad"
-                  value={editForm.telefono} onChangeText={(t) => setEditForm((p) => ({ ...p, telefono: t }))} />
+                <TextInput
+                  style={[styles.input, errTelefono ? styles.inputError : null]}
+                  placeholder="10 dígitos sin espacios"
+                  placeholderTextColor="#64748B"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  value={editForm.telefono}
+                  onChangeText={(t) => { setEditForm((p) => ({ ...p, telefono: t })); setErrTelefono(''); }}
+                />
+                {errTelefono ? <Text style={styles.errorText}>{errTelefono}</Text> : null}
+
                 <Text style={styles.label}>Correo electrónico</Text>
-                <TextInput style={styles.input} placeholder="correo@ejemplo.com" placeholderTextColor="#64748B" keyboardType="email-address" autoCapitalize="none"
-                  value={editForm.correo} onChangeText={(t) => setEditForm((p) => ({ ...p, correo: t }))} />
+                <TextInput
+                  style={[styles.input, errCorreo ? styles.inputError : null]}
+                  placeholder="correo@gmail.com"
+                  placeholderTextColor="#64748B"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={editForm.correo}
+                  onChangeText={(t) => { setEditForm((p) => ({ ...p, correo: t })); setErrCorreo(''); }}
+                />
+                {errCorreo ? <Text style={styles.errorText}>{errCorreo}</Text> : null}
               </View>
 
               {/* SECCIÓN: INFORMACIÓN DEL VEHÍCULO */}
               <View style={styles.modalSection}>
                 <Text style={styles.modalSectionTitle}>Información del vehículo</Text>
+
                 <Text style={[styles.label, styles.labelFirstInSection]}>Marca</Text>
-                <TextInput style={styles.input} placeholder="Marca" placeholderTextColor="#64748B"
-                  value={editForm.marca} onChangeText={(t) => setEditForm((p) => ({ ...p, marca: t }))} />
-                {/* Fila: Modelo + Año en la misma línea */}
+                <TextInput
+                  style={[styles.input, errMarca ? styles.inputError : null]}
+                  placeholder="Marca"
+                  placeholderTextColor="#64748B"
+                  value={editForm.marca}
+                  onChangeText={(t) => { setEditForm((p) => ({ ...p, marca: t })); setErrMarca(''); }}
+                />
+                {errMarca ? <Text style={styles.errorText}>{errMarca}</Text> : null}
+
+                {/* Fila: Modelo + Año */}
                 <View style={styles.formRow}>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Modelo</Text>
-                    <TextInput style={styles.input} placeholder="Modelo" placeholderTextColor="#64748B"
-                      value={editForm.modelo} onChangeText={(t) => setEditForm((p) => ({ ...p, modelo: t }))} />
+                    <TextInput
+                      style={[styles.input, errModelo ? styles.inputError : null]}
+                      placeholder="Ej: Corolla-2019"
+                      placeholderTextColor="#64748B"
+                      value={editForm.modelo}
+                      onChangeText={(t) => { setEditForm((p) => ({ ...p, modelo: t })); setErrModelo(''); }}
+                    />
+                    {errModelo ? <Text style={styles.errorText} numberOfLines={2}>{errModelo}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Año</Text>
-                    <TextInput style={styles.input} placeholder="Año" placeholderTextColor="#64748B" keyboardType="numeric"
-                      value={editForm.año} onChangeText={(t) => setEditForm((p) => ({ ...p, año: t }))} />
+                    <TextInput
+                      style={[styles.input, errAño ? styles.inputError : null]}
+                      placeholder="Año"
+                      placeholderTextColor="#64748B"
+                      keyboardType="numeric"
+                      maxLength={4}
+                      value={editForm.año}
+                      onChangeText={(t) => { setEditForm((p) => ({ ...p, año: t })); setErrAño(''); }}
+                    />
+                    {errAño ? <Text style={styles.errorText} numberOfLines={2}>{errAño}</Text> : null}
                   </View>
                 </View>
-                {/* Fila: Placa + Kilometraje en la misma línea */}
+
+                {/* Fila: Placa + Kilometraje */}
                 <View style={styles.formRow}>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Placa</Text>
-                    <TextInput style={styles.input} placeholder="Placa" placeholderTextColor="#64748B"
-                      value={editForm.placa} onChangeText={(t) => setEditForm((p) => ({ ...p, placa: t }))} />
+                    <TextInput
+                      style={[styles.input, errPlaca ? styles.inputError : null]}
+                      placeholder="Placa"
+                      placeholderTextColor="#64748B"
+                      value={editForm.placa}
+                      onChangeText={(t) => { setEditForm((p) => ({ ...p, placa: t })); setErrPlaca(''); }}
+                    />
+                    {errPlaca ? <Text style={styles.errorText} numberOfLines={2}>{errPlaca}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Kilometraje</Text>
-                    <TextInput style={styles.input} placeholder="km" placeholderTextColor="#64748B" keyboardType="numeric"
-                      value={editForm.kilometraje} onChangeText={(t) => setEditForm((p) => ({ ...p, kilometraje: t }))} />
+                    <TextInput
+                      style={[styles.input, errKm ? styles.inputError : null]}
+                      placeholder="km"
+                      placeholderTextColor="#64748B"
+                      keyboardType="numeric"
+                      value={editForm.kilometraje}
+                      onChangeText={(t) => { setEditForm((p) => ({ ...p, kilometraje: t })); setErrKm(''); }}
+                    />
+                    {errKm ? <Text style={styles.errorText} numberOfLines={2}>{errKm}</Text> : null}
                   </View>
                 </View>
               </View>
@@ -464,38 +659,53 @@ export default function ReportesClientesScreen() {
               <View style={styles.modalSection}>
                 <Text style={styles.modalSectionTitle}>Tipo de servicio</Text>
                 <Text style={[styles.label, styles.labelFirstInSection]}>Servicio solicitado</Text>
-                {/* Dropdown de tipo de servicio */}
-                <Pressable style={[styles.dropdown, editServDropdown && styles.dropdownOpen]}
-                  onPress={() => setEditServDropdown((v) => !v)}>
+                <Pressable
+                  style={[styles.dropdown, editServDropdown && styles.dropdownOpen, errServicio ? styles.inputError : null]}
+                  onPress={() => setEditServDropdown((v) => !v)}
+                >
                   <Text style={editForm.tipoServicio ? styles.dropdownText : styles.dropdownPlaceholder}>
                     {editForm.tipoServicio || 'Selecciona un servicio'}
                   </Text>
                   <Text style={styles.dropdownArrow}>{editServDropdown ? '▲' : '▼'}</Text>
                 </Pressable>
-                {/* Lista de opciones del dropdown */}
+                {errServicio ? <Text style={styles.errorText}>{errServicio}</Text> : null}
                 {editServDropdown && (
                   <ScrollView style={styles.dropdownList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
                     {['Cambio de aceite','Frenos','Suspensión','Motor','Electricidad','Aire acondicionado','Revisión general','Otro'].map((opt, i, arr) => (
                       <Pressable key={opt}
                         style={[styles.dropdownItem, i === arr.length - 1 && styles.dropdownItemLast, editForm.tipoServicio === opt && styles.dropdownItemActive]}
-                        onPress={() => { setEditForm((p) => ({ ...p, tipoServicio: opt })); setEditServDropdown(false); }}>
+                        onPress={() => { setEditForm((p) => ({ ...p, tipoServicio: opt })); setEditServDropdown(false); setErrServicio(''); }}>
                         <Text style={styles.dropdownItemText}>{opt}</Text>
                       </Pressable>
                     ))}
                   </ScrollView>
                 )}
-                {/* Campo extra solo visible cuando el servicio es "Otro" */}
+
+                {/* Campo "Describe el servicio" — solo visible cuando se selecciona "Otro" */}
                 {editForm.tipoServicio === 'Otro' && (
                   <>
                     <Text style={styles.label}>Describe el servicio</Text>
-                    <TextInput style={styles.input} placeholder="Describe brevemente" placeholderTextColor="#64748B"
-                      value={editForm.otroServicio} onChangeText={(t) => setEditForm((p) => ({ ...p, otroServicio: t }))} />
+                    <TextInput
+                      style={[styles.input, errOtroServicio ? styles.inputError : null]}
+                      placeholder="Solo texto, sin números ni símbolos"
+                      placeholderTextColor="#64748B"
+                      value={editForm.otroServicio}
+                      onChangeText={(t) => { setEditForm((p) => ({ ...p, otroServicio: t })); setErrOtroServicio(''); }}
+                    />
+                    {errOtroServicio ? <Text style={styles.errorText}>{errOtroServicio}</Text> : null}
                   </>
                 )}
+
                 <Text style={styles.label}>Descripción del problema</Text>
-                {/* Campo multilínea para la descripción del problema */}
-                <TextInput style={[styles.input, styles.textarea]} placeholder="Describe el problema..." placeholderTextColor="#64748B" multiline
-                  value={editForm.descripcionProblema} onChangeText={(t) => setEditForm((p) => ({ ...p, descripcionProblema: t }))} />
+                <TextInput
+                  style={[styles.input, styles.textarea, errDescripcion ? styles.inputError : null]}
+                  placeholder="Describe el problema..."
+                  placeholderTextColor="#64748B"
+                  multiline
+                  value={editForm.descripcionProblema}
+                  onChangeText={(t) => { setEditForm((p) => ({ ...p, descripcionProblema: t })); setErrDescripcion(''); }}
+                />
+                {errDescripcion ? <Text style={styles.errorText}>{errDescripcion}</Text> : null}
               </View>
 
               {/* Botón guardar cambios — blanco en reposo, azul al presionar */}
@@ -530,42 +740,65 @@ export default function ReportesClientesScreen() {
               <View style={[styles.modalSection, styles.modalSectionFirst]}>
                 <Text style={styles.modalSectionTitle}>Datos del vehículo</Text>
                 <Text style={[styles.label, styles.labelFirstInSection]}>Marca</Text>
-                <TextInput style={styles.input} placeholder="Marca" placeholderTextColor="#64748B"
-                  value={maintForm.marca} onChangeText={(t) => setMaintForm((p) => ({ ...p, marca: t }))} />
+                <TextInput style={[styles.input, errMaintMarca ? styles.inputError : null]} placeholder="Marca" placeholderTextColor="#64748B"
+                  value={maintForm.marca} onChangeText={(t) => { setMaintForm((p) => ({ ...p, marca: t })); setErrMaintMarca(''); }} />
+                {errMaintMarca ? <Text style={styles.errorText}>{errMaintMarca}</Text> : null}
+
+                {/* Modelo — ancho completo para ver la validación completa */}
+                <Text style={styles.label}>Modelo</Text>
+                <TextInput style={[styles.input, errMaintModelo ? styles.inputError : null]} placeholder="Ej: Corolla-2019" placeholderTextColor="#64748B"
+                  value={maintForm.modelo} onChangeText={(t) => { setMaintForm((p) => ({ ...p, modelo: t })); setErrMaintModelo(''); }} />
+                {errMaintModelo ? <Text style={styles.errorText}>{errMaintModelo}</Text> : null}
+
+                {/* Placa — ancho completo para ver la validación completa */}
+                <Text style={styles.label}>Placa</Text>
+                <TextInput style={[styles.input, errMaintPlaca ? styles.inputError : null]} placeholder="Placa" placeholderTextColor="#64748B"
+                  value={maintForm.placa} onChangeText={(t) => { setMaintForm((p) => ({ ...p, placa: t })); setErrMaintPlaca(''); }} />
+                {errMaintPlaca ? <Text style={styles.errorText}>{errMaintPlaca}</Text> : null}
+
+                {/* Fila: Año + Kilometraje */}
                 <View style={styles.formRow}>
                   <View style={styles.inputHalf}>
-                    <Text style={styles.label}>Modelo</Text>
-                    <TextInput style={styles.input} placeholder="Modelo" placeholderTextColor="#64748B"
-                      value={maintForm.modelo} onChangeText={(t) => setMaintForm((p) => ({ ...p, modelo: t }))} />
+                    <Text style={styles.label}>Año</Text>
+                    <TextInput style={[styles.input, errMaintAño ? styles.inputError : null]} placeholder="Año" placeholderTextColor="#64748B"
+                      keyboardType="numeric" maxLength={4}
+                      value={(maintForm as any).año ?? ''}
+                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, año: t } as any)); setErrMaintAño(''); }} />
+                    {errMaintAño ? <Text style={styles.errorText} numberOfLines={2}>{errMaintAño}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
-                    <Text style={styles.label}>Placa</Text>
-                    <TextInput style={styles.input} placeholder="Placa" placeholderTextColor="#64748B"
-                      value={maintForm.placa} onChangeText={(t) => setMaintForm((p) => ({ ...p, placa: t }))} />
+                    <Text style={styles.label}>Kilometraje</Text>
+                    <TextInput style={[styles.input, errMaintKm ? styles.inputError : null]} placeholder="km" placeholderTextColor="#64748B"
+                      keyboardType="numeric"
+                      value={(maintForm as any).kilometraje ?? ''}
+                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, kilometraje: t } as any)); setErrMaintKm(''); }} />
+                    {errMaintKm ? <Text style={styles.errorText} numberOfLines={2}>{errMaintKm}</Text> : null}
                   </View>
                 </View>
                 <Text style={styles.label}>Fecha del servicio</Text>
-                <TextInput style={styles.input} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
-                  value={maintForm.fechaServicio} onChangeText={(t) => setMaintForm((p) => ({ ...p, fechaServicio: t }))} />
+                <TextInput style={[styles.input, errMaintFechaServ ? styles.inputError : null]} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
+                  value={maintForm.fechaServicio} onChangeText={(t) => { setMaintForm((p) => ({ ...p, fechaServicio: t })); setErrMaintFechaServ(''); }} />
+                {errMaintFechaServ ? <Text style={styles.errorText}>{errMaintFechaServ}</Text> : null}
               </View>
 
               {/* SECCIÓN: MECÁNICO ASIGNADO
                   Dropdown con la lista de mecánicos registrados en el sistema */}
               <View style={styles.modalSection}>
                 <Text style={styles.modalSectionTitle}>Mecánico asignado</Text>
-                <Pressable style={[styles.dropdown, mecDropdown && styles.dropdownOpen]}
+                <Pressable style={[styles.dropdown, mecDropdown && styles.dropdownOpen, errMaintMecAsinado ? styles.inputError : null]}
                   onPress={() => { setTrabajoDropdown(false); setMecDropdown((v) => !v); }}>
                   <Text style={maintForm.mecanicoAsignado ? styles.dropdownText : styles.dropdownPlaceholder}>
                     {maintForm.mecanicoAsignado || 'Selecciona un mecánico'}
                   </Text>
                   <Text style={styles.dropdownArrow}>{mecDropdown ? '▲' : '▼'}</Text>
                 </Pressable>
+                {errMaintMecAsinado ? <Text style={styles.errorText}>{errMaintMecAsinado}</Text> : null}
                 {mecDropdown && (
                   <View style={styles.dropdownList}>
                     {MECANICOS_DISPONIBLES.map((m, i) => (
                       <Pressable key={m}
                         style={[styles.dropdownItem, i === MECANICOS_DISPONIBLES.length - 1 && styles.dropdownItemLast, maintForm.mecanicoAsignado === m && styles.dropdownItemActive]}
-                        onPress={() => { setMaintForm((p) => ({ ...p, mecanicoAsignado: m })); setMecDropdown(false); }}>
+                        onPress={() => { setMaintForm((p) => ({ ...p, mecanicoAsignado: m })); setMecDropdown(false); setErrMaintMecAsinado(''); }}>
                         <Text style={styles.dropdownItemText}>{m}</Text>
                       </Pressable>
                     ))}
@@ -578,27 +811,29 @@ export default function ReportesClientesScreen() {
                 <Text style={styles.modalSectionTitle}>Diagnóstico inicial</Text>
                 <Text style={[styles.label, styles.labelFirstInSection]}>Diagnóstico</Text>
                 <Text style={styles.labelHint}>Descripción detallada de lo que presenta el vehículo.</Text>
-                <TextInput style={[styles.input, styles.textarea]} placeholder="Describe detalladamente el problema..." placeholderTextColor="#64748B" multiline
-                  value={maintForm.diagnostico} onChangeText={(t) => setMaintForm((p) => ({ ...p, diagnostico: t }))} />
+                <TextInput style={[styles.input, styles.textarea, errMaintDiagnost ? styles.inputError : null]} placeholder="Describe detalladamente el problema..." placeholderTextColor="#64748B" multiline
+                  value={maintForm.diagnostico} onChangeText={(t) => { setMaintForm((p) => ({ ...p, diagnostico: t })); setErrMaintDiagnost(''); }} />
+                {errMaintDiagnost ? <Text style={styles.errorText}>{errMaintDiagnost}</Text> : null}
               </View>
 
               {/* SECCIÓN: TRABAJO REALIZADO
                   Dropdown del catálogo + campo extra si es "Otros" */}
               <View style={styles.modalSection}>
                 <Text style={styles.modalSectionTitle}>Trabajo realizado</Text>
-                <Pressable style={[styles.dropdown, trabajoDropdown && styles.dropdownOpen]}
+                <Pressable style={[styles.dropdown, trabajoDropdown && styles.dropdownOpen, errMaintTrabajo ? styles.inputError : null]}
                   onPress={() => { setMecDropdown(false); setTrabajoDropdown((v) => !v); }}>
                   <Text style={maintForm.trabajoRealizado ? styles.dropdownText : styles.dropdownPlaceholder}>
                     {maintForm.trabajoRealizado || 'Selecciona el trabajo'}
                   </Text>
                   <Text style={styles.dropdownArrow}>{trabajoDropdown ? '▲' : '▼'}</Text>
                 </Pressable>
+                {errMaintTrabajo ? <Text style={styles.errorText}>{errMaintTrabajo}</Text> : null}
                 {trabajoDropdown && (
                   <ScrollView style={styles.dropdownList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
                     {TRABAJOS_OPCIONES.map((opt, i) => (
                       <Pressable key={opt}
                         style={[styles.dropdownItem, i === TRABAJOS_OPCIONES.length - 1 && styles.dropdownItemLast, maintForm.trabajoRealizado === opt && styles.dropdownItemActive]}
-                        onPress={() => { setMaintForm((p) => ({ ...p, trabajoRealizado: opt })); setTrabajoDropdown(false); }}>
+                        onPress={() => { setMaintForm((p) => ({ ...p, trabajoRealizado: opt })); setTrabajoDropdown(false); setErrMaintTrabajo(''); }}>
                         <Text style={styles.dropdownItemText}>{opt}</Text>
                       </Pressable>
                     ))}
@@ -608,17 +843,20 @@ export default function ReportesClientesScreen() {
                 {maintForm.trabajoRealizado === 'Otros' && (
                   <>
                     <Text style={styles.label}>Describe el trabajo realizado</Text>
-                    <TextInput style={styles.input} placeholder="Describe brevemente..." placeholderTextColor="#64748B"
-                      value={maintForm.otroTrabajo} onChangeText={(t) => setMaintForm((p) => ({ ...p, otroTrabajo: t }))} />
+                    <TextInput style={[styles.input, errMaintOtroTrabajo ? styles.inputError : null]} placeholder="Describe brevemente..." placeholderTextColor="#64748B"
+                      value={maintForm.otroTrabajo} onChangeText={(t) => { setMaintForm((p) => ({ ...p, otroTrabajo: t })); setErrMaintOtroTrabajo(''); }} />
+                    {errMaintOtroTrabajo ? <Text style={styles.errorText}>{errMaintOtroTrabajo}</Text> : null}
                   </>
                 )}
                 <Text style={styles.label}>Repuestos utilizados</Text>
-                <TextInput style={[styles.input, styles.textarea]} placeholder="Lista los repuestos utilizados..." placeholderTextColor="#64748B" multiline
-                  value={maintForm.repuestosUtilizados} onChangeText={(t) => setMaintForm((p) => ({ ...p, repuestosUtilizados: t }))} />
+                <TextInput style={[styles.input, styles.textarea, errMaintRepuestos ? styles.inputError : null]} placeholder="Lista los repuestos utilizados..." placeholderTextColor="#64748B" multiline
+                  value={maintForm.repuestosUtilizados} onChangeText={(t) => { setMaintForm((p) => ({ ...p, repuestosUtilizados: t })); setErrMaintRepuestos(''); }} />
+                {errMaintRepuestos ? <Text style={styles.errorText}>{errMaintRepuestos}</Text> : null}
                 <Text style={styles.label}>Diagnóstico realizado</Text>
                 <Text style={styles.labelHint}>Describe paso a paso lo que se realizó.</Text>
-                <TextInput style={[styles.input, styles.textarea]} placeholder="Describe paso a paso el trabajo..." placeholderTextColor="#64748B" multiline
-                  value={maintForm.diagnosticoRealizado} onChangeText={(t) => setMaintForm((p) => ({ ...p, diagnosticoRealizado: t }))} />
+                <TextInput style={[styles.input, styles.textarea, errMaintDiagReal ? styles.inputError : null]} placeholder="Describe paso a paso el trabajo..." placeholderTextColor="#64748B" multiline
+                  value={maintForm.diagnosticoRealizado} onChangeText={(t) => { setMaintForm((p) => ({ ...p, diagnosticoRealizado: t })); setErrMaintDiagReal(''); }} />
+                {errMaintDiagReal ? <Text style={styles.errorText}>{errMaintDiagReal}</Text> : null}
               </View>
 
               {/* SECCIÓN: COSTOS DEL SERVICIO */}
@@ -627,13 +865,15 @@ export default function ReportesClientesScreen() {
                 <View style={styles.formRow}>
                   <View style={styles.inputHalf}>
                     <Text style={[styles.label, styles.labelFirstInSection]}>Mano de obra ($)</Text>
-                    <TextInput style={styles.input} placeholder="0.00" placeholderTextColor="#64748B" keyboardType="decimal-pad"
-                      value={maintForm.costoManoObra} onChangeText={(t) => setMaintForm((p) => ({ ...p, costoManoObra: t }))} />
+                    <TextInput style={[styles.input, errMaintManoObra ? styles.inputError : null]} placeholder="0.00" placeholderTextColor="#64748B" keyboardType="decimal-pad"
+                      value={maintForm.costoManoObra} onChangeText={(t) => { setMaintForm((p) => ({ ...p, costoManoObra: t })); setErrMaintManoObra(''); }} />
+                    {errMaintManoObra ? <Text style={styles.errorText} numberOfLines={2}>{errMaintManoObra}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
                     <Text style={[styles.label, styles.labelFirstInSection]}>Costo repuestos ($)</Text>
-                    <TextInput style={styles.input} placeholder="0.00" placeholderTextColor="#64748B" keyboardType="decimal-pad"
-                      value={maintForm.costoRepuestos} onChangeText={(t) => setMaintForm((p) => ({ ...p, costoRepuestos: t }))} />
+                    <TextInput style={[styles.input, errMaintCostoRep ? styles.inputError : null]} placeholder="0.00" placeholderTextColor="#64748B" keyboardType="decimal-pad"
+                      value={maintForm.costoRepuestos} onChangeText={(t) => { setMaintForm((p) => ({ ...p, costoRepuestos: t })); setErrMaintCostoRep(''); }} />
+                    {errMaintCostoRep ? <Text style={styles.errorText} numberOfLines={2}>{errMaintCostoRep}</Text> : null}
                   </View>
                 </View>
               </View>
@@ -643,18 +883,21 @@ export default function ReportesClientesScreen() {
                 <Text style={styles.modalSectionTitle}>Observaciones y fechas</Text>
                 <Text style={[styles.label, styles.labelFirstInSection]}>Observaciones</Text>
                 <Text style={styles.labelHint}>Recomendaciones para el cuidado posterior del vehículo.</Text>
-                <TextInput style={[styles.input, styles.textarea]} placeholder="Recomendaciones post-servicio..." placeholderTextColor="#64748B" multiline
-                  value={maintForm.observaciones} onChangeText={(t) => setMaintForm((p) => ({ ...p, observaciones: t }))} />
+                <TextInput style={[styles.input, styles.textarea, errMaintObserv ? styles.inputError : null]} placeholder="Recomendaciones post-servicio..." placeholderTextColor="#64748B" multiline
+                  value={maintForm.observaciones} onChangeText={(t) => { setMaintForm((p) => ({ ...p, observaciones: t })); setErrMaintObserv(''); }} />
+                {errMaintObserv ? <Text style={styles.errorText}>{errMaintObserv}</Text> : null}
                 <View style={styles.formRow}>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Fecha de inicio</Text>
-                    <TextInput style={styles.input} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
-                      value={maintForm.fechaInicio} onChangeText={(t) => setMaintForm((p) => ({ ...p, fechaInicio: t }))} />
+                    <TextInput style={[styles.input, errMaintFechaInit ? styles.inputError : null]} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
+                      value={maintForm.fechaInicio} onChangeText={(t) => { setMaintForm((p) => ({ ...p, fechaInicio: t })); setErrMaintFechaInit(''); }} />
+                    {errMaintFechaInit ? <Text style={styles.errorText} numberOfLines={2}>{errMaintFechaInit}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Fecha de finalización</Text>
-                    <TextInput style={styles.input} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
-                      value={maintForm.fechaFinalizacion} onChangeText={(t) => setMaintForm((p) => ({ ...p, fechaFinalizacion: t }))} />
+                    <TextInput style={[styles.input, errMaintFechaFinal ? styles.inputError : null]} placeholder="DD/MM/AAAA" placeholderTextColor="#64748B"
+                      value={maintForm.fechaFinalizacion} onChangeText={(t) => { setMaintForm((p) => ({ ...p, fechaFinalizacion: t })); setErrMaintFechaFinal(''); }} />
+                    {errMaintFechaFinal ? <Text style={styles.errorText} numberOfLines={2}>{errMaintFechaFinal}</Text> : null}
                   </View>
                 </View>
               </View>
