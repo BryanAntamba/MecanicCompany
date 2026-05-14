@@ -177,21 +177,10 @@ export const validarCosto = (valor: string, campo: string): string | null => {
   return null;
 };
 
-// ─── validarCostoObligatorio ─────────────────────────────────────────────────────
-// Número decimal positivo con hasta 2 decimales y campo obligatorio.
-export const validarCostoObligatorio = (valor: string, campo: string): string | null => {
-  if (!valor.trim()) return `${campo} es obligatorio.`;
-  if (!/^\d+(\.\d{1,2})?$/.test(valor.trim()))
-    return `${campo} debe ser un número válido (ej: 25.00).`;
-  return null;
-};
-
-
 // ─── validarContrasena ────────────────────────────────────────────────────────
-// No vacía, mínimo 6 caracteres.
+// No vacía.
 export const validarContrasena = (valor: string, campo = 'La contraseña'): string | null => {
   if (!valor.trim()) return `${campo} es obligatoria.`;
-  if (valor.length < 6) return `${campo} debe tener al menos 6 caracteres.`;
   return null;
 };
 
