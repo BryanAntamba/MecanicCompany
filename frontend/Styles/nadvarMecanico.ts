@@ -43,9 +43,13 @@ export default StyleSheet.create({
     lineHeight: 24,
   },
 
-  // Menú desplegable — fluye debajo del navbar (no flotante)
+  // Menú desplegable — flotante sobre el contenido
   menu: {
-    backgroundColor: 'rgba(17, 24, 39, 0.8)',
+    position: 'absolute',
+    top: 100, // Ajusta según la altura del navbar
+    left: 0,
+    right: 0,
+    backgroundColor: 'rgba(17, 24, 39, 0.95)',
     paddingVertical: 12,
     paddingHorizontal: 16,
     shadowColor: '#000',
@@ -53,6 +57,7 @@ export default StyleSheet.create({
     shadowOpacity: 0.18,
     shadowRadius: 18,
     elevation: 8,
+    zIndex: 1000, // Alto z-index para aparecer sobre el contenido
   },
 
   // Cada opción del menú — idéntico al de nadvarCliente (sin borderRadius)
