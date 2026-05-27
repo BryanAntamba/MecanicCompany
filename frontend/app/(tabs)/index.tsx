@@ -66,6 +66,9 @@ import {
   validarObligatorio,
 } from '@/utils/validaciones';
 
+// API de backend
+import { authApi, solicitudesApi } from '@/utils/api';
+
 // Componente reutilizable de la barra de navegación del cliente
 import NavbarCliente from '@/components/nadvarCliente/nadvarCliente';
 
@@ -203,6 +206,42 @@ export default function HomeScreen() {
   const [calendarVisible, setCalendarVisible] = useState(false);
   // Estado: controla si el dropdown de hora está abierto
   const [timeDropdownOpen, setTimeDropdownOpen] = useState(false);
+
+  // ─── Estados del modal de verificación de correo del cliente ──────────────
+  // visible: muestra/oculta el modal de verificación
+  const [verifyVisible, setVerifyVisible]     = useState(false);
+  // code: código de 6 dígitos ingresado por el usuario
+  const [verifyCode, setVerifyCode]           = useState('');
+  // sending: true mientras se envía el código al correo
+  const [verifySending, setVerifySending]     = useState(false);
+  // loading: true mientras se verifica el código
+  const [verifyLoading, setVerifyLoading]     = useState(false);
+  // error: mensaje de error dentro del modal
+  const [verifyError, setVerifyError]         = useState('');
+  // resend cooldown: segundos restantes para poder reenviar (0 = habilitado)
+  const [resendCooldown, setResendCooldown]   = useState(0);
+  const resendTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // ─── Estado y animación del modal de éxito ───────────────────────────────
+  const [successVisible, setSuccessVisible]   = useState(false);
+  const successScale   = useRef(new Animated.Value(0.7)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
+
+  const showSuccess = () => {
+    setSuccessVisible(true);
+    successScale.setValue(0.7);
+    successOpacity.setValue(0);
+    Animated.parallel([
+      Animated.spring(successScale,   { toValue: 1,   useNativeDriver: true, friction: 6 }),
+      Animated.timing(successOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const hideSuccess = () => {
+    Animated.timing(successOpacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(
+      () => setSuccessVisible(false)
+    );
+  };
 
   // Ref al ScrollView principal de la página (para hacer scroll programático a secciones)
   const scrollRef = useRef<ScrollView>(null);
@@ -398,7 +437,17 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, [heroWidth]);
 
-  const onSend = () => {
+  const resetForm = () => {
+    setForm({ name: '', phone: '', email: '', brand: '', model: '', year: '', plate: '', mileage: '', service: '', otherService: '', details: '' });
+    setAppointmentDate(null);
+    setAppointmentTime(null);
+    setServiceDropdownOpen(false);
+    setErrName(''); setErrPhone(''); setErrEmail(''); setErrBrand('');
+    setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
+    setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime('');
+  };
+
+  const onSend = async () => {
     // Valida cada campo y guarda el error en su estado individual
     const eName = validarCuatroPalabras(form.name, 'El nombre completo');
     const ePhone = validarTelefono(form.phone);
@@ -428,18 +477,70 @@ export default function HomeScreen() {
     setErrDate(eDate ?? '');
     setErrTime(eTime ?? '');
 
-    // Si hay algún error, no envía
+    // Si hay algún error, no continúa
     if ([eName, ePhone, eEmail, eBrand, eModel, eYear, ePlate, eMileage,
       eService, eOther, eDetails, eDate, eTime].some(Boolean)) return;
 
-    Alert.alert('Solicitud enviada', 'Tu registro ha sido enviado al mecánico. Pronto recibirás una confirmación.');
-    setForm({ name: '', phone: '', email: '', brand: '', model: '', year: '', plate: '', mileage: '', service: '', otherService: '', details: '' });
-    setAppointmentDate(null);
-    setAppointmentTime(null);
-    setServiceDropdownOpen(false);
-    setErrName(''); setErrPhone(''); setErrEmail(''); setErrBrand('');
-    setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
-    setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime('');
+    // Todo válido → envía código de verificación al correo del cliente
+    setVerifySending(true);
+    setVerifyError('');
+    setVerifyCode('');
+    try {
+      await authApi.enviarCodigoCliente(form.email.trim().toLowerCase());
+      setVerifyVisible(true);
+      // Inicia cooldown de 30 segundos al abrir el modal
+      setResendCooldown(30);
+      if (resendTimer.current) clearInterval(resendTimer.current);
+      resendTimer.current = setInterval(() => {
+        setResendCooldown((prev) => {
+          if (prev <= 1) { clearInterval(resendTimer.current!); return 0; }
+          return prev - 1;
+        });
+      }, 1000);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'No se pudo enviar el código. Intenta de nuevo.');
+    } finally {
+      setVerifySending(false);
+    }
+  };
+
+  // Se llama cuando el usuario ingresa el código en el modal de verificación
+  const onVerify = async () => {
+    if (verifyCode.trim().length !== 6) {
+      setVerifyError('Ingresa el código de 6 dígitos enviado a tu correo.');
+      return;
+    }
+    setVerifyLoading(true);
+    setVerifyError('');
+    try {
+      await authApi.verificarCodigoCliente(form.email.trim().toLowerCase(), verifyCode.trim());
+
+      // Código válido → envía la solicitud al backend
+      await solicitudesApi.crear({
+        nombreCliente:       form.name.trim(),
+        telefono:            form.phone.trim(),
+        correoCliente:       form.email.trim().toLowerCase(),
+        marca:               form.brand.trim(),
+        modelo:              form.model.trim(),
+        anio:                parseInt(form.year, 10),
+        placa:               form.plate.trim().toUpperCase(),
+        kilometraje:         parseInt(form.mileage, 10),
+        tipoServicio:        form.service === 'Otro' ? form.otherService.trim() : form.service,
+        descripcionProblema: form.details.trim(),
+        fechaCita:           appointmentDate
+          ? new Date(`${appointmentDate.toISOString().split('T')[0]}T${appointmentTime}:00`).toISOString()
+          : new Date().toISOString(),
+        horaCita:            appointmentTime ?? undefined,
+      });
+
+      setVerifyVisible(false);
+      resetForm();
+      showSuccess();
+    } catch (err: any) {
+      setVerifyError(err?.message ?? 'Código incorrecto o expirado. Intenta de nuevo.');
+    } finally {
+      setVerifyLoading(false);
+    }
   };
 
   // Navega (hace scroll) hasta las cards del carrusel "Nosotros"
@@ -1215,12 +1316,14 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
+                verifySending && { opacity: 0.6 },
               ]}
               onPress={onSend}
+              disabled={verifySending}
             >
               {({ pressed }) => (
                 <Text style={[styles.buttonText, pressed && styles.buttonTextPressed]}>
-                  ENVIAR SOLICITUD
+                  {verifySending ? 'Enviando código...' : 'ENVIAR SOLICITUD'}
                 </Text>
               )}
             </Pressable>
@@ -1300,6 +1403,158 @@ export default function HomeScreen() {
         </View>
 
       </ScrollView>
+
+      {/* ─── Modal: éxito al enviar solicitud ─────────────────────────────── */}
+      <Modal visible={successVisible} transparent animationType="none">
+        <Animated.View style={{
+          flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
+          justifyContent: 'center', alignItems: 'center', padding: 32,
+          opacity: successOpacity,
+        }}>
+          <Animated.View style={{
+            backgroundColor: '#ffffff', borderRadius: 20, padding: 36,
+            width: '100%', maxWidth: 360, alignItems: 'center',
+            transform: [{ scale: successScale }],
+            shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+            shadowOpacity: 0.18, shadowRadius: 20, elevation: 12,
+          }}>
+            {/* Ícono de check */}
+            <View style={{
+              width: 72, height: 72, borderRadius: 36,
+              backgroundColor: '#111111', justifyContent: 'center',
+              alignItems: 'center', marginBottom: 20,
+            }}>
+              <FontAwesome name="check" size={32} color="#ffffff" />
+            </View>
+
+            <Text style={{
+              fontSize: 22, fontWeight: '800', color: '#111111',
+              marginBottom: 10, textAlign: 'center', letterSpacing: 0.3,
+            }}>
+              ¡Solicitud enviada!
+            </Text>
+
+            <Text style={{
+              fontSize: 14, color: '#555555', textAlign: 'center',
+              lineHeight: 22, marginBottom: 28,
+            }}>
+              Tu solicitud fue registrada correctamente.{`\n`}
+              Pronto nos pondremos en contacto contigo.
+            </Text>
+
+            {/* Separador */}
+            <View style={{ width: '100%', height: 1, backgroundColor: '#eeeeee', marginBottom: 20 }} />
+
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? '#333333' : '#111111',
+                borderRadius: 12, paddingVertical: 14, paddingHorizontal: 48,
+              })}
+              onPress={hideSuccess}
+            >
+              <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15, letterSpacing: 0.5 }}>
+                Aceptar
+              </Text>
+            </Pressable>
+          </Animated.View>
+        </Animated.View>
+      </Modal>
+
+      {/* ─── Modal: verificación de correo del cliente ───────────────────── */}
+      <Modal
+        visible={verifyVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setVerifyVisible(false)}
+      >
+        <View style={{
+          flex: 1, backgroundColor: 'rgba(0,0,0,0.6)',
+          justifyContent: 'center', alignItems: 'center', padding: 24,
+        }}>
+          <View style={{
+            backgroundColor: '#1E293B', borderRadius: 16, padding: 28,
+            width: '100%', maxWidth: 380,
+          }}>
+            <Text style={{ color: '#F1F5F9', fontSize: 18, fontWeight: '700', marginBottom: 8 }}>
+              Verifica tu correo
+            </Text>
+            <Text style={{ color: '#94A3B8', fontSize: 14, marginBottom: 20, lineHeight: 20 }}>
+              Enviamos un código de 6 dígitos a{'\n'}
+              <Text style={{ color: '#60A5FA', fontWeight: '600' }}>{form.email}</Text>
+              {'\n'}Ingresa el código para confirmar tu solicitud.
+            </Text>
+
+            <TextInput
+              style={{
+                backgroundColor: '#0F172A', color: '#F1F5F9',
+                borderWidth: 1, borderColor: verifyError ? '#EF4444' : '#334155',
+                borderRadius: 10, paddingHorizontal: 16, paddingVertical: 12,
+                fontSize: 22, letterSpacing: 8, textAlign: 'center', marginBottom: 8,
+              }}
+              placeholder="000000"
+              placeholderTextColor="#475569"
+              keyboardType="number-pad"
+              maxLength={6}
+              value={verifyCode}
+              onChangeText={(t) => { setVerifyCode(t); setVerifyError(''); }}
+            />
+            {verifyError ? (
+              <Text style={{ color: '#EF4444', fontSize: 13, marginBottom: 12 }}>{verifyError}</Text>
+            ) : null}
+
+            <Pressable
+              style={({ pressed }) => ({
+                backgroundColor: pressed ? '#1D4ED8' : '#3B82F6',
+                borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 8,
+                opacity: verifyLoading ? 0.6 : 1,
+              })}
+              onPress={onVerify}
+              disabled={verifyLoading}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>
+                {verifyLoading ? 'Verificando...' : 'Confirmar y enviar'}
+              </Text>
+            </Pressable>
+
+            <Pressable
+              style={{ marginTop: 14, alignItems: 'center' }}
+              onPress={() => setVerifyVisible(false)}
+            >
+              <Text style={{ color: '#64748B', fontSize: 14 }}>Cancelar</Text>
+            </Pressable>
+
+            {/* ── Reenviar código ── */}
+            <Pressable
+              style={{ marginTop: 10, alignItems: 'center', opacity: resendCooldown > 0 ? 0.4 : 1 }}
+              disabled={resendCooldown > 0}
+              onPress={async () => {
+                setVerifyError('');
+                setVerifyCode('');
+                try {
+                  await authApi.enviarCodigoCliente(form.email.trim().toLowerCase());
+                  setResendCooldown(30);
+                  if (resendTimer.current) clearInterval(resendTimer.current);
+                  resendTimer.current = setInterval(() => {
+                    setResendCooldown((prev) => {
+                      if (prev <= 1) { clearInterval(resendTimer.current!); return 0; }
+                      return prev - 1;
+                    });
+                  }, 1000);
+                } catch {
+                  setVerifyError('No se pudo reenviar el código. Intenta de nuevo.');
+                }
+              }}
+            >
+              <Text style={{ color: '#60A5FA', fontSize: 13 }}>
+                {resendCooldown > 0
+                  ? `Reenviar código (${resendCooldown}s)`
+                  : 'Reenviar código'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }

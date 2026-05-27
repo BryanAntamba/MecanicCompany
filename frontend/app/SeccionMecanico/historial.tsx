@@ -5,10 +5,11 @@
 
 
 // Hook de React para manejar estado local
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 
 // Componentes nativos de React Native
 import {
+  BackHandler,          // Intercepta el botón físico de atrás en Android
   KeyboardAvoidingView, // Evita que el teclado tape los inputs en iOS
   Modal,                // Superposición de contenido sobre la pantalla principal
   Platform,             // Detecta el sistema operativo (iOS / Android)
@@ -24,6 +25,9 @@ import { FontAwesome } from '@expo/vector-icons';
 
 // Barra de navegación del mecánico con opciones Reportes, Historial y Cerrar sesión
 import NavbarMecanico from '@/components/nadvarMecanico/nadvarMecanico';
+
+// useFocusEffect: ejecuta un efecto solo mientras la pantalla está en foco
+import { useFocusEffect } from 'expo-router';
 
 // Estilos compartidos con ReportesClientes (tarjetas, modales, botones)
 import styles from '@/Styles/ReportesClientes';
@@ -70,58 +74,24 @@ type RegistroHistorial = {
 };
 
 
-// DATOS MOCK
+// DATOS
 
-// Registros de prueba que simulan mantenimientos ya completados
-// En producción estos datos vendrán del backend
-const MOCK_HISTORIAL: RegistroHistorial[] = [
-  {
-    id: 'h-1',
-    clienteNombre: 'Carlos Pérez',
-    clienteCorreo: 'carlos.perez@gmail.com',
-    marca: 'Toyota', modelo: 'Corolla', placa: 'ABC-1234',
-    fechaMantenimiento: '10/05/2026',
-    mecanicoNombre: 'Bryan Justicia',
-    mantenimiento: {
-      marca: 'Toyota', modelo: 'Corolla', placa: 'ABC-1234',
-      año: '2019', kilometraje: '85000',
-      fechaServicio: '10/05/2026', mecanicoAsignado: 'Bryan Justicia',
-      diagnostico: 'Ruido al frenar, desgaste de pastillas.',
-      trabajoRealizado: 'Revisión de frenos',
-      otroTrabajo: '', repuestosUtilizados: 'Pastillas de freno delanteras',
-      diagnosticoRealizado: 'Se revisaron los frenos delanteros y traseros. Se reemplazaron las pastillas delanteras.',
-      costoManoObra: '25.00', costoRepuestos: '45.00',
-      observaciones: 'Revisar frenos traseros en próximo mantenimiento.',
-      fechaInicio: '10/05/2026', fechaFinalizacion: '10/05/2026',
-    },
-  },
-  {
-    id: 'h-2',
-    clienteNombre: 'María González',
-    clienteCorreo: 'maria.g@gmail.com',
-    marca: 'Chevrolet', modelo: 'Aveo', placa: 'XYZ-5678',
-    fechaMantenimiento: '08/05/2026',
-    mecanicoNombre: 'Luis Ramírez',
-    mantenimiento: {
-      marca: 'Chevrolet', modelo: 'Aveo', placa: 'XYZ-5678',
-      año: '2021', kilometraje: '42000',
-      fechaServicio: '08/05/2026', mecanicoAsignado: 'Luis Ramírez',
-      diagnostico: 'Pérdida de potencia al acelerar.',
-      trabajoRealizado: 'Diagnóstico computarizado',
-      otroTrabajo: '', repuestosUtilizados: 'Filtro de aire, bujías',
-      diagnosticoRealizado: 'Se realizó diagnóstico OBD2. Se encontraron fallas en sensores de oxígeno.',
-      costoManoObra: '30.00', costoRepuestos: '60.00',
-      observaciones: 'Cambiar sensor de oxígeno en máximo 3 meses.',
-      fechaInicio: '08/05/2026', fechaFinalizacion: '08/05/2026',
-    },
-  },
-];
+// Lista vacía — los registros reales vendrán del backend
+const MOCK_HISTORIAL: RegistroHistorial[] = [];
 
 
 // COMPONENTE PRINCIPAL
 
 
 export default function HistorialScreen() {
+  // Bloquea el botón físico de atrás en Android mientras esta pantalla está activa
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, []),
+  );
+
   // Estado del campo de búsqueda por placa
   const [busqueda, setBusqueda] = useState('');
 

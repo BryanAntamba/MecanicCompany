@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mecanic Company — Diagrama UML</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #0b1120;
+      color: #e2e8f0;
+      min-height: 100vh;
+    }
+
+    /* ── HEADER ── */
+    header {
+      background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 60%, #2563eb 100%);
+      padding: 28px 32px;
+      text-align: center;
+      border-bottom: 3px solid #3b82f6;
+      box-shadow: 0 4px 24px rgba(59,130,246,0.3);
+    }
+    header h1 {
+      font-size: 26px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+    header p {
+      color: #93c5fd;
+      margin-top: 6px;
+      font-size: 13px;
+      letter-spacing: 1px;
+    }
+
+    /* ── TABS ── */
+    .tabs {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 16px;
+      background: #0f172a;
+      border-bottom: 1px solid #1e293b;
+    }
+    .tab-btn {
+      padding: 10px 28px;
+      border: 2px solid #1e293b;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      background: #1e293b;
+      color: #94a3b8;
+      letter-spacing: 0.5px;
+    }
+    .tab-btn.active {
+      background: #2563eb;
+      border-color: #3b82f6;
+      color: #fff;
+      box-shadow: 0 0 12px rgba(59,130,246,0.4);
+    }
+    .tab-btn:hover:not(.active) {
+      background: #334155;
+      border-color: #475569;
+      color: #e2e8f0;
+    }
+
+    /* ── CONTENT ── */
+    .tab-content { display: none; padding: 36px 32px; }
+    .tab-content.active { display: block; }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 700;
+      color: #60a5fa;
+      text-align: center;
+      margin-bottom: 6px;
+      letter-spacing: 1px;
+    }
+    .section-desc {
+      text-align: center;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    /* ── MERMAID WRAPPER ── */
+    .diagram-wrap {
+      background: #1a2540;
+      border-radius: 14px;
+      padding: 28px 16px;
+      overflow-x: auto;
+      border: 1px solid #1e3a5f;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+    }
+    .mermaid {
+      display: flex;
+      justify-content: center;
+    }
+
+    /* ── USE CASE DIAGRAM ── */
+    .uc-system {
+      border: 2px dashed #334155;
+      border-radius: 16px;
+      padding: 28px 24px 24px;
+      position: relative;
+      background: #1a2540;
+      box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+    }
+    .uc-system-label {
+      position: absolute;
+      top: -14px;
+      left: 24px;
+      background: #0b1120;
+      padding: 2px 12px;
+      font-size: 13px;
+      color: #64748b;
+      font-style: italic;
+      border: 1px solid #334155;
+      border-radius: 4px;
+    }
+
+    .uc-columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+    }
+
+    .uc-actor-section { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+
+    /* Stick figure */
+    .stick-figure {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .stick-head {
+      width: 26px; height: 26px;
+      border-radius: 50%;
+      border: 3px solid currentColor;
+      background: #0b1120;
+    }
+    .stick-body { width: 3px; height: 22px; background: currentColor; }
+    .stick-arms {
+      width: 38px; height: 3px;
+      background: currentColor;
+      margin-top: -16px;
+    }
+    .stick-legs {
+      display: flex; gap: 10px;
+      margin-top: 6px;
+    }
+    .stick-leg { width: 3px; height: 18px; background: currentColor; }
+    .stick-leg.l { transform: rotate(-15deg); transform-origin: top; }
+    .stick-leg.r { transform: rotate(15deg); transform-origin: top; }
+
+    .actor-label {
+      font-weight: 700;
+      font-size: 13px;
+      text-align: center;
+      margin-top: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Actor color themes */
+    .actor-cliente  { color: #3b82f6; }
+    .actor-mecanico { color: #10b981; }
+    .actor-admin    { color: #a855f7; }
+
+    /* Use case ovals */
+    .uc-list { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+    .uc-oval {
+      border: 2px solid;
+      border-radius: 999px;
+      padding: 7px 14px;
+      text-align: center;
+      font-size: 12px;
+      line-height: 1.3;
+      background: #0f1e36;
+      transition: background 0.15s;
+    }
+    .uc-oval:hover { background: #1e3a5f; }
+    .uc-oval.c { border-color: #3b82f6; color: #93c5fd; }
+    .uc-oval.m { border-color: #10b981; color: #6ee7b7; }
+    .uc-oval.a { border-color: #a855f7; color: #d8b4fe; }
+    .uc-oval.s { border-color: #f59e0b; color: #fcd34d; }
+
+    /* Shared use cases row */
+    .uc-shared-row {
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px dashed #334155;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+    .uc-shared-label {
+      font-size: 11px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .uc-shared-ovals {
+      display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    }
+    .uc-include-note {
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    /* ── LEGEND ── */
+    .legend {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #94a3b8;
+    }
+    .legend-dot {
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+    .legend-dot.c { border-color: #3b82f6; background: #1e3a8a33; }
+    .legend-dot.m { border-color: #10b981; background: #06513033; }
+    .legend-dot.a { border-color: #a855f7; background: #6b21a833; }
+    .legend-dot.s { border-color: #f59e0b; background: #78350f33; }
+
+    /* ── BASE DE DATOS TAB ── */
+    .db-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-bottom: 36px;
+    }
+    .db-table-card {
+      background: #1a2540;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #1e3a5f;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .db-table-header {
+      padding: 12px 16px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .db-table-header .table-icon { font-size: 16px; }
+    .db-table-header.t-mecanicos    { background: linear-gradient(90deg,#1e3a8a,#2563eb); color:#bfdbfe; }
+    .db-table-header.t-solicitudes  { background: linear-gradient(90deg,#064e3b,#059669); color:#a7f3d0; }
+    .db-table-header.t-mant         { background: linear-gradient(90deg,#78350f,#d97706); color:#fde68a; }
+    .db-table-header.t-codigos      { background: linear-gradient(90deg,#4c1d95,#7c3aed); color:#ddd6fe; }
+    .db-table-body { padding: 0; }
+    .db-field {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      padding: 7px 14px;
+      border-bottom: 1px solid #0f172a;
+      font-size: 12px;
+      gap: 8px;
+    }
+    .db-field:last-child { border-bottom: none; }
+    .db-field:hover { background: #0f1e36; }
+    .db-field-name { color: #e2e8f0; font-family: 'Courier New', monospace; }
+    .db-field-name.pk-field { color: #fbbf24; font-weight: 700; }
+    .db-field-name.fk-field { color: #34d399; }
+    .db-field-name.uk-field { color: #a78bfa; }
+    .db-field-type { color: #64748b; font-size: 11px; text-align:right; }
+    .db-badge {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .badge-pk  { background: #78350f; color: #fde68a; border: 1px solid #d97706; }
+    .badge-fk  { background: #064e3b; color: #a7f3d0; border: 1px solid #059669; }
+    .badge-uk  { background: #4c1d95; color: #ddd6fe; border: 1px solid #7c3aed; }
+    .badge-nn  { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+    .badge-null { background: #1e293b; color: #475569; border: 1px solid #334155; font-style:italic; }
+    /* FK Flow */
+    .fk-flow {
+      background: #1a2540;
+      border-radius: 12px;
+      padding: 28px 24px;
+      border: 1px solid #1e3a5f;
+      margin-bottom: 36px;
+    }
+    .fk-flow-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #60a5fa;
+      margin-bottom: 24px;
+      text-align: center;
+      letter-spacing: 1px;
+    }
+    .fk-relations { display: flex; flex-direction: column; gap: 16px; }
+    .fk-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .fk-box {
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      font-weight: 700;
+    }
+    .fk-box.src  { background: #1e3a8a; color: #bfdbfe; border: 1px solid #3b82f6; }
+    .fk-box.dst  { background: #064e3b; color: #a7f3d0; border: 1px solid #059669; }
+    .fk-box.src2 { background: #064e3b; color: #a7f3d0; border: 1px solid #059669; }
+    .fk-box.dst2 { background: #78350f; color: #fde68a; border: 1px solid #d97706; }
+    .fk-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex: 1;
+      min-width: 120px;
+    }
+    .fk-arrow-line {
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #3b82f6, #059669);
+      position: relative;
+    }
+    .fk-arrow-line::after {
+      content: '►';
+      position: absolute;
+      right: -6px;
+      top: -8px;
+      color: #059669;
+      font-size: 14px;
+    }
+    .fk-arrow-label {
+      font-size: 10px;
+      color: #64748b;
+      text-align: center;
+    }
+    .fk-cardinality {
+      font-size: 11px;
+      color: #94a3b8;
+      font-style: italic;
+    }
+    .fk-cascade {
+      font-size: 10px;
+      background: #7f1d1d;
+      color: #fca5a5;
+      padding: 2px 8px;
+      border-radius: 4px;
+      border: 1px solid #ef4444;
+    }
+    .db-legend {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center; margin-top: 20px;
+    }
+    .db-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #94a3b8; }
+    .db-legend-badge { font-size: 9px; font-weight:700; padding: 2px 6px; border-radius:4px; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #334155;
+      font-size: 12px;
+      border-top: 1px solid #1e293b;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>⚙ Mecanic Company — Diagrama UML</h1>
+  <p>Expo React Native · TypeScript · Frontend · 2026</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('clases', this)">📦 Diagrama de Clases</button>
+  <button class="tab-btn"        onclick="showTab('componentes', this)">🗂 Arquitectura de Componentes</button>
+  <button class="tab-btn"        onclick="showTab('casos', this)">👥 Casos de Uso</button>
+  <button class="tab-btn"        onclick="showTab('basedatos', this)">🗄 Base de Datos</button>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     TAB 1 — DIAGRAMA DE CLASES
+     ════════════════════════════════════════════ -->
+<div id="tab-clases" class="tab-content active">
+  <div class="section-title">Diagrama de Clases</div>
+  <div class="section-desc">Tipos, entidades de datos y relaciones del dominio de la aplicación</div>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+classDiagram
+    direction TB
+
+    class EstadoLaboral {
+        &lt;&lt;enumeration&gt;&gt;
+        Disponible
+        Ocupado
+        Inactivo
+    }
+
+    class EstadoSolicitud {
+        &lt;&lt;enumeration&gt;&gt;
+        Pendiente
+        EnProceso
+        Completado
+    }
+
+    class Mecanico {
+        +String id
+        +String nombres
+        +String apellidos
+        +Number edad
+        +String correo
+        +String correoEmpresarial
+        +String especialidadCatalogo
+        +String especialidadOtro
+        +Number anosExperiencia
+        +EstadoLaboral estadoLaboral
+        +Boolean cuentaActiva
+        +String contrasena
+    }
+
+    class Solicitud {
+        +String id
+        +String nombre
+        +String telefono
+        +String correo
+        +String marca
+        +String modelo
+        +String anio
+        +String placa
+        +String kilometraje
+        +String tipoServicio
+        +String otroServicio
+        +String descripcionProblema
+        +String fechaCita
+        +String horaCita
+        +EstadoSolicitud estado
+    }
+
+    class Mantenimiento {
+        +String marca
+        +String modelo
+        +String placa
+        +String fechaServicio
+        +String mecanicoAsignado
+        +String diagnostico
+        +String trabajoRealizado
+        +String otroTrabajo
+        +String repuestosUtilizados
+        +String diagnosticoRealizado
+        +String costoManoObra
+        +String costoRepuestos
+        +String observaciones
+        +String fechaInicio
+        +String fechaFinalizacion
+    }
+
+    class RegistroHistorial {
+        +String id
+        +String clienteNombre
+        +Mantenimiento mantenimiento
+    }
+
+    class Validaciones {
+        &lt;&lt;utility&gt;&gt;
+        +validarSoloTexto(valor, campo) String
+        +validarTextoYNumeros(valor, campo) String
+        +validarSoloNumeros(valor, campo) String
+        +validarTelefono(valor) String
+        +validarCorreoGmail(valor) String
+        +validarCorreoMecanic(valor) String
+        +validarAnio(valor) String
+        +validarPlaca(valor, campo) String
+        +validarFecha(valor) String
+        +validarCosto(valor, campo) String
+        +validarContrasena(valor, campo) String
+        +validarObligatorio(valor, campo) String
+    }
+
+    Mecanico --> EstadoLaboral : estadoLaboral
+    Solicitud --> EstadoSolicitud : estado
+    Solicitud "1" --> "0..1" Mantenimiento : contiene
+    RegistroHistorial "1" --> "1" Mantenimiento : referencia
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     TAB 2 — ARQUITECTURA DE COMPONENTES
+     ════════════════════════════════════════════ -->
+<div id="tab-componentes" class="tab-content">
+  <div class="section-title">Arquitectura de Componentes</div>
+  <div class="section-desc">Pantallas, componentes compartidos, navegación y dependencias del proyecto</div>
+  <div class="diagram-wrap">
+    <div class="mermaid">
+graph TD
+    Root["_layout.tsx\nRootLayout — Stack Navigator\nThemeProvider · StatusBar"]
+
+    Root --> AuthGroup["(auth)/\nGrupo de autenticación"]
+    Root --> TabsGroup["(tabs)/\nGrupo principal cliente"]
+    Root --> AdminGroup["Admin/\nGrupo administrador"]
+    Root --> ClienteGroup["SeccionCliente/\nGrupo cliente"]
+    Root --> MecanicoGroup["SeccionMecanico/\nGrupo mecánico"]
+
+    AuthGroup --> Login["login.tsx\nLoginScreen\nAnimación fade-in\nValidación @mecanic.com"]
+    AuthGroup --> CambPwd["cambiarPassword.tsx\nAnimación entrada\nValidación contraseña"]
+    AuthGroup --> RestablPwd["restablecimientoPassword.tsx\nVerificación de correo"]
+
+    TabsGroup --> Index["index.tsx — HomeScreen\nCarrusel hero · Sección Nosotros\nCarrusel vehículos · Video BG\nFormulario de cita · Calendario\nMapa embebido"]
+
+    AdminGroup --> GestMec["GestionMecanicos.tsx\nCRUD mecánicos\nActivar / Desactivar cuentas\nModal de edición"]
+
+    ClienteGroup --> Contact["Contactanos.tsx\nTarjetas de contacto\nMapa nativo · Google Maps\nAnimación logo spring"]
+
+    MecanicoGroup --> Reportes["ReportesClientes.tsx\nGestión solicitudes\nRegistrar mantenimiento\nEnviar reporte por correo"]
+    MecanicoGroup --> Historial["historial.tsx\nBúsqueda por placa\nVer detalles completos\nReenviar reporte"]
+
+    Index       -->|usa| NavCli["NavbarCliente\nMenú hamburguesa\nCallbacks: scrollToAbout · scrollToTop\nEaster egg 10 taps → Login"]
+    Contact     -->|usa| NavCli
+
+    GestMec     -->|usa| NavAdmin["NavbarAdmin\nCerrar sesión → Login\nCallback: onSignOut"]
+
+    Reportes    -->|usa| NavMecR["NavbarMecanico\nactiveTab = reportes"]
+    Historial   -->|usa| NavMecH["NavbarMecanico\nactiveTab = historial"]
+
+    Login       -->|importa| Val["validaciones.ts\nUtilidad pura\n12 funciones de validación"]
+    CambPwd     -->|importa| Val
+    RestablPwd  -->|importa| Val
+    Index       -->|importa| Val
+    GestMec     -->|importa| Val
+    Reportes    -->|importa| Val
+
+    NavCli      -. "easter egg\n10 taps en logo" .-> Login
+
+    style Root fill:#1e3a8a,color:#fff,stroke:#60a5fa,stroke-width:2px
+    style AuthGroup fill:#4c1d95,color:#fff,stroke:#8b5cf6,stroke-width:2px
+    style TabsGroup fill:#064e3b,color:#fff,stroke:#10b981,stroke-width:2px
+    style AdminGroup fill:#78350f,color:#fff,stroke:#f59e0b,stroke-width:2px
+    style ClienteGroup fill:#064e3b,color:#fff,stroke:#10b981,stroke-width:2px
+    style MecanicoGroup fill:#0c4a6e,color:#fff,stroke:#38bdf8,stroke-width:2px
+    style Val fill:#0f172a,color:#94a3b8,stroke:#475569,stroke-dasharray:6 3
+    style NavCli fill:#1e3a8a,color:#bfdbfe,stroke:#3b82f6
+    style NavAdmin fill:#78350f,color:#fde68a,stroke:#f59e0b
+    style NavMecR fill:#0c4a6e,color:#bae6fd,stroke:#38bdf8
+    style NavMecH fill:#0c4a6e,color:#bae6fd,stroke:#38bdf8
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════════
+     TAB 3 — CASOS DE USO
+     ════════════════════════════════════════════ -->
+<div id="tab-casos" class="tab-content">
+  <div class="section-title">Diagrama de Casos de Uso</div>
+  <div class="section-desc">Roles del sistema y funcionalidades disponibles para cada actor</div>
+
+  <div class="uc-system">
+    <span class="uc-system-label">«sistema» Mecanic Company</span>
+
+    <div class="uc-columns">
+
+      <!-- CLIENTE -->
+      <div class="uc-actor-section">
+        <div class="stick-figure actor-cliente">
+          <div class="stick-head"></div>
+          <div class="stick-body"></div>
+          <div class="stick-arms"></div>
+          <div class="stick-legs">
+            <div class="stick-leg l"></div>
+            <div class="stick-leg r"></div>
+          </div>
+        </div>
+        <div class="actor-label actor-cliente">Cliente</div>
+        <div class="uc-list">
+          <div class="uc-oval c">Ver página de inicio</div>
+          <div class="uc-oval c">Ver carrusel hero</div>
+          <div class="uc-oval c">Ver sección Nosotros</div>
+          <div class="uc-oval c">Solicitar cita de servicio</div>
+          <div class="uc-oval c">Seleccionar fecha y hora</div>
+          <div class="uc-oval c">Ver información de contacto</div>
+          <div class="uc-oval c">Ver ubicación en mapa</div>
+          <div class="uc-oval c">Abrir Google Maps externo</div>
+          <div class="uc-oval c">Llamar al taller</div>
+          <div class="uc-oval c">Abrir WhatsApp del taller</div>
+        </div>
+      </div>
+
+      <!-- MECÁNICO -->
+      <div class="uc-actor-section">
+        <div class="stick-figure actor-mecanico">
+          <div class="stick-head"></div>
+          <div class="stick-body"></div>
+          <div class="stick-arms"></div>
+          <div class="stick-legs">
+            <div class="stick-leg l"></div>
+            <div class="stick-leg r"></div>
+          </div>
+        </div>
+        <div class="actor-label actor-mecanico">Mecánico</div>
+        <div class="uc-list">
+          <div class="uc-oval m">Iniciar sesión (@mecanic.com)</div>
+          <div class="uc-oval m">Ver solicitudes de clientes</div>
+          <div class="uc-oval m">Editar datos de solicitud</div>
+          <div class="uc-oval m">Registrar mantenimiento</div>
+          <div class="uc-oval m">Actualizar estado de solicitud</div>
+          <div class="uc-oval m">Ver historial de mantenimientos</div>
+          <div class="uc-oval m">Buscar registro por placa</div>
+          <div class="uc-oval m">Ver detalles de mantenimiento</div>
+          <div class="uc-oval m">Reenviar reporte al cliente</div>
+          <div class="uc-oval m">Cerrar sesión</div>
+          <div class="uc-oval m">Cambiar contraseña</div>
+        </div>
+      </div>
+
+      <!-- ADMINISTRADOR -->
+      <div class="uc-actor-section">
+        <div class="stick-figure actor-admin">
+          <div class="stick-head"></div>
+          <div class="stick-body"></div>
+          <div class="stick-arms"></div>
+          <div class="stick-legs">
+            <div class="stick-leg l"></div>
+            <div class="stick-leg r"></div>
+          </div>
+        </div>
+        <div class="actor-label actor-admin">Administrador</div>
+        <div class="uc-list">
+          <div class="uc-oval a">Iniciar sesión (@mecanic.com)</div>
+          <div class="uc-oval a">Registrar nuevo mecánico</div>
+          <div class="uc-oval a">Editar datos de mecánico</div>
+          <div class="uc-oval a">Eliminar mecánico</div>
+          <div class="uc-oval a">Activar cuenta de mecánico</div>
+          <div class="uc-oval a">Desactivar cuenta de mecánico</div>
+          <div class="uc-oval a">Asignar especialidad</div>
+          <div class="uc-oval a">Asignar estado laboral</div>
+          <div class="uc-oval a">Cerrar sesión</div>
+          <div class="uc-oval a">Cambiar contraseña</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SHARED USE CASES -->
+    <div class="uc-shared-row">
+      <div class="uc-shared-label">Casos de uso compartidos / «include»</div>
+      <div class="uc-shared-ovals">
+        <div class="uc-oval s">«include» Validar formulario</div>
+        <div class="uc-oval s">«include» Verificar correo @mecanic.com</div>
+        <div class="uc-oval s">«include» Validar contraseña min. 6 chars</div>
+        <div class="uc-oval s">«extend» Restablecer contraseña</div>
+      </div>
+      <div class="uc-include-note">
+        Solicitar cita · Iniciar sesión · Registrar mecánico → todos incluyen la validación de formularios (validaciones.ts)
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEYENDA -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot c"></div>
+      <span>Cliente (sin autenticación)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot m"></div>
+      <span>Mecánico (autenticado)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot a"></div>
+      <span>Administrador (autenticado)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot s"></div>
+      <span>Compartido / include / extend</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     TAB 4 — BASE DE DATOS
+     ════════════════════════════════════════════ -->
+<div id="tab-basedatos" class="tab-content">
+  <div class="section-title">Diagrama Entidad-Relación</div>
+  <div class="section-desc">Estructura de la base de datos PostgreSQL · Prisma ORM · Claves primarias, foráneas y cardinalidades</div>
+
+  <!-- DIAGRAMA ER MERMAID -->
+  <div class="diagram-wrap" style="margin-bottom:36px">
+    <div class="mermaid">
+erDiagram
+    MECANICOS {
+        string   id               PK
+        string   nombres
+        string   apellidos
+        int      edad
+        string   correo           UK
+        string   correoEmpresarial UK
+        string   especialidad
+        int      anosExperiencia
+        enum     estadoLaboral
+        boolean  cuentaActiva
+        string   contrasena
+        datetime createdAt
+        datetime updatedAt
+    }
+    SOLICITUDES {
+        string   id               PK
+        string   nombreCliente
+        string   telefono
+        string   correoCliente
+        string   marca
+        string   modelo
+        string   anio
+        string   placa
+        string   kilometraje
+        string   tipoServicio
+        string   otroServicio
+        string   descripcionProblema
+        string   fechaCita
+        string   horaCita
+        enum     estado
+        string   mecanicoId       FK
+        datetime createdAt
+        datetime updatedAt
+    }
+    MANTENIMIENTOS {
+        string   id               PK
+        string   solicitudId      FK
+        string   marca
+        string   modelo
+        string   placa
+        string   mecanicoAsignado
+        string   diagnostico
+        string   trabajoRealizado
+        string   otroTrabajo
+        string   repuestosUtilizados
+        string   diagnosticoRealizado
+        decimal  costoManoObra
+        decimal  costoRepuestos
+        string   observaciones
+        string   fechaServicio
+        string   fechaInicio
+        string   fechaFinalizacion
+        datetime createdAt
+        datetime updatedAt
+    }
+    CODIGOS_VERIFICACION {
+        string   id               PK
+        string   correo
+        string   codigo
+        datetime expiresAt
+        boolean  usado
+        datetime createdAt
+    }
+
+    MECANICOS      ||--o{ SOLICITUDES         : "mecanicoId → id"
+    SOLICITUDES    ||--o| MANTENIMIENTOS      : "solicitudId → id"
+    </div>
+  </div>
+
+  <!-- FLUJO DE CLAVES FORÁNEAS -->
+  <div class="fk-flow">
+    <div class="fk-flow-title">🔗 Flujo de Claves Foráneas</div>
+    <div class="fk-relations">
+
+      <!-- FK 1 -->
+      <div class="fk-row">
+        <div class="fk-box src">
+          SOLICITUDES<br/>
+          <span style="color:#fbbf24;font-size:11px">mecanicoId</span>
+        </div>
+        <div class="fk-arrow">
+          <div class="fk-arrow-line"></div>
+          <div class="fk-arrow-label">REFERENCES · SET NULL</div>
+        </div>
+        <div class="fk-box dst">
+          MECANICOS<br/>
+          <span style="color:#fbbf24;font-size:11px">id (PK)</span>
+        </div>
+        <span class="fk-cardinality">N solicitudes → 1 mecánico</span>
+      </div>
+
+      <!-- FK 2 -->
+      <div class="fk-row">
+        <div class="fk-box src2">
+          MANTENIMIENTOS<br/>
+          <span style="color:#fbbf24;font-size:11px">solicitudId (UNIQUE)</span>
+        </div>
+        <div class="fk-arrow">
+          <div class="fk-arrow-line" style="background:linear-gradient(90deg,#059669,#d97706)"></div>
+          <div class="fk-arrow-label">REFERENCES · <span class="fk-cascade">ON DELETE CASCADE</span></div>
+        </div>
+        <div class="fk-box dst2">
+          SOLICITUDES<br/>
+          <span style="color:#fbbf24;font-size:11px">id (PK)</span>
+        </div>
+        <span class="fk-cardinality">1 mantenimiento → 1 solicitud</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- TABLAS DETALLADAS -->
+  <div class="db-grid">
+
+    <!-- MECANICOS -->
+    <div class="db-table-card">
+      <div class="db-table-header t-mecanicos"><span class="table-icon">👨‍🔧</span> mecanicos</div>
+      <div class="db-table-body">
+        <div class="db-field"><span class="db-field-name pk-field">id</span><span class="db-field-type">TEXT</span><span class="db-badge badge-pk">PK</span></div>
+        <div class="db-field"><span class="db-field-name">nombres</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">apellidos</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">edad</span><span class="db-field-type">INTEGER</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name uk-field">correo</span><span class="db-field-type">TEXT</span><span class="db-badge badge-uk">UNIQUE</span></div>
+        <div class="db-field"><span class="db-field-name uk-field">correoEmpresarial</span><span class="db-field-type">TEXT</span><span class="db-badge badge-uk">UNIQUE</span></div>
+        <div class="db-field"><span class="db-field-name">especialidad</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">anosExperiencia</span><span class="db-field-type">INTEGER</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">estadoLaboral</span><span class="db-field-type">ENUM</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">cuentaActiva</span><span class="db-field-type">BOOLEAN</span><span class="db-badge badge-nn">DEFAULT true</span></div>
+        <div class="db-field"><span class="db-field-name">contrasena</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">bcrypt</span></div>
+        <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">AUTO</span></div>
+        <div class="db-field"><span class="db-field-name">updatedAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">AUTO</span></div>
+      </div>
+    </div>
+
+    <!-- SOLICITUDES -->
+    <div class="db-table-card">
+      <div class="db-table-header t-solicitudes"><span class="table-icon">📋</span> solicitudes</div>
+      <div class="db-table-body">
+        <div class="db-field"><span class="db-field-name pk-field">id</span><span class="db-field-type">TEXT</span><span class="db-badge badge-pk">PK</span></div>
+        <div class="db-field"><span class="db-field-name">nombreCliente</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">telefono</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">correoCliente</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">marca</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">modelo</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">anio</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">placa</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">kilometraje</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">tipoServicio</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">otroServicio</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">DEFAULT ''</span></div>
+        <div class="db-field"><span class="db-field-name">descripcionProblema</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">fechaCita / horaCita</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">estado</span><span class="db-field-type">ENUM</span><span class="db-badge badge-nn">DEFAULT Pendiente</span></div>
+        <div class="db-field"><span class="db-field-name fk-field">mecanicoId</span><span class="db-field-type">TEXT</span><span class="db-badge badge-fk">FK · NULL</span></div>
+        <div class="db-field"><span class="db-field-name">createdAt / updatedAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">AUTO</span></div>
+      </div>
+    </div>
+
+    <!-- MANTENIMIENTOS -->
+    <div class="db-table-card">
+      <div class="db-table-header t-mant"><span class="table-icon">🔧</span> mantenimientos</div>
+      <div class="db-table-body">
+        <div class="db-field"><span class="db-field-name pk-field">id</span><span class="db-field-type">TEXT</span><span class="db-badge badge-pk">PK</span></div>
+        <div class="db-field"><span class="db-field-name fk-field">solicitudId</span><span class="db-field-type">TEXT</span><span class="db-badge badge-fk">FK · UNIQUE</span></div>
+        <div class="db-field"><span class="db-field-name">marca / modelo / placa</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">mecanicoAsignado</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">diagnostico</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">trabajoRealizado</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">otroTrabajo</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">DEFAULT ''</span></div>
+        <div class="db-field"><span class="db-field-name">repuestosUtilizados</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">diagnosticoRealizado</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">costoManoObra</span><span class="db-field-type">DECIMAL(10,2)</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">costoRepuestos</span><span class="db-field-type">DECIMAL(10,2)</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">observaciones</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">fechaServicio</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">fechaInicio / fechaFinalizacion</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">createdAt / updatedAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">AUTO</span></div>
+      </div>
+    </div>
+
+    <!-- CODIGOS_VERIFICACION -->
+    <div class="db-table-card">
+      <div class="db-table-header t-codigos"><span class="table-icon">🔑</span> codigos_verificacion</div>
+      <div class="db-table-body">
+        <div class="db-field"><span class="db-field-name pk-field">id</span><span class="db-field-type">TEXT</span><span class="db-badge badge-pk">PK</span></div>
+        <div class="db-field"><span class="db-field-name">correo</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">NOT NULL</span></div>
+        <div class="db-field"><span class="db-field-name">codigo</span><span class="db-field-type">TEXT</span><span class="db-badge badge-nn">6 dígitos</span></div>
+        <div class="db-field"><span class="db-field-name">expiresAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">+15 min</span></div>
+        <div class="db-field"><span class="db-field-name">usado</span><span class="db-field-type">BOOLEAN</span><span class="db-badge badge-nn">DEFAULT false</span></div>
+        <div class="db-field"><span class="db-field-name">createdAt</span><span class="db-field-type">TIMESTAMP</span><span class="db-badge badge-nn">AUTO</span></div>
+      </div>
+      <div style="padding:12px 14px; border-top:1px solid #0f172a;">
+        <div style="font-size:11px; color:#64748b; line-height:1.6">
+          ⚠ <strong style="color:#a78bfa">Sin FK</strong> — tabla independiente.<br/>
+          Se crea al solicitar recuperación de contraseña.<br/>
+          El código expira en 15 min y se marca <code style="color:#fbbf24">usado=true</code> al verificarse.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- LEYENDA -->
+  <div class="db-legend">
+    <div class="db-legend-item"><span class="db-legend-badge badge-pk">PK</span> Clave primaria (cuid)</div>
+    <div class="db-legend-item"><span class="db-legend-badge badge-fk">FK</span> Clave foránea</div>
+    <div class="db-legend-item"><span class="db-legend-badge badge-uk">UNIQUE</span> Valor único</div>
+    <div class="db-legend-item"><span class="db-legend-badge badge-nn">NOT NULL</span> Obligatorio</div>
+    <div class="db-legend-item"><span class="db-legend-badge badge-null" style="background:#1e293b;color:#475569;border:1px solid #334155">NULL</span> Opcional</div>
+  </div>
+</div>
+
+<footer>
+  Mecanic Company · Diagrama UML · Solo visualización · No forma parte del proyecto frontend
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#1e3a8a',
+      primaryTextColor: '#e2e8f0',
+      primaryBorderColor: '#3b82f6',
+      lineColor: '#475569',
+      secondaryColor: '#1e293b',
+      tertiaryColor: '#0f172a',
+      background: '#0b1120',
+      mainBkg: '#1a2540',
+      nodeBorder: '#3b82f6',
+      clusterBkg: '#1e293b',
+      titleColor: '#60a5fa',
+      edgeLabelBackground: '#1e293b',
+      fontFamily: 'Segoe UI, Tahoma, sans-serif',
+    },
+    classDiagram: {
+      diagramPadding: 20,
+    },
+    flowchart: {
+      curve: 'basis',
+      padding: 20,
+      nodeSpacing: 40,
+      rankSpacing: 60,
+    },
+  });
+
+  function showTab(tab, btn) {
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    btn.classList.add('active');
+  }
+</script>
+</body>
+</html>

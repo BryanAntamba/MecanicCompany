@@ -3,7 +3,7 @@
 // Permite: registrar, editar, eliminar y activar/desactivar cuentas de mecánicos.
 
 // Hook de React para manejar estado local del componente
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 // Componentes nativos de React Native necesarios para la pantalla
 import {
@@ -29,6 +29,12 @@ import NavbarAdmin from '@/components/nadvarAdmin/nadvarAdmin';
 
 // Hoja de estilos específica de esta pantalla
 import styles from '@/Styles/GestionMecanicos';
+
+// Contexto de autenticación (para obtener el token JWT)
+import { useAuth } from '@/context/AuthContext';
+
+// URL base del backend
+import { BASE_URL } from '@/utils/api';
 
 // Validaciones reutilizables para formularios
 import {
@@ -59,7 +65,7 @@ export type Mecanico = {
   añosExperiencia: number;       // Años de experiencia en el oficio
   estadoLaboral: EstadoLaboral;  // Disponibilidad operativa en el taller
   cuentaActiva: boolean;         // Si puede iniciar sesión en el sistema
-  contraseña: string;            // Contraseña de acceso al sistema
+  contraseña?: string;           // Contraseña (no retornada por la API)
 };
 
 
@@ -83,52 +89,23 @@ const ESPECIALIDADES = [
 // Opciones de estado laboral para el dropdown de disponibilidad
 const ESTADOS_LABORAL: EstadoLaboral[] = ['Disponible', 'Ocupado', 'Inactivo'];
 
-// Datos de prueba (mock) que simulan mecánicos ya registrados en el sistema
-// En producción estos datos vendrán del backend
-const MOCK_INICIAL: Mecanico[] = [
-  {
-    id: 'm-1',
-    nombres: 'Luis',
-    apellidos: 'Ramírez',
-    edad: 34,
-    correo: 'luis.ramirez@gmail.com',
-    correoEmpresarial: 'luis.r@mecanic.com',
-    especialidadCatalogo: 'Motor',
-    especialidadOtro: '',
-    añosExperiencia: 8,
-    estadoLaboral: 'Disponible',
-    cuentaActiva: true,
-    contraseña: 'temp123',
-  },
-  {
-    id: 'm-2',
-    nombres: 'Carla',
-    apellidos: 'Mendoza',
-    edad: 29,
-    correo: 'carla.m@gmail.com',
-    correoEmpresarial: 'carla.m@mecanic.com',
-    especialidadCatalogo: 'Electricidad automotriz',
-    especialidadOtro: '',
-    añosExperiencia: 5,
-    estadoLaboral: 'Ocupado',
-    cuentaActiva: false,
-    contraseña: 'temp456',
-  },
-  {
-    id: 'm-3',
-    nombres: 'Diego',
-    apellidos: 'Torres',
-    edad: 41,
-    correo: 'diego.t@gmail.com',
-    correoEmpresarial: 'diego.t@mecanic.com',
-    especialidadCatalogo: 'Otros',
-    especialidadOtro: 'Híbridos y alta voltaje',
-    añosExperiencia: 12,
-    estadoLaboral: 'Inactivo',
-    cuentaActiva: true,
-    contraseña: 'temp789',
-  },
-];
+// Convierte la respuesta del backend al tipo Mecanico del frontend
+function apiAMecanico(m: any): Mecanico {
+  const esCatalogada = (ESPECIALIDADES as readonly string[]).includes(m.especialidad);
+  return {
+    id: m.id,
+    nombres: m.nombres,
+    apellidos: m.apellidos,
+    edad: m.edad,
+    correo: m.correo,
+    correoEmpresarial: m.correoEmpresarial,
+    especialidadCatalogo: esCatalogada ? m.especialidad : 'Otros',
+    especialidadOtro: esCatalogada ? '' : m.especialidad,
+    añosExperiencia: m.anosExperiencia,
+    estadoLaboral: m.estadoLaboral as EstadoLaboral,
+    cuentaActiva: m.cuentaActiva,
+  };
+}
 
 
 // TIPO DEL FORMULARIO DEL MODAL
@@ -186,15 +163,15 @@ function mecanicoAForm(m: Mecanico): FormState {
   return {
     nombres: m.nombres,
     apellidos: m.apellidos,
-    edad: String(m.edad),                         // Número → string para el TextInput
+    edad: String(m.edad),
     correo: m.correo,
     correoEmpresarial: m.correoEmpresarial,
     especialidadCatalogo: m.especialidadCatalogo,
     especialidadOtro: m.especialidadOtro,
-    añosExperiencia: String(m.añosExperiencia),   // Número → string para el TextInput
+    añosExperiencia: String(m.añosExperiencia),
     estadoLaboral: m.estadoLaboral,
     cuentaActiva: m.cuentaActiva,
-    contraseña: m.contraseña,
+    contraseña: '',  // La API no retorna la contraseña; dejar vacío en edición
   };
 }
 
@@ -227,8 +204,26 @@ export default function GestionMecanicosScreen() {
   // Hook de navegación para redirigir al login al cerrar sesión
   const router = useRouter();
 
-  // Lista de mecánicos registrados (inicia con los datos mock)
-  const [lista, setLista] = useState<Mecanico[]>(MOCK_INICIAL);
+  // Token JWT del administrador autenticado
+  const { token } = useAuth();
+
+  // Lista de mecánicos registrados (se carga desde la API)
+  const [lista, setLista] = useState<Mecanico[]>([]);
+
+  // Indica si se está cargando la lista de mecánicos
+  const [cargando, setCargando] = useState(true);
+
+  // Carga los mecánicos desde el backend al montar el componente
+  useEffect(() => {
+    if (!token) return;
+    fetch(`${BASE_URL}/mecanicos`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((r) => r.json())
+      .then((data) => setLista(data.map(apiAMecanico)))
+      .catch(() => Alert.alert('Error', 'No se pudo cargar la lista de mecánicos.'))
+      .finally(() => setCargando(false));
+  }, [token]);
 
   // Controla si el modal de registro/edición está visible
   const [modalVisible, setModalVisible] = useState(false);
@@ -341,7 +336,7 @@ export default function GestionMecanicosScreen() {
   //FUNCIÓN GUARDAR
 
   // Valida los datos del formulario y guarda el mecánico (crear o editar)
-  const guardar = () => {
+  const guardar = async () => {
     const errorNombres = validarDosPalabras(form.nombres, 'Los nombres');
     const errorApellidos = validarDosPalabras(form.apellidos, 'Los apellidos');
     const errorEdad = validarSoloNumeros(form.edad, 'La edad');
@@ -354,7 +349,10 @@ export default function GestionMecanicosScreen() {
         : null;
     const errorAñosExperiencia = validarSoloNumeros(form.añosExperiencia, 'Los años de experiencia');
     const errorEstadoLaboral = validarObligatorio(form.estadoLaboral, 'El estado laboral');
-    const errorContraseña = validarContrasena(form.contraseña);
+    // En edición la contraseña es opcional; solo se valida si el usuario escribe algo
+    const errorContraseña = modo === 'editar' && !form.contraseña.trim()
+      ? null
+      : validarContrasena(form.contraseña);
 
     const edad = Number.isNaN(parseInt(form.edad, 10)) ? NaN : parseInt(form.edad, 10);
     const años = Number.isNaN(parseInt(form.añosExperiencia, 10)) ? NaN : parseInt(form.añosExperiencia, 10);
@@ -384,28 +382,47 @@ export default function GestionMecanicosScreen() {
     const hayErrores = Object.values(nuevosErrores).some((value) => value.length > 0);
     if (hayErrores) return;
 
-    const base: Mecanico = {
-      id: editandoId ?? `m-${Date.now()}`,
+    const especialidad = form.especialidadCatalogo === 'Otros'
+      ? form.especialidadOtro.trim()
+      : form.especialidadCatalogo;
+
+    const body: Record<string, unknown> = {
       nombres: form.nombres.trim(),
       apellidos: form.apellidos.trim(),
       edad,
       correo: form.correo.trim(),
       correoEmpresarial: form.correoEmpresarial.trim().toLowerCase(),
-      especialidadCatalogo: form.especialidadCatalogo,
-      especialidadOtro: form.especialidadCatalogo === 'Otros' ? form.especialidadOtro.trim() : '',
-      añosExperiencia: años,
+      especialidad,
+      anosExperiencia: años,
       estadoLaboral: form.estadoLaboral,
       cuentaActiva: form.cuentaActiva,
-      contraseña: form.contraseña.trim(),
     };
+    if (form.contraseña.trim()) body.contrasena = form.contraseña.trim();
 
-    if (modo === 'crear') {
-      setLista((prev) => [...prev, base]);
-    } else if (editandoId) {
-      setLista((prev) => prev.map((x) => (x.id === editandoId ? { ...base, id: editandoId } : x)));
+    try {
+      if (modo === 'crear') {
+        const resp = await fetch(`${BASE_URL}/mecanicos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) throw new Error((await resp.json()).message ?? 'Error al crear');
+        const nuevo = await resp.json();
+        setLista((prev) => [apiAMecanico(nuevo), ...prev]);
+      } else if (editandoId) {
+        const resp = await fetch(`${BASE_URL}/mecanicos/${editandoId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify(body),
+        });
+        if (!resp.ok) throw new Error((await resp.json()).message ?? 'Error al actualizar');
+        const actualizado = await resp.json();
+        setLista((prev) => prev.map((x) => (x.id === editandoId ? apiAMecanico(actualizado) : x)));
+      }
+      cerrarModal();
+    } catch (e: any) {
+      Alert.alert('Error', e.message ?? 'No se pudo guardar el mecánico.');
     }
-
-    cerrarModal();
   };
 
   //FUNCIÓN ELIMINAR
@@ -413,13 +430,24 @@ export default function GestionMecanicosScreen() {
   const eliminar = (m: Mecanico) => {
     Alert.alert(
       'Eliminar mecánico',
-      `¿Eliminar a ${m.nombres} ${m.apellidos}? Esta acción es de demostración.`,
+      `¿Eliminar a ${m.nombres} ${m.apellidos}? Esta acción no se puede deshacer.`,
       [
-        { text: 'Cancelar', style: 'cancel' },                          // No hace nada
+        { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Eliminar',
-          style: 'destructive',                                          // Texto rojo en iOS
-          onPress: () => setLista((prev) => prev.filter((x) => x.id !== m.id)), // Filtra el mecánico
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const resp = await fetch(`${BASE_URL}/mecanicos/${m.id}`, {
+                method: 'DELETE',
+                headers: { Authorization: `Bearer ${token}` },
+              });
+              if (!resp.ok) throw new Error();
+              setLista((prev) => prev.filter((x) => x.id !== m.id));
+            } catch {
+              Alert.alert('Error', 'No se pudo eliminar el mecánico.');
+            }
+          },
         },
       ],
     );
@@ -428,10 +456,20 @@ export default function GestionMecanicosScreen() {
   //FUNCIÓN TOGGLE CUENTA
 
   // Alterna el estado de cuentaActiva del mecánico (activa ↔ inactiva)
-  const toggleCuenta = (m: Mecanico) => {
-    setLista((prev) =>
-      prev.map((x) => (x.id === m.id ? { ...x, cuentaActiva: !x.cuentaActiva } : x)),
-    );
+  const toggleCuenta = async (m: Mecanico) => {
+    try {
+      const resp = await fetch(`${BASE_URL}/mecanicos/${m.id}/estado`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ cuentaActiva: !m.cuentaActiva }),
+      });
+      if (!resp.ok) throw new Error();
+      setLista((prev) =>
+        prev.map((x) => (x.id === m.id ? { ...x, cuentaActiva: !x.cuentaActiva } : x)),
+      );
+    } catch {
+      Alert.alert('Error', 'No se pudo cambiar el estado de la cuenta.');
+    }
   };
 
   //CERRAR SESIÓN
@@ -475,6 +513,20 @@ export default function GestionMecanicosScreen() {
             </Text>
           )}
         </Pressable>
+
+        {/* Indicador de carga mientras se obtienen los datos del backend */}
+        {cargando && (
+          <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 24 }}>
+            Cargando mecánicos...
+          </Text>
+        )}
+
+        {/* Mensaje cuando no hay mecánicos registrados */}
+        {!cargando && lista.length === 0 && (
+          <Text style={{ textAlign: 'center', color: '#64748B', marginTop: 24 }}>
+            No hay mecánicos registrados aún.
+          </Text>
+        )}
 
         {/* Itera sobre la lista de mecánicos para renderizar una tarjeta por cada uno */}
         {lista.map((m) => (

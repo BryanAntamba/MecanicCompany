@@ -465,6 +465,8 @@ export default StyleSheet.create({
     marginTop: 4,
     marginBottom: 4,
     marginLeft: 4,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
 
   //Formulario de la solicitud

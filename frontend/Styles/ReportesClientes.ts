@@ -205,7 +205,7 @@ export default StyleSheet.create({
   formRow: { flexDirection: 'row', gap: 10 },
 
   // Input que ocupa la mitad del ancho en una fila
-  inputHalf: { flex: 1, overflow: 'hidden' },
+  inputHalf: { flex: 1 },
 
   // Botón selector (dropdown) cerrado
   dropdown: {

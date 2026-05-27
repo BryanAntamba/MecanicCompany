@@ -7,14 +7,12 @@ import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
 import loginStyles from '@/Styles/login';
-import {
-  validarCorreoMecanic,
-  validarContrasena,
-  validarCredencialesLogin,
-} from '@/utils/validaciones';
+import { validarCorreoMecanic, validarContrasena } from '@/utils/validaciones';
+import { useAuth } from '@/context/AuthContext';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const { login } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -28,6 +26,7 @@ export default function LoginScreen() {
 
   const slideAnim = useRef(new Animated.Value(60)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     Animated.parallel([
@@ -50,22 +49,17 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 800));
+      // Llama a la API real y guarda token + usuario en AuthContext
+      const user = await login(email.trim().toLowerCase(), password);
 
-      // Valida las credenciales — retorna mensaje de error o null
-      const errCred = validarCredencialesLogin(email, password);
-      if (errCred) {
-        setErrGeneral(errCred);
-        return;
-      }
-
-      // Credenciales correctas → redirige según el rol
-      const lower = email.trim().toLowerCase();
-      if (lower === 'admin@mecanic.com') {
+      // Redirige según el rol
+      if (user.esAdmin) {
         router.replace('/Admin/GestionMecanicos' as any);
       } else {
         router.replace('/SeccionMecanico/ReportesClientes' as any);
       }
+    } catch (err: any) {
+      setErrGeneral(err?.message ?? 'Correo o contraseña incorrectos.');
     } finally {
       setLoading(false);
     }
@@ -78,8 +72,16 @@ export default function LoginScreen() {
       resizeMode="cover"
     >
       <View style={loginStyles.overlay} />
-      <KeyboardAvoidingView style={loginStyles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={loginStyles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={loginStyles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={loginStyles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
           <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
@@ -107,6 +109,7 @@ export default function LoginScreen() {
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
+                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
               />
               <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
                 <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />

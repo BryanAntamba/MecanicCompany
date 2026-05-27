@@ -3,11 +3,12 @@
 // Permite: editar solicitudes, registrar/editar mantenimientos, eliminar registros
 // y enviar el reporte técnico al correo del cliente.
 
-// Hook de React para manejar estado local del componente
-import { useState } from 'react';
+// Hooks de React para manejar estado local y efectos secundarios
+import { useCallback, useEffect, useState } from 'react';
 
 // Componentes nativos de React Native
 import {
+  BackHandler,          // Intercepta el botón físico de atrás en Android
   KeyboardAvoidingView, // Evita que el teclado tape los inputs en iOS
   Modal,                // Superposición de contenido sobre la pantalla principal
   Platform,             // Detecta el sistema operativo (iOS / Android)
@@ -24,8 +25,17 @@ import { FontAwesome } from '@expo/vector-icons';
 // Barra de navegación del mecánico con opciones Reportes, Historial y Cerrar sesión
 import NavbarMecanico from '@/components/nadvarMecanico/nadvarMecanico';
 
+// useFocusEffect: ejecuta un efecto solo mientras la pantalla está en foco
+import { useFocusEffect } from 'expo-router';
+
 // Hoja de estilos compartida entre ReportesClientes e historial
 import styles from '@/Styles/ReportesClientes';
+
+// Contexto de autenticación para obtener el token JWT
+import { useAuth } from '@/context/AuthContext';
+
+// API de mecánicos para cargar la lista dinámica
+import { mecanicosApi, mantenimientosApi, solicitudesApi, SolicitudBackend } from '@/utils/api';
 
 // Validación del nombre completo en el modal de edición
 import {
@@ -79,6 +89,8 @@ type Mantenimiento = {
   marca: string;               // Marca del vehículo
   modelo: string;              // Modelo del vehículo
   placa: string;               // Placa del vehículo
+  año: string;                 // Año de fabricación
+  kilometraje: string;         // Kilometraje al momento del servicio
   fechaServicio: string;       // Fecha en que se realizó el servicio
   mecanicoAsignado: string;    // Nombre del mecánico que atendió
   diagnostico: string;         // Diagnóstico inicial del problema
@@ -96,14 +108,7 @@ type Mantenimiento = {
 
 // CONSTANTES
 
-// Lista de mecánicos disponibles para asignar en el registro de mantenimiento
-// En producción vendrá del backend (lista de mecánicos registrados en GestionMecanicos)
-const MECANICOS_DISPONIBLES = [
-  'Luis Ramírez',
-  'Carla Mendoza',
-  'Diego Torres',
-  'Bryan Justicia',
-];
+// Los mecánicos se cargan dinámicamente desde el backend al montar el componente
 
 // Catálogo de tipos de trabajo para el dropdown del registro de mantenimiento
 const TRABAJOS_OPCIONES = [
@@ -120,38 +125,14 @@ const TRABAJOS_OPCIONES = [
 
 // Solicitudes de prueba que simulan registros enviados por clientes
 // En producción estos datos vendrán del backend
-const MOCK_SOLICITUDES: Solicitud[] = [
-  {
-    id: 's-1',
-    nombre: 'Carlos Pérez',
-    telefono: '+593 99 123 4567',
-    correo: 'carlos.perez@gmail.com',
-    marca: 'Toyota', modelo: 'Corolla', año: '2019',
-    placa: 'ABC-1234', kilometraje: '85000',
-    tipoServicio: 'Cambio de aceite', otroServicio: '',
-    descripcionProblema: 'El vehículo presenta ruido al frenar.',
-    fechaCita: '2026-05-15', horaCita: '09:00',
-    estado: 'Pendiente', mantenimiento: null,
-  },
-  {
-    id: 's-2',
-    nombre: 'María González',
-    telefono: '+593 98 765 4321',
-    correo: 'maria.g@gmail.com',
-    marca: 'Chevrolet', modelo: 'Aveo', año: '2021',
-    placa: 'XYZ-5678', kilometraje: '42000',
-    tipoServicio: 'Frenos', otroServicio: '',
-    descripcionProblema: 'Pierde potencia al acelerar.',
-    fechaCita: '2026-05-16', horaCita: '11:00',
-    estado: 'En proceso', mantenimiento: null,
-  },
-];
+// Lista vacía — las solicitudes reales vendrán del backend
+const MOCK_SOLICITUDES: Solicitud[] = [];
 
 // Retorna un objeto Mantenimiento con todos los campos vacíos
 // Usado para inicializar el formulario de registro de mantenimiento
 function formMantVacio(): Mantenimiento {
   return {
-    marca: '', modelo: '', placa: '', fechaServicio: '',
+    marca: '', modelo: '', placa: '', año: '', kilometraje: '', fechaServicio: '',
     mecanicoAsignado: '', diagnostico: '', trabajoRealizado: '',
     otroTrabajo: '', repuestosUtilizados: '', diagnosticoRealizado: '',
     costoManoObra: '', costoRepuestos: '', observaciones: '',
@@ -163,8 +144,87 @@ function formMantVacio(): Mantenimiento {
 // COMPONENTE PRINCIPAL
 
 export default function ReportesClientesScreen() {
-  // Lista de solicitudes de clientes (inicia con los datos mock)
-  const [lista, setLista] = useState<Solicitud[]>(MOCK_SOLICITUDES);
+  // Bloquea el botón físico de atrás en Android mientras esta pantalla está activa
+  useFocusEffect(
+    useCallback(() => {
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      return () => sub.remove();
+    }, []),
+  );
+
+  // Token JWT del mecánico autenticado
+  const { token } = useAuth();
+
+  // Lista de solicitudes de clientes
+  const [lista, setLista] = useState<Solicitud[]>([]);
+
+  // Lista de mecánicos cargada desde el backend
+  const [mecanicosList, setMecanicosList] = useState<string[]>([]);
+  // Error al cargar mecánicos
+  const [mecError, setMecError] = useState('');
+
+  // Función reutilizable para cargar la lista de mecánicos
+  const cargarMecanicos = (tkn: string) => {
+    setMecError('');
+    mecanicosApi.listar(tkn)
+      .then((data) => {
+        const nombres = data
+          .filter((m) => m.cuentaActiva)
+          .map((m) => `${m.nombres} ${m.apellidos}`);
+        setMecanicosList(nombres);
+        if (nombres.length === 0) setMecError('No hay mecánicos activos registrados.');
+      })
+      .catch((err) => {
+        setMecError(err?.message ?? 'No se pudo cargar la lista de mecánicos.');
+      });
+  };
+
+  // Carga solicitudes y mecánicos al montar la pantalla
+  useEffect(() => {
+    if (!token) return;
+
+    solicitudesApi.listar(token)
+      .then((data: SolicitudBackend[]) => {
+        const mapped: Solicitud[] = data.map((s) => ({
+          id:                  s.id,
+          nombre:              s.nombreCliente,
+          telefono:            s.telefono,
+          correo:              s.correoCliente,
+          marca:               s.marca,
+          modelo:              s.modelo,
+          año:                 s.anio,
+          placa:               s.placa,
+          kilometraje:         s.kilometraje,
+          tipoServicio:        s.tipoServicio,
+          otroServicio:        s.otroServicio,
+          descripcionProblema: s.descripcionProblema,
+          fechaCita:           s.fechaCita,
+          horaCita:            s.horaCita,
+          estado:              (s.estado === 'En_proceso' ? 'En proceso' : s.estado) as EstadoSolicitud,
+          mantenimiento: s.mantenimiento ? {
+            marca:                s.mantenimiento.marca,
+            modelo:               s.mantenimiento.modelo,
+            placa:                s.mantenimiento.placa,
+            fechaServicio:        s.mantenimiento.fechaServicio,
+            mecanicoAsignado:     s.mantenimiento.mecanicoAsignado,
+            diagnostico:          s.mantenimiento.diagnostico,
+            trabajoRealizado:     s.mantenimiento.trabajoRealizado,
+            otroTrabajo:          s.mantenimiento.otroTrabajo,
+            repuestosUtilizados:  s.mantenimiento.repuestosUtilizados,
+            diagnosticoRealizado: s.mantenimiento.diagnosticoRealizado,
+            costoManoObra:        String(s.mantenimiento.costoManoObra),
+            costoRepuestos:       String(s.mantenimiento.costoRepuestos),
+            observaciones:        s.mantenimiento.observaciones,
+            fechaInicio:          s.mantenimiento.fechaInicio,
+            fechaFinalizacion:    s.mantenimiento.fechaFinalizacion,
+          } : null,
+        }));
+        setLista(mapped);
+      })
+      .catch(() => {});
+
+    cargarMecanicos(token);
+  }, [token]);
 
   // ESTADOS DEL MODAL EDITAR SOLICITUD 
   const [editModal, setEditModal]           = useState(false);
@@ -216,6 +276,10 @@ export default function ReportesClientesScreen() {
   const [sendTarget, setSendTarget]         = useState<Solicitud | null>(null); // Solicitud a enviar
   const [sendSuccess, setSendSuccess]       = useState(false);           // true = mostrar pantalla de éxito
 
+  // Estado de guardado del modal de mantenimiento
+  const [maintSaving, setMaintSaving]       = useState(false);
+  const [maintSaveError, setMaintSaveError] = useState('');
+
   // ESTADOS DEL MODAL ELIMINAR
   const [deleteModal, setDeleteModal]       = useState(false);           // Visibilidad del modal
   const [deleteTarget, setDeleteTarget]     = useState<Solicitud | null>(null); // Solicitud a eliminar
@@ -234,8 +298,8 @@ export default function ReportesClientesScreen() {
     setEditModal(true);
   };
 
-  const guardarEditar = () => {
-    if (!editId) return;
+  const guardarEditar = async () => {
+    if (!editId || !token) return;
 
     const eNombre      = validarNombreCompleto(editForm.nombre ?? '');
     const eTelefono    = validarTelefono(editForm.telefono ?? '');
@@ -266,8 +330,28 @@ export default function ReportesClientesScreen() {
     if ([eNombre, eTelefono, eCorreo, eMarca, eModelo, eAño, ePlaca, eKm,
          eServicio, eOtroServ, eDescripcion].some(Boolean)) return;
 
-    setLista((prev) => prev.map((x) => x.id === editId ? { ...x, ...editForm } as Solicitud : x));
-    setEditModal(false);
+    try {
+      await solicitudesApi.actualizar(editId, {
+        nombreCliente:       editForm.nombre ?? '',
+        telefono:            editForm.telefono ?? '',
+        correoCliente:       editForm.correo ?? '',
+        marca:               editForm.marca ?? '',
+        modelo:              editForm.modelo ?? '',
+        anio:                editForm.año ?? '',
+        placa:               editForm.placa ?? '',
+        kilometraje:         editForm.kilometraje ?? '',
+        tipoServicio:        editForm.tipoServicio ?? '',
+        otroServicio:        editForm.otroServicio ?? '',
+        descripcionProblema: editForm.descripcionProblema ?? '',
+        fechaCita:           editForm.fechaCita ?? '',
+        horaCita:            editForm.horaCita ?? '',
+      }, token);
+
+      setLista((prev) => prev.map((x) => x.id === editId ? { ...x, ...editForm } as Solicitud : x));
+      setEditModal(false);
+    } catch {
+      // Error de red silenciado — el modal permanece abierto para reintentar
+    }
   };
 
   // FUNCIÓN: ABRIR MODAL MANTENIMIENTO
@@ -277,10 +361,12 @@ export default function ReportesClientesScreen() {
     setMaintId(s.id);
     setMaintForm(s.mantenimiento
       ? { ...s.mantenimiento }          // Pre-llena con el mantenimiento existente
-      : { ...formMantVacio(), marca: s.marca, modelo: s.modelo, placa: s.placa } // Datos del vehículo
+      : { ...formMantVacio(), marca: s.marca, modelo: s.modelo, placa: s.placa, año: s.año, kilometraje: s.kilometraje } // Datos del vehículo
     );
     setMecDropdown(false);
     setTrabajoDropdown(false);
+    // Recarga la lista de mecánicos cada vez que se abre el modal
+    if (token) cargarMecanicos(token);
     // Limpia todos los errores al abrir el modal
     setErrMaintMarca(''); setErrMaintModelo(''); setErrMaintPlaca('');
     setErrMaintAño(''); setErrMaintKm('');
@@ -293,14 +379,14 @@ export default function ReportesClientesScreen() {
 
   // FUNCIÓN: GUARDAR MANTENIMIENTO
   // Guarda el registro de mantenimiento y cambia el estado a "Completado"
-  const guardarMantenimiento = () => {
+  const guardarMantenimiento = async () => {
     if (!maintId) return;
 
     const eMarca       = validarSoloTexto(maintForm.marca ?? '', 'La marca');
     const eModelo      = validarModelo(maintForm.modelo ?? '');
     const ePlaca       = validarPlaca(maintForm.placa ?? '');
-    const eAño         = validarAño((maintForm as any).año ?? '');
-    const eKm          = validarSoloNumeros((maintForm as any).kilometraje ?? '', 'El kilometraje');
+    const eAño         = validarAño(maintForm.año ?? '');
+    const eKm          = validarSoloNumeros(maintForm.kilometraje ?? '', 'El kilometraje');
     const eFechaServ   = validarFecha(maintForm.fechaServicio ?? '');
     const eMecAsignado = validarObligatorio(maintForm.mecanicoAsignado, 'El mecánico asignado');
     const eDiagnost    = validarTextoYNumeros(maintForm.diagnostico ?? '', 'El diagnóstico');
@@ -336,17 +422,45 @@ export default function ReportesClientesScreen() {
 
     const errores = [eMarca, eModelo, ePlaca, eAño, eKm, eFechaServ, eMecAsignado, eDiagnost, eTrabajo,
          eOtroTrab, eRepuestos, eDiagReal, eManoObra, eCostoRep, eObserv, eFechaInit, eFechaFinal].filter(Boolean);
-    
-    if (errores.length > 0) {
-      return;
-    }
 
-    setLista((prev) => prev.map((x) =>
-      x.id === maintId
-        ? { ...x, mantenimiento: { ...maintForm }, estado: 'Completado' as EstadoSolicitud }
-        : x
-    ));
-    setMaintModal(false);
+    if (errores.length > 0) return;
+
+    if (!token) return;
+    setMaintSaving(true);
+    setMaintSaveError('');
+
+    try {
+      await mantenimientosApi.crear({
+        solicitudId:         maintId,
+        marca:               maintForm.marca,
+        modelo:              maintForm.modelo,
+        placa:               maintForm.placa,
+        mecanicoAsignado:    maintForm.mecanicoAsignado,
+        diagnostico:         maintForm.diagnostico,
+        trabajoRealizado:    maintForm.trabajoRealizado,
+        otroTrabajo:         maintForm.otroTrabajo,
+        repuestosUtilizados: maintForm.repuestosUtilizados,
+        diagnosticoRealizado:maintForm.diagnosticoRealizado,
+        observaciones:       maintForm.observaciones,
+        costoManoObra:       maintForm.costoManoObra,
+        costoRepuestos:      maintForm.costoRepuestos,
+        fechaServicio:       maintForm.fechaServicio,
+        fechaInicio:         maintForm.fechaInicio,
+        fechaFinalizacion:   maintForm.fechaFinalizacion,
+      }, token);
+
+      // Actualiza el estado local y cierra el modal
+      setLista((prev) => prev.map((x) =>
+        x.id === maintId
+          ? { ...x, mantenimiento: { ...maintForm }, estado: 'Completado' as EstadoSolicitud }
+          : x
+      ));
+      setMaintModal(false);
+    } catch (err: any) {
+      setMaintSaveError(err?.message ?? 'Error al guardar el mantenimiento. Intenta de nuevo.');
+    } finally {
+      setMaintSaving(false);
+    }
   };
 
   // FUNCIÓN: ABRIR MODAL ELIMINAR
@@ -762,16 +876,16 @@ export default function ReportesClientesScreen() {
                     <Text style={styles.label}>Año</Text>
                     <TextInput style={[styles.input, errMaintAño ? styles.inputError : null]} placeholder="Año" placeholderTextColor="#64748B"
                       keyboardType="numeric" maxLength={4}
-                      value={(maintForm as any).año ?? ''}
-                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, año: t } as any)); setErrMaintAño(''); }} />
+                      value={maintForm.año}
+                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, año: t })); setErrMaintAño(''); }} />
                     {errMaintAño ? <Text style={styles.errorText} numberOfLines={2}>{errMaintAño}</Text> : null}
                   </View>
                   <View style={styles.inputHalf}>
                     <Text style={styles.label}>Kilometraje</Text>
                     <TextInput style={[styles.input, errMaintKm ? styles.inputError : null]} placeholder="km" placeholderTextColor="#64748B"
                       keyboardType="numeric"
-                      value={(maintForm as any).kilometraje ?? ''}
-                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, kilometraje: t } as any)); setErrMaintKm(''); }} />
+                      value={maintForm.kilometraje}
+                      onChangeText={(t) => { setMaintForm((p) => ({ ...p, kilometraje: t })); setErrMaintKm(''); }} />
                     {errMaintKm ? <Text style={styles.errorText} numberOfLines={2}>{errMaintKm}</Text> : null}
                   </View>
                 </View>
@@ -795,13 +909,23 @@ export default function ReportesClientesScreen() {
                 {errMaintMecAsinado ? <Text style={styles.errorText}>{errMaintMecAsinado}</Text> : null}
                 {mecDropdown && (
                   <View style={styles.dropdownList}>
-                    {MECANICOS_DISPONIBLES.map((m, i) => (
-                      <Pressable key={m}
-                        style={[styles.dropdownItem, i === MECANICOS_DISPONIBLES.length - 1 && styles.dropdownItemLast, maintForm.mecanicoAsignado === m && styles.dropdownItemActive]}
-                        onPress={() => { setMaintForm((p) => ({ ...p, mecanicoAsignado: m })); setMecDropdown(false); setErrMaintMecAsinado(''); }}>
-                        <Text style={styles.dropdownItemText}>{m}</Text>
-                      </Pressable>
-                    ))}
+                    {mecError ? (
+                      <View style={{ padding: 14 }}>
+                        <Text style={{ color: '#EF4444', fontSize: 13, textAlign: 'center' }}>{mecError}</Text>
+                      </View>
+                    ) : mecanicosList.length === 0 ? (
+                      <View style={{ padding: 14 }}>
+                        <Text style={{ color: '#64748B', fontSize: 13, textAlign: 'center' }}>Cargando mecánicos...</Text>
+                      </View>
+                    ) : (
+                      mecanicosList.map((m, i) => (
+                        <Pressable key={m}
+                          style={[styles.dropdownItem, i === mecanicosList.length - 1 && styles.dropdownItemLast, maintForm.mecanicoAsignado === m && styles.dropdownItemActive]}
+                          onPress={() => { setMaintForm((p) => ({ ...p, mecanicoAsignado: m })); setMecDropdown(false); setErrMaintMecAsinado(''); }}>
+                          <Text style={styles.dropdownItemText}>{m}</Text>
+                        </Pressable>
+                      ))
+                    )}
                   </View>
                 )}
               </View>
@@ -903,8 +1027,21 @@ export default function ReportesClientesScreen() {
               </View>
 
               {/* Botón guardar reporte — blanco en reposo, azul al presionar */}
-              <Pressable style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]} onPress={guardarMantenimiento}>
-                {({ pressed }) => <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>Guardar reporte</Text>}
+              {maintSaveError ? (
+                <Text style={{ color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: 8 }}>
+                  {maintSaveError}
+                </Text>
+              ) : null}
+              <Pressable
+                style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed, maintSaving && { opacity: 0.6 }]}
+                onPress={guardarMantenimiento}
+                disabled={maintSaving}
+              >
+                {({ pressed }) => (
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    {maintSaving ? 'Guardando...' : 'Guardar reporte'}
+                  </Text>
+                )}
               </Pressable>
             </ScrollView>
           </View>

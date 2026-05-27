@@ -62,11 +62,11 @@ export const validarTextoYNumeros = (valor: string, campo: string): string | nul
 
 
 // ─── validarModelo ────────────────────────────────────────────────────────────
-// Letras, números y guión. Sin espacios ni otros símbolos.
+// Letras, números, espacios y guión. Ejemplos válidos: "A3 sedan", "Corolla-2019".
 export const validarModelo = (valor: string): string | null => {
   if (!valor.trim()) return 'El modelo es obligatorio.';
-  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ-]+$/.test(valor.trim()))
-    return 'El modelo solo puede contener letras, números y guiones.';
+  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s-]+$/.test(valor.trim()))
+    return 'El modelo solo puede contener letras, números, espacios y guiones.';
   return null;
 };
 
@@ -172,6 +172,13 @@ export const validarFecha = (valor: string): string | null => {
 // Número decimal positivo con hasta 2 decimales. Campo opcional.
 export const validarCosto = (valor: string, campo: string): string | null => {
   if (!valor.trim()) return null;
+  if (!/^\d+(\.\d{1,2})?$/.test(valor.trim()))
+    return `${campo} debe ser un número válido (ej: 25.00).`;
+  return null;
+};
+
+export const validarCostoObligatorio = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
   if (!/^\d+(\.\d{1,2})?$/.test(valor.trim()))
     return `${campo} debe ser un número válido (ej: 25.00).`;
   return null;

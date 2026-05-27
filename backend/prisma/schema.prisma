@@ -1,0 +1,155 @@
+// Schema de Prisma para MecanicCompany
+// Base de datos: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── ENUMS ────────────────────────────────────────────────────────────────────
+
+enum EstadoLaboral {
+  Disponible
+  Ocupado
+  Inactivo
+}
+
+enum EstadoSolicitud {
+  Pendiente
+  En_proceso
+  Completado
+}
+
+// ─── MODELOS ──────────────────────────────────────────────────────────────────
+
+// Administrador del sistema — tabla separada de mecánicos
+// Solo tiene credenciales básicas, sin campos operativos de taller
+model Admin {
+  id                  String    @id @default(cuid())
+  nombres             String
+  apellidos           String
+  correo              String    @unique  // Correo personal
+  correoEmpresarial   String    @unique  // Correo de acceso @mecanic.com
+  contrasena          String             // Almacenada con bcrypt
+
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@map("admins")
+}
+
+// Mecánicos: usuarios operativos del taller que inician sesión con correo @mecanic.com
+model Mecanico {
+  id                  String        @id @default(cuid())
+  nombres             String
+  apellidos           String
+  edad                Int
+  correo              String        @unique  // Correo personal (gmail)
+  correoEmpresarial   String        @unique  // Correo de acceso @mecanic.com
+  especialidad        String
+  anosExperiencia     Int
+  estadoLaboral       EstadoLaboral @default(Disponible)
+  cuentaActiva        Boolean       @default(true)
+  contrasena          String        // Almacenada con bcrypt
+
+  // Relaciones
+  solicitudes         Solicitud[]   // Solicitudes asignadas a este mecánico
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@map("mecanicos")
+}
+
+// Solicitudes de servicio enviadas por clientes desde la app
+model Solicitud {
+  id                  String          @id @default(cuid())
+
+  // Datos del cliente (no tiene cuenta en el sistema)
+  nombreCliente       String
+  telefono            String
+  correoCliente       String
+
+  // Datos del vehículo
+  marca               String
+  modelo              String
+  anio                String
+  placa               String
+  kilometraje         String
+
+  // Datos del servicio solicitado
+  tipoServicio        String
+  otroServicio        String          @default("")
+  descripcionProblema String
+  fechaCita           String
+  horaCita            String
+
+  // Estado de la solicitud
+  estado              EstadoSolicitud @default(Pendiente)
+
+  // Mecánico asignado (puede ser null hasta que se asigne)
+  mecanicoId          String?
+  mecanico            Mecanico?       @relation(fields: [mecanicoId], references: [id])
+
+  // Registro de mantenimiento (se crea cuando el mecánico atiende la solicitud)
+  mantenimiento       Mantenimiento?
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@map("solicitudes")
+}
+
+// Registro técnico del mantenimiento realizado por el mecánico
+model Mantenimiento {
+  id                    String    @id @default(cuid())
+
+  // Relación 1-1 con Solicitud
+  solicitudId           String    @unique
+  solicitud             Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+
+  // Datos del vehículo al momento del servicio
+  marca                 String
+  modelo                String
+  placa                 String
+
+  // Trabajo realizado
+  mecanicoAsignado      String    // Nombre para el reporte (denormalizado)
+  diagnostico           String
+  trabajoRealizado      String
+  otroTrabajo           String    @default("")
+  repuestosUtilizados   String
+  diagnosticoRealizado  String
+  observaciones         String
+
+  // Costos
+  costoManoObra         Decimal   @db.Decimal(10, 2)
+  costoRepuestos        Decimal   @db.Decimal(10, 2)
+
+  // Fechas del servicio
+  fechaServicio         String
+  fechaInicio           String
+  fechaFinalizacion     String
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("mantenimientos")
+}
+
+// Códigos de verificación para recuperación de contraseña
+model CodigoVerificacion {
+  id        String   @id @default(cuid())
+  correo    String                    // Correo al que se envió el código
+  codigo    String                    // Código de 6 dígitos
+  expiresAt DateTime                  // Expira en 15 minutos
+  usado     Boolean  @default(false)  // true = ya fue verificado
+
+  createdAt DateTime @default(now())
+
+  @@map("codigos_verificacion")
+}

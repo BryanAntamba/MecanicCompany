@@ -1,0 +1,238 @@
+import { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import prisma from '../lib/prisma';
+import { generarCodigo, enviarCodigoEmail } from '../services/email.service';
+
+// POST /api/auth/login
+export async function login(req: Request, res: Response): Promise<void> {
+    const { correoEmpresarial, contrasena } = req.body;
+
+    if (!correoEmpresarial || !contrasena) {
+        res.status(400).json({ message: 'Correo y contraseña son requeridos' });
+        return;
+    }
+
+    const correoNorm = correoEmpresarial.trim().toLowerCase();
+
+    // 1. Buscar primero en la tabla Admin
+    const admin = await prisma.admin.findUnique({
+        where: { correoEmpresarial: correoNorm },
+    });
+
+    if (admin) {
+        const passwordValida = await bcrypt.compare(contrasena, admin.contrasena);
+        if (!passwordValida) {
+            res.status(401).json({ message: 'Credenciales incorrectas' });
+            return;
+        }
+
+        const token = jwt.sign(
+            { id: admin.id, correoEmpresarial: admin.correoEmpresarial, rol: 'admin' },
+            process.env.JWT_SECRET!,
+            { expiresIn: 28800 }
+        );
+
+        res.json({
+            token,
+            mecanico: {
+                id: admin.id,
+                nombres: admin.nombres,
+                apellidos: admin.apellidos,
+                correoEmpresarial: admin.correoEmpresarial,
+                especialidad: 'Administración',
+                estadoLaboral: 'Disponible',
+                esAdmin: true,
+            },
+        });
+        return;
+    }
+
+    // 2. Si no es admin, buscar en la tabla Mecanico
+    const mecanico = await prisma.mecanico.findUnique({
+        where: { correoEmpresarial: correoNorm },
+    });
+
+    if (!mecanico || !mecanico.cuentaActiva) {
+        res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+        return;
+    }
+
+    const passwordValida = await bcrypt.compare(contrasena, mecanico.contrasena);
+    if (!passwordValida) {
+        res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+        return;
+    }
+
+    const token = jwt.sign(
+        { id: mecanico.id, correoEmpresarial: mecanico.correoEmpresarial, rol: 'mecanico' },
+        process.env.JWT_SECRET!,
+        { expiresIn: 28800 }
+    );
+
+    res.json({
+        token,
+        mecanico: {
+            id: mecanico.id,
+            nombres: mecanico.nombres,
+            apellidos: mecanico.apellidos,
+            correoEmpresarial: mecanico.correoEmpresarial,
+            especialidad: mecanico.especialidad,
+            estadoLaboral: mecanico.estadoLaboral,
+            esAdmin: false,
+        },
+    });
+}
+
+// POST /api/auth/recuperar
+export async function solicitarRecuperacion(req: Request, res: Response): Promise<void> {
+    const { correo } = req.body;
+
+    if (!correo) {
+        res.status(400).json({ message: 'Correo requerido' });
+        return;
+    }
+
+    const mecanico = await prisma.mecanico.findUnique({
+        where: { correo: correo.trim().toLowerCase() },
+    });
+
+    // Respuesta genérica para no revelar si el correo existe
+    if (!mecanico) {
+        res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
+        return;
+    }
+
+    const codigo = generarCodigo();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    await prisma.codigoVerificacion.create({
+        data: { correo: correo.trim().toLowerCase(), codigo, expiresAt },
+    });
+
+    await enviarCodigoEmail(correo, codigo, 'recuperacion');
+
+    res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
+}
+
+// POST /api/auth/verificar-codigo
+export async function verificarCodigo(req: Request, res: Response): Promise<void> {
+    const { correo, codigo } = req.body;
+
+    if (!correo || !codigo) {
+        res.status(400).json({ message: 'Correo y código son requeridos' });
+        return;
+    }
+
+    const registro = await prisma.codigoVerificacion.findFirst({
+        where: {
+            correo: correo.trim().toLowerCase(),
+            codigo,
+            usado: false,
+            expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    if (!registro) {
+        res.status(400).json({ message: 'Código inválido o expirado' });
+        return;
+    }
+
+    await prisma.codigoVerificacion.update({
+        where: { id: registro.id },
+        data: { usado: true },
+    });
+
+    res.json({ message: 'Código verificado correctamente' });
+}
+
+// POST /api/auth/enviar-codigo-cliente
+// Envía un código de verificación a cualquier correo (Gmail) para validar
+// que el cliente es real antes de permitirle enviar una solicitud de servicio.
+export async function enviarCodigoCliente(req: Request, res: Response): Promise<void> {
+    const { correo } = req.body;
+
+    if (!correo || !String(correo).includes('@')) {
+        res.status(400).json({ message: 'Correo requerido' });
+        return;
+    }
+
+    const correoNorm = correo.trim().toLowerCase();
+
+    // Elimina códigos anteriores del mismo correo para no acumular basura en la BD
+    await prisma.codigoVerificacion.deleteMany({
+        where: { correo: correoNorm },
+    });
+
+    const codigo = generarCodigo();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+    await prisma.codigoVerificacion.create({
+        data: { correo: correoNorm, codigo, expiresAt },
+    });
+
+    await enviarCodigoEmail(correoNorm, codigo, 'verificacion');
+
+    res.json({ message: 'Código enviado al correo indicado' });
+}
+
+// POST /api/auth/verificar-codigo-cliente
+// Verifica el código enviado al correo del cliente.
+// Si es válido devuelve { verificado: true } para que el frontend pueda continuar.
+export async function verificarCodigoCliente(req: Request, res: Response): Promise<void> {
+    const { correo, codigo } = req.body;
+
+    if (!correo || !codigo) {
+        res.status(400).json({ message: 'Correo y código son requeridos' });
+        return;
+    }
+
+    const registro = await prisma.codigoVerificacion.findFirst({
+        where: {
+            correo: correo.trim().toLowerCase(),
+            codigo,
+            usado: false,
+            expiresAt: { gt: new Date() },
+        },
+        orderBy: { createdAt: 'desc' },
+    });
+
+    if (!registro) {
+        res.status(400).json({ message: 'Código inválido o expirado' });
+        return;
+    }
+
+    // No se marca como usado aquí — se consume al crear la solicitud.
+    // Esto garantiza que la solicitud solo se guarda si el código sigue válido.
+
+    res.json({ verificado: true, correo: correo.trim().toLowerCase() });
+}
+
+// PUT /api/auth/cambiar-password
+export async function cambiarPassword(req: Request, res: Response): Promise<void> {
+    const { correo, nuevaContrasena } = req.body;
+
+    if (!correo || !nuevaContrasena) {
+        res.status(400).json({ message: 'Correo y nueva contraseña son requeridos' });
+        return;
+    }
+
+    const mecanico = await prisma.mecanico.findUnique({
+        where: { correo: correo.trim().toLowerCase() },
+    });
+
+    if (!mecanico) {
+        res.status(404).json({ message: 'Usuario no encontrado' });
+        return;
+    }
+
+    const hash = await bcrypt.hash(nuevaContrasena, 12);
+
+    await prisma.mecanico.update({
+        where: { id: mecanico.id },
+        data: { contrasena: hash },
+    });
+
+    res.json({ message: 'Contraseña actualizada correctamente' });
+}
