@@ -144,7 +144,14 @@ export async function verificarCodigo(req: Request, res: Response): Promise<void
         data: { usado: true },
     });
 
-    res.json({ message: 'Código verificado correctamente' });
+    // Token de un solo uso válido 10 minutos — el frontend debe pasarlo a /cambiar-password
+    const resetToken = jwt.sign(
+        { correo: correo.trim().toLowerCase(), type: 'password-reset' },
+        process.env.JWT_SECRET!,
+        { expiresIn: '10m' }
+    );
+
+    res.json({ message: 'Código verificado correctamente', resetToken });
 }
 
 // POST /api/auth/enviar-codigo-cliente
@@ -211,15 +218,37 @@ export async function verificarCodigoCliente(req: Request, res: Response): Promi
 
 // PUT /api/auth/cambiar-password
 export async function cambiarPassword(req: Request, res: Response): Promise<void> {
-    const { correo, nuevaContrasena } = req.body;
+    const { resetToken, nuevaContrasena } = req.body;
 
-    if (!correo || !nuevaContrasena) {
-        res.status(400).json({ message: 'Correo y nueva contraseña son requeridos' });
+    if (!resetToken || !nuevaContrasena) {
+        res.status(400).json({ message: 'Token de restablecimiento y nueva contraseña son requeridos' });
+        return;
+    }
+
+    // Mínimo 8 caracteres con al menos una letra y un número
+    if (
+        typeof nuevaContrasena !== 'string' ||
+        nuevaContrasena.length < 8 ||
+        !/[a-zA-Z]/.test(nuevaContrasena) ||
+        !/[0-9]/.test(nuevaContrasena)
+    ) {
+        res.status(400).json({ message: 'La contraseña debe tener al menos 8 caracteres, incluir una letra y un número' });
+        return;
+    }
+
+    // Valida el resetToken — rechaza si no existe, está expirado o es de otro tipo
+    let correo: string;
+    try {
+        const payload = jwt.verify(resetToken, process.env.JWT_SECRET!) as any;
+        if (payload.type !== 'password-reset') throw new Error('Tipo de token inválido');
+        correo = payload.correo;
+    } catch {
+        res.status(400).json({ message: 'Token de restablecimiento inválido o expirado' });
         return;
     }
 
     const mecanico = await prisma.mecanico.findUnique({
-        where: { correo: correo.trim().toLowerCase() },
+        where: { correo },
     });
 
     if (!mecanico) {

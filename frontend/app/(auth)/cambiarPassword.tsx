@@ -3,14 +3,17 @@ import {
   Animated, ImageBackground, KeyboardAvoidingView,
   Platform, Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
 import cambiarStyles from '@/Styles/cambiarPassword';
 import { validarContrasena } from '@/utils/validaciones';
+import { authApi } from '@/utils/api';
 
 export default function CambiarPasswordScreen() {
   const router = useRouter();
+  // resetToken recibido de codigoVerificacion (JWT de 10 min)
+  const { resetToken = '' } = useLocalSearchParams<{ resetToken: string }>();
 
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -59,13 +62,10 @@ export default function CambiarPasswordScreen() {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-
-      // Muestra el mensaje de éxito inline y redirige al login tras 2 segundos
-      setSuccessMsg('Contraseña actualizada correctamente. Redirigiendo al login...');
-      setTimeout(() => {
-        router.replace('/(auth)/login');
-      }, 2000);
+      await authApi.cambiarPassword(resetToken, newPassword);
+      setSuccessMsg('\u2705 Contraseña actualizada correctamente.');
+    } catch (err: any) {
+      setErrNew(err?.message ?? 'No se pudo cambiar la contraseña. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -132,8 +132,20 @@ export default function CambiarPasswordScreen() {
               )}
             </Pressable>
 
-            {/* Mensaje de éxito inline — sin modal */}
-            {successMsg ? <Text style={cambiarStyles.successText}>{successMsg}</Text> : null}
+            {/* Mensaje de éxito con botón para ir al login */}
+            {successMsg ? (
+              <View style={{ alignItems: 'center', marginTop: 4 }}>
+                <Text style={cambiarStyles.successText}>{successMsg}</Text>
+                <Pressable
+                  style={({ pressed }) => [cambiarStyles.button, pressed && cambiarStyles.buttonPressed]}
+                  onPress={() => router.replace('/(auth)/login')}
+                >
+                  {({ pressed }) => (
+                    <Text style={[cambiarStyles.buttonText, pressed && cambiarStyles.buttonTextPressed]}>Ir al login</Text>
+                  )}
+                </Pressable>
+              </View>
+            ) : null}
 
             <Pressable onPress={() => router.back()} style={cambiarStyles.backRow}>
               <Text style={cambiarStyles.backText}>← Volver atrás</Text>

@@ -6,7 +6,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import restablecerStyles from '@/Styles/restablecimientoPaswword';
-import { validarCorreoGmail, validarCorreoRegistrado } from '@/utils/validaciones';
+import { validarCorreoGmail } from '@/utils/validaciones';
+import { authApi } from '@/utils/api';
 
 export default function RestablecimientoPasswordScreen() {
   const router = useRouter();
@@ -26,7 +27,6 @@ export default function RestablecimientoPasswordScreen() {
   }, []);
 
   const handleSend = async () => {
-    // Paso 1: valida el formato @gmail.com
     const eFormato = validarCorreoGmail(email);
     if (eFormato) {
       setErrEmail(eFormato);
@@ -35,17 +35,11 @@ export default function RestablecimientoPasswordScreen() {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-
-      // Paso 2: valida si el correo está registrado en el sistema
-      const eRegistro = validarCorreoRegistrado(email);
-      if (eRegistro) {
-        setErrEmail(eRegistro);
-        return;
-      }
-
-      // Correo válido y registrado → navega al código de verificación
-      router.push('/(auth)/codigoVerificacion' as any);
+      await authApi.solicitarRecuperacion(email.trim().toLowerCase());
+      // Pasa el correo a la siguiente pantalla como parámetro
+      router.push(`/(auth)/codigoVerificacion?correo=${encodeURIComponent(email.trim().toLowerCase())}` as any);
+    } catch (err: any) {
+      setErrEmail(err?.message ?? 'No se pudo enviar el código. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }

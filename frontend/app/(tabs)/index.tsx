@@ -218,30 +218,6 @@ export default function HomeScreen() {
   const [verifyLoading, setVerifyLoading]     = useState(false);
   // error: mensaje de error dentro del modal
   const [verifyError, setVerifyError]         = useState('');
-  // resend cooldown: segundos restantes para poder reenviar (0 = habilitado)
-  const [resendCooldown, setResendCooldown]   = useState(0);
-  const resendTimer = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  // ─── Estado y animación del modal de éxito ───────────────────────────────
-  const [successVisible, setSuccessVisible]   = useState(false);
-  const successScale   = useRef(new Animated.Value(0.7)).current;
-  const successOpacity = useRef(new Animated.Value(0)).current;
-
-  const showSuccess = () => {
-    setSuccessVisible(true);
-    successScale.setValue(0.7);
-    successOpacity.setValue(0);
-    Animated.parallel([
-      Animated.spring(successScale,   { toValue: 1,   useNativeDriver: true, friction: 6 }),
-      Animated.timing(successOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
-    ]).start();
-  };
-
-  const hideSuccess = () => {
-    Animated.timing(successOpacity, { toValue: 0, duration: 180, useNativeDriver: true }).start(
-      () => setSuccessVisible(false)
-    );
-  };
 
   // Ref al ScrollView principal de la página (para hacer scroll programático a secciones)
   const scrollRef = useRef<ScrollView>(null);
@@ -488,15 +464,6 @@ export default function HomeScreen() {
     try {
       await authApi.enviarCodigoCliente(form.email.trim().toLowerCase());
       setVerifyVisible(true);
-      // Inicia cooldown de 30 segundos al abrir el modal
-      setResendCooldown(30);
-      if (resendTimer.current) clearInterval(resendTimer.current);
-      resendTimer.current = setInterval(() => {
-        setResendCooldown((prev) => {
-          if (prev <= 1) { clearInterval(resendTimer.current!); return 0; }
-          return prev - 1;
-        });
-      }, 1000);
     } catch (err: any) {
       Alert.alert('Error', err?.message ?? 'No se pudo enviar el código. Intenta de nuevo.');
     } finally {
@@ -520,8 +487,8 @@ export default function HomeScreen() {
         nombreCliente:       form.name.trim(),
         telefono:            form.phone.trim(),
         correoCliente:       form.email.trim().toLowerCase(),
-        marca:               form.brand.trim(),
-        modelo:              form.model.trim(),
+        marcaVehiculo:       form.brand.trim(),
+        modeloVehiculo:      form.model.trim(),
         anio:                parseInt(form.year, 10),
         placa:               form.plate.trim().toUpperCase(),
         kilometraje:         parseInt(form.mileage, 10),
@@ -530,12 +497,11 @@ export default function HomeScreen() {
         fechaCita:           appointmentDate
           ? new Date(`${appointmentDate.toISOString().split('T')[0]}T${appointmentTime}:00`).toISOString()
           : new Date().toISOString(),
-        horaCita:            appointmentTime ?? undefined,
       });
 
       setVerifyVisible(false);
       resetForm();
-      showSuccess();
+      Alert.alert('¡Solicitud enviada!', 'Tu solicitud fue registrada correctamente. Pronto nos pondremos en contacto contigo.');
     } catch (err: any) {
       setVerifyError(err?.message ?? 'Código incorrecto o expirado. Intenta de nuevo.');
     } finally {
@@ -1404,62 +1370,6 @@ export default function HomeScreen() {
 
       </ScrollView>
 
-      {/* ─── Modal: éxito al enviar solicitud ─────────────────────────────── */}
-      <Modal visible={successVisible} transparent animationType="none">
-        <Animated.View style={{
-          flex: 1, backgroundColor: 'rgba(0,0,0,0.55)',
-          justifyContent: 'center', alignItems: 'center', padding: 32,
-          opacity: successOpacity,
-        }}>
-          <Animated.View style={{
-            backgroundColor: '#ffffff', borderRadius: 20, padding: 36,
-            width: '100%', maxWidth: 360, alignItems: 'center',
-            transform: [{ scale: successScale }],
-            shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-            shadowOpacity: 0.18, shadowRadius: 20, elevation: 12,
-          }}>
-            {/* Ícono de check */}
-            <View style={{
-              width: 72, height: 72, borderRadius: 36,
-              backgroundColor: '#111111', justifyContent: 'center',
-              alignItems: 'center', marginBottom: 20,
-            }}>
-              <FontAwesome name="check" size={32} color="#ffffff" />
-            </View>
-
-            <Text style={{
-              fontSize: 22, fontWeight: '800', color: '#111111',
-              marginBottom: 10, textAlign: 'center', letterSpacing: 0.3,
-            }}>
-              ¡Solicitud enviada!
-            </Text>
-
-            <Text style={{
-              fontSize: 14, color: '#555555', textAlign: 'center',
-              lineHeight: 22, marginBottom: 28,
-            }}>
-              Tu solicitud fue registrada correctamente.{`\n`}
-              Pronto nos pondremos en contacto contigo.
-            </Text>
-
-            {/* Separador */}
-            <View style={{ width: '100%', height: 1, backgroundColor: '#eeeeee', marginBottom: 20 }} />
-
-            <Pressable
-              style={({ pressed }) => ({
-                backgroundColor: pressed ? '#333333' : '#111111',
-                borderRadius: 12, paddingVertical: 14, paddingHorizontal: 48,
-              })}
-              onPress={hideSuccess}
-            >
-              <Text style={{ color: '#ffffff', fontWeight: '700', fontSize: 15, letterSpacing: 0.5 }}>
-                Aceptar
-              </Text>
-            </Pressable>
-          </Animated.View>
-        </Animated.View>
-      </Modal>
-
       {/* ─── Modal: verificación de correo del cliente ───────────────────── */}
       <Modal
         visible={verifyVisible}
@@ -1521,35 +1431,6 @@ export default function HomeScreen() {
               onPress={() => setVerifyVisible(false)}
             >
               <Text style={{ color: '#64748B', fontSize: 14 }}>Cancelar</Text>
-            </Pressable>
-
-            {/* ── Reenviar código ── */}
-            <Pressable
-              style={{ marginTop: 10, alignItems: 'center', opacity: resendCooldown > 0 ? 0.4 : 1 }}
-              disabled={resendCooldown > 0}
-              onPress={async () => {
-                setVerifyError('');
-                setVerifyCode('');
-                try {
-                  await authApi.enviarCodigoCliente(form.email.trim().toLowerCase());
-                  setResendCooldown(30);
-                  if (resendTimer.current) clearInterval(resendTimer.current);
-                  resendTimer.current = setInterval(() => {
-                    setResendCooldown((prev) => {
-                      if (prev <= 1) { clearInterval(resendTimer.current!); return 0; }
-                      return prev - 1;
-                    });
-                  }, 1000);
-                } catch {
-                  setVerifyError('No se pudo reenviar el código. Intenta de nuevo.');
-                }
-              }}
-            >
-              <Text style={{ color: '#60A5FA', fontSize: 13 }}>
-                {resendCooldown > 0
-                  ? `Reenviar código (${resendCooldown}s)`
-                  : 'Reenviar código'}
-              </Text>
             </Pressable>
           </View>
         </View>

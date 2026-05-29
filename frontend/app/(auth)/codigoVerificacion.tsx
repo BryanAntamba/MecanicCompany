@@ -3,13 +3,16 @@ import {
   Animated, ImageBackground, KeyboardAvoidingView,
   Platform, Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import codigoStyles from '@/Styles/codigoVerificacion';
 import { validarCodigoVerificacion } from '@/utils/validaciones';
+import { authApi } from '@/utils/api';
 
 export default function CodigoVerificacionScreen() {
   const router = useRouter();
+  // Correo personal recibido de la pantalla anterior
+  const { correo = '' } = useLocalSearchParams<{ correo: string }>();
 
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,7 +29,7 @@ export default function CodigoVerificacionScreen() {
   }, []);
 
   const handleVerificar = async () => {
-    // Valida formato y valor del código — todo en validaciones.ts
+    // Valida formato (6 dígitos) antes de llamar al backend
     const err = validarCodigoVerificacion(codigo);
     if (err) {
       setErrCodigo(err);
@@ -35,9 +38,11 @@ export default function CodigoVerificacionScreen() {
 
     setLoading(true);
     try {
-      await new Promise((r) => setTimeout(r, 1000));
-      // Código correcto → navega a cambiar contraseña
-      router.push('/(auth)/cambiarPassword' as any);
+      const { resetToken } = await authApi.verificarCodigo(correo, codigo.trim());
+      // Pasa el resetToken (no el correo) a cambiarPassword
+      router.push(`/(auth)/cambiarPassword?resetToken=${encodeURIComponent(resetToken)}` as any);
+    } catch (err: any) {
+      setErrCodigo(err?.message ?? 'Código inválido o expirado. Intenta de nuevo.');
     } finally {
       setLoading(false);
     }

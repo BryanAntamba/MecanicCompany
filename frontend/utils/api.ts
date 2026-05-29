@@ -6,19 +6,7 @@
 //   - Android emulator → cambia por http://10.0.2.2:3000/api
 //   - Dispositivo real → usa la IP local del PC, p. ej. http://192.168.1.X:3000/api
 
-import Constants from 'expo-constants';
-
-function getBaseUrl(): string {
-  // En Expo Go, hostUri tiene la forma "192.168.X.X:8081"
-  const hostUri = Constants.expoConfig?.hostUri ?? Constants.manifest?.debuggerHost;
-  if (hostUri) {
-    const ip = hostUri.split(':')[0];
-    return `http://${ip}:3000/api`;
-  }
-  return 'http://localhost:3000/api';
-}
-
-export const BASE_URL = getBaseUrl();
+export const BASE_URL = 'http://10.20.23.191:3000/api';
 
 // ─── Tipo de error de API ─────────────────────────────────────────────────────
 export interface ApiError {
@@ -101,82 +89,19 @@ export interface CrearSolicitudBody {
     nombreCliente: string;
     telefono: string;
     correoCliente: string;
-    marca: string;
-    modelo: string;
+    marcaVehiculo: string;
+    modeloVehiculo: string;
     anio: number;
     placa: string;
     kilometraje: number;
     tipoServicio: string;
     descripcionProblema: string;
     fechaCita: string; // ISO string
-    horaCita?: string;
-}
-
-export interface MantenimientoBackend {
-    id: string;
-    solicitudId: string;
-    marca: string;
-    modelo: string;
-    placa: string;
-    mecanicoAsignado: string;
-    diagnostico: string;
-    trabajoRealizado: string;
-    otroTrabajo: string;
-    repuestosUtilizados: string;
-    diagnosticoRealizado: string;
-    costoManoObra: string | number;
-    costoRepuestos: string | number;
-    observaciones: string;
-    fechaServicio: string;
-    fechaInicio: string;
-    fechaFinalizacion: string;
-}
-
-export interface SolicitudBackend {
-    id: string;
-    nombreCliente: string;
-    telefono: string;
-    correoCliente: string;
-    marca: string;
-    modelo: string;
-    anio: string;
-    placa: string;
-    kilometraje: string;
-    tipoServicio: string;
-    otroServicio: string;
-    descripcionProblema: string;
-    fechaCita: string;
-    horaCita: string;
-    estado: 'Pendiente' | 'En_proceso' | 'Completado';
-    mantenimiento: MantenimientoBackend | null;
-}
-
-export interface ActualizarSolicitudBody {
-    nombreCliente?: string;
-    telefono?: string;
-    correoCliente?: string;
-    marca?: string;
-    modelo?: string;
-    anio?: string;
-    placa?: string;
-    kilometraje?: string;
-    tipoServicio?: string;
-    otroServicio?: string;
-    descripcionProblema?: string;
-    fechaCita?: string;
-    horaCita?: string;
-    estado?: string;
 }
 
 export const solicitudesApi = {
     crear: (body: CrearSolicitudBody) =>
         request<{ id: string }>('POST', '/solicitudes', body),
-
-    listar: (token: string) =>
-        request<SolicitudBackend[]>('GET', '/solicitudes', undefined, token),
-
-    actualizar: (id: string, body: ActualizarSolicitudBody, token: string) =>
-        request<SolicitudBackend>('PUT', `/solicitudes/${id}`, body, token),
 };
 
 // ─── API Mecánicos (admin) ────────────────────────────────────────────────────
@@ -221,33 +146,4 @@ export const mecanicosApi = {
 
     cambiarEstado: (id: string, estadoLaboral: string, token: string) =>
         request<Mecanico>('PATCH', `/mecanicos/${id}/estado`, { estadoLaboral }, token),
-};
-
-// ─── API Mantenimientos ───────────────────────────────────────────────────────
-
-export interface CrearMantenimientoBody {
-    solicitudId: string;
-    marca: string;
-    modelo: string;
-    placa: string;
-    mecanicoAsignado: string;
-    diagnostico: string;
-    trabajoRealizado: string;
-    otroTrabajo?: string;
-    repuestosUtilizados: string;
-    diagnosticoRealizado: string;
-    observaciones: string;
-    costoManoObra: string;
-    costoRepuestos: string;
-    fechaServicio: string;
-    fechaInicio: string;
-    fechaFinalizacion: string;
-}
-
-export const mantenimientosApi = {
-    crear: (body: CrearMantenimientoBody, token: string) =>
-        request<MantenimientoBackend>('POST', '/mantenimientos', body, token),
-
-    actualizar: (id: string, body: Partial<CrearMantenimientoBody> & { estadoSolicitud?: string }, token: string) =>
-        request<MantenimientoBackend>('PUT', `/mantenimientos/${id}`, body, token),
 };

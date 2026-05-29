@@ -185,9 +185,12 @@ export const validarCostoObligatorio = (valor: string, campo: string): string | 
 };
 
 // ─── validarContrasena ────────────────────────────────────────────────────────
-// No vacía.
+// Mínimo 8 caracteres, al menos una letra y un número.
 export const validarContrasena = (valor: string, campo = 'La contraseña'): string | null => {
   if (!valor.trim()) return `${campo} es obligatoria.`;
+  if (valor.length < 8) return `${campo} debe tener al menos 8 caracteres.`;
+  if (!/[a-zA-Z]/.test(valor)) return `${campo} debe incluir al menos una letra.`;
+  if (!/[0-9]/.test(valor)) return `${campo} debe incluir al menos un número.`;
   return null;
 };
 
@@ -226,7 +229,5 @@ export const validarCorreoRegistrado = (email: string): string | null => {
 export const validarCodigoVerificacion = (codigo: string): string | null => {
   if (!codigo.trim()) return 'El código de verificación es obligatorio.';
   if (!/^\d{6}$/.test(codigo.trim())) return 'El código debe tener exactamente 6 dígitos.';
-  if (codigo.trim() !== '123456')
-    return 'El código ingresado es incorrecto. Verifica tu correo e intenta de nuevo.';
   return null;
 };

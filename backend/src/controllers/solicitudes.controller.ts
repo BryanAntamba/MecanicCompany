@@ -69,33 +69,46 @@ export async function crearSolicitud(req: Request, res: Response): Promise<void>
 
 // PUT /api/solicitudes/:id
 export async function actualizarSolicitud(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
-    const {
-        nombreCliente, telefono, correoCliente,
-        marca, modelo, anio, placa, kilometraje,
-        tipoServicio, otroServicio, descripcionProblema,
-        fechaCita, horaCita, estado, mecanicoId,
-    } = req.body;
-
-    const solicitud = await prisma.solicitud.update({
-        where: { id },
-        data: {
+    try {
+        const { id } = req.params;
+        const {
             nombreCliente, telefono, correoCliente,
             marca, modelo, anio, placa, kilometraje,
             tipoServicio, otroServicio, descripcionProblema,
             fechaCita, horaCita, estado, mecanicoId,
-        },
-        include: { mantenimiento: true },
-    });
+        } = req.body;
 
-    res.json(solicitud);
+        // Solo incluye mecanicoId en el update si fue enviado explícitamente
+        const data: Record<string, unknown> = {
+            nombreCliente, telefono, correoCliente,
+            marca, modelo, anio, placa, kilometraje,
+            tipoServicio, otroServicio, descripcionProblema,
+            fechaCita, horaCita,
+        };
+        if (estado !== undefined) data.estado = estado;
+        if (mecanicoId !== undefined) data.mecanicoId = mecanicoId || null;
+
+        const solicitud = await prisma.solicitud.update({
+            where: { id },
+            data,
+            include: { mantenimiento: true },
+        });
+
+        res.json(solicitud);
+    } catch (err: any) {
+        console.error('[actualizarSolicitud]', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al actualizar la solicitud' });
+    }
 }
 
 // DELETE /api/solicitudes/:id
 export async function eliminarSolicitud(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
-
-    await prisma.solicitud.delete({ where: { id } });
-
-    res.json({ message: 'Solicitud eliminada correctamente' });
+    try {
+        const { id } = req.params;
+        await prisma.solicitud.delete({ where: { id } });
+        res.json({ message: 'Solicitud eliminada correctamente' });
+    } catch (err: any) {
+        console.error('[eliminarSolicitud]', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al eliminar la solicitud' });
+    }
 }
