@@ -23,7 +23,8 @@ export default StyleSheet.create({
     flexGrow: 1,
     justifyContent: 'center',
     paddingHorizontal: 24,
-    paddingVertical: 48,
+    paddingVertical: 32,
+    paddingBottom: 80,        // Extra al fondo para que el botón no quede tapado por el teclado
   },
 
   // Tarjeta principal del formulario

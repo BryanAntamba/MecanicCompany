@@ -14,10 +14,10 @@ const router = Router();
 router.get('/', authMiddleware, listarMecanicos);
 
 // Las siguientes rutas requieren ser admin
-// POST /api/mecanicos
+// POST /api/mecanicos — JSON, fotoPerfil llega como string base64
 router.post('/', authMiddleware, soloAdmin, crearMecanico);
 
-// PUT /api/mecanicos/:id
+// PUT /api/mecanicos/:id — JSON, fotoPerfil llega como string base64
 router.put('/:id', authMiddleware, soloAdmin, actualizarMecanico);
 
 // DELETE /api/mecanicos/:id

@@ -55,8 +55,17 @@ export default function CodigoVerificacionScreen() {
       resizeMode="cover"
     >
       <View style={codigoStyles.overlay} />
-      <KeyboardAvoidingView style={codigoStyles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={codigoStyles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={codigoStyles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={codigoStyles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <Animated.View style={[codigoStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={codigoStyles.logo} />

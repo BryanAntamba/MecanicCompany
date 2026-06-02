@@ -31,7 +31,8 @@ export default StyleSheet.create({
     flexGrow: 1,              // Permite que el contenido crezca para centrado vertical
     justifyContent: 'center', // Centra la tarjeta verticalmente en la pantalla
     paddingHorizontal: 24,    // Margen lateral de 24px
-    paddingVertical: 48,      // Margen vertical de 48px
+    paddingVertical: 32,      // Margen vertical
+    paddingBottom: 80,        // Extra al fondo para que el botón no quede tapado por el teclado
   },
 
   // Tarjeta principal del formulario con fondo azul muy oscuro semitransparente

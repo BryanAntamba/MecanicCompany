@@ -6,7 +6,7 @@
 //   - Android emulator → cambia por http://10.0.2.2:3000/api
 //   - Dispositivo real → usa la IP local del PC, p. ej. http://192.168.1.X:3000/api
 
-export const BASE_URL = 'http://10.20.23.191:3000/api';
+export const BASE_URL = 'http://192.168.70.215:3000/api';
 
 // ─── Tipo de error de API ─────────────────────────────────────────────────────
 export interface ApiError {
@@ -76,6 +76,17 @@ export const authApi = {
     login: (correoEmpresarial: string, contrasena: string) =>
         request<LoginResponse>('POST', '/auth/login', { correoEmpresarial, contrasena }),
 
+    // ── Recuperación de contraseña ────────────────────────────────────────────
+    solicitarRecuperacion: (correo: string) =>
+        request<{ message: string }>('POST', '/auth/recuperar', { correo }),
+
+    verificarCodigo: (correo: string, codigo: string) =>
+        request<{ message: string; resetToken: string }>('POST', '/auth/verificar-codigo', { correo, codigo }),
+
+    cambiarPassword: (resetToken: string, nuevaContrasena: string) =>
+        request<{ message: string }>('PUT', '/auth/cambiar-password', { resetToken, nuevaContrasena }),
+
+    // ── Verificación de correo de clientes ────────────────────────────────────
     enviarCodigoCliente: (correo: string) =>
         request<{ message: string }>('POST', '/auth/enviar-codigo-cliente', { correo }),
 
@@ -89,19 +100,86 @@ export interface CrearSolicitudBody {
     nombreCliente: string;
     telefono: string;
     correoCliente: string;
-    marcaVehiculo: string;
-    modeloVehiculo: string;
+    marca: string;
+    modelo: string;
     anio: number;
     placa: string;
     kilometraje: number;
     tipoServicio: string;
+    otroServicio?: string;
     descripcionProblema: string;
     fechaCita: string; // ISO string
+    horaCita?: string;
+}
+
+// Tipo que devuelve el backend al listar solicitudes
+export interface SolicitudBackend {
+    id: string;
+    mecanicoId: string | null;
+    nombreCliente: string;
+    telefono: string;
+    correoCliente: string;
+    marca: string;
+    modelo: string;
+    anio: string;
+    placa: string;
+    kilometraje: string;
+    tipoServicio: string;
+    otroServicio: string;
+    descripcionProblema: string;
+    fechaCita: string;
+    horaCita: string;
+    estado: string;
+    mantenimiento: {
+        id: string;
+        marca: string;
+        modelo: string;
+        placa: string;
+        año: string;
+        kilometraje: string;
+        fechaServicio: string;
+        mecanicoAsignado: string;
+        diagnostico: string;
+        trabajoRealizado: string;
+        otroTrabajo: string;
+        repuestosUtilizados: string;
+        diagnosticoRealizado: string;
+        costoManoObra: number;
+        costoRepuestos: number;
+        observaciones: string;
+        fechaInicio: string;
+        fechaFinalizacion: string;
+    } | null;
+}
+
+export interface ActualizarSolicitudBody {
+    nombreCliente: string;
+    telefono: string;
+    correoCliente: string;
+    marca: string;
+    modelo: string;
+    anio: string;
+    placa: string;
+    kilometraje: string;
+    tipoServicio: string;
+    otroServicio: string;
+    descripcionProblema: string;
+    fechaCita: string;
+    horaCita: string;
 }
 
 export const solicitudesApi = {
     crear: (body: CrearSolicitudBody) =>
         request<{ id: string }>('POST', '/solicitudes', body),
+
+    listar: (token: string) =>
+        request<SolicitudBackend[]>('GET', '/solicitudes', undefined, token),
+
+    actualizar: (id: string, body: ActualizarSolicitudBody, token: string) =>
+        request<SolicitudBackend>('PUT', `/solicitudes/${id}`, body, token),
+
+    eliminar: (id: string, token: string) =>
+        request<{ message: string }>('DELETE', `/solicitudes/${id}`, undefined, token),
 };
 
 // ─── API Mecánicos (admin) ────────────────────────────────────────────────────
@@ -146,4 +224,41 @@ export const mecanicosApi = {
 
     cambiarEstado: (id: string, estadoLaboral: string, token: string) =>
         request<Mecanico>('PATCH', `/mecanicos/${id}/estado`, { estadoLaboral }, token),
+};
+
+// ─── API Mantenimientos ───────────────────────────────────────────────────────
+
+export interface CrearMantenimientoBody {
+    solicitudId: string;
+    marca: string;
+    modelo: string;
+    placa: string;
+    mecanicoAsignado: string;
+    diagnostico: string;
+    trabajoRealizado: string;
+    otroTrabajo: string;
+    repuestosUtilizados: string;
+    diagnosticoRealizado: string;
+    observaciones: string;
+    costoManoObra: string;
+    costoRepuestos: string;
+    fechaServicio: string;
+    fechaInicio: string;
+    fechaFinalizacion: string;
+}
+
+export const mantenimientosApi = {
+    crear: (body: CrearMantenimientoBody, token: string) =>
+        request<{ id: string }>('POST', '/mantenimientos', body, token),
+
+    actualizar: (id: string, body: Partial<CrearMantenimientoBody>, token: string) =>
+        request<{ id: string }>('PUT', `/mantenimientos/${id}`, body, token),
+};
+
+// ─── API Reportes ──────────────────────────────────────────────────────────────
+
+export const reportesApi = {
+    // Envía el reporte al correo del cliente y marca la solicitud como Completado
+    enviar: (solicitudId: string, token: string) =>
+        request<{ message: string }>('POST', `/reportes/enviar/${solicitudId}`, undefined, token),
 };

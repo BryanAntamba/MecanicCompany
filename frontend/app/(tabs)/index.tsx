@@ -222,6 +222,12 @@ export default function HomeScreen() {
   // Ref al ScrollView principal de la página (para hacer scroll programático a secciones)
   const scrollRef = useRef<ScrollView>(null);
 
+  // Dispara la animación del logo del video al montar — la sección es visible sin hacer scroll
+  useEffect(() => {
+    const t = setTimeout(() => triggerVideoBgLogo(), 300);
+    return () => clearTimeout(t);
+  }, []);
+
   // Lee parámetros de la ruta — Contactanos pasa scrollTo='about' para navegar a Nosotros
   const { scrollTo } = useLocalSearchParams<{ scrollTo?: string }>();
 
@@ -487,16 +493,18 @@ export default function HomeScreen() {
         nombreCliente:       form.name.trim(),
         telefono:            form.phone.trim(),
         correoCliente:       form.email.trim().toLowerCase(),
-        marcaVehiculo:       form.brand.trim(),
-        modeloVehiculo:      form.model.trim(),
+        marca:               form.brand.trim(),
+        modelo:              form.model.trim(),
         anio:                parseInt(form.year, 10),
         placa:               form.plate.trim().toUpperCase(),
         kilometraje:         parseInt(form.mileage, 10),
         tipoServicio:        form.service === 'Otro' ? form.otherService.trim() : form.service,
+        otroServicio:        form.service === 'Otro' ? form.otherService.trim() : '',
         descripcionProblema: form.details.trim(),
         fechaCita:           appointmentDate
           ? new Date(`${appointmentDate.toISOString().split('T')[0]}T${appointmentTime}:00`).toISOString()
           : new Date().toISOString(),
+        horaCita:            appointmentTime ?? '',
       });
 
       setVerifyVisible(false);

@@ -13,32 +13,39 @@ export async function crearMantenimiento(req: Request, res: Response): Promise<v
       fechaServicio, fechaInicio, fechaFinalizacion,
     } = req.body;
 
-    const solicitud = await prisma.solicitud.findUnique({ where: { id: solicitudId } });
+    const solicitud = await prisma.solicitud.findUnique({
+      where: { id: solicitudId },
+      include: { mecanico: true },
+    });
     if (!solicitud) {
       res.status(404).json({ message: 'Solicitud no encontrada' });
       return;
     }
 
+    const mantenimientoData = {
+      solicitudId, marca, modelo, placa,
+      mecanicoAsignado, diagnostico, trabajoRealizado,
+      otroTrabajo: otroTrabajo ?? '',
+      repuestosUtilizados, diagnosticoRealizado, observaciones,
+      costoManoObra, costoRepuestos,
+      fechaServicio, fechaInicio, fechaFinalizacion,
+    };
+
+    const mecanicoId = req.user!.id;
+
     const [mantenimiento] = await prisma.$transaction([
-      prisma.mantenimiento.create({
-        data: {
-          solicitudId, marca, modelo, placa,
-          mecanicoAsignado, diagnostico, trabajoRealizado,
-          otroTrabajo: otroTrabajo ?? '',
-          repuestosUtilizados, diagnosticoRealizado, observaciones,
-          costoManoObra, costoRepuestos,
-          fechaServicio, fechaInicio, fechaFinalizacion,
-        },
+      // upsert: crea si no existe, actualiza si ya existe (evita unique constraint)
+      prisma.mantenimiento.upsert({
+        where: { solicitudId },
+        create: mantenimientoData,
+        update: mantenimientoData,
       }),
+      // Asigna el mecánico que guardó el mantenimiento y marca En_proceso
       prisma.solicitud.update({
         where: { id: solicitudId },
-        data: { estado: 'En_proceso' },
+        data: { estado: 'En_proceso', mecanicoId },
       }),
     ]);
-
-    enviarReporteEmail(solicitud.correoCliente, solicitud, mantenimiento).catch((err) => {
-      console.error('[EMAIL] Error al enviar reporte de mantenimiento:', err);
-    });
 
     res.status(201).json(mantenimiento);
   } catch (err: any) {

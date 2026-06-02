@@ -78,8 +78,17 @@ export default function CambiarPasswordScreen() {
       resizeMode="cover"
     >
       <View style={cambiarStyles.overlay} />
-      <KeyboardAvoidingView style={cambiarStyles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={cambiarStyles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        style={cambiarStyles.keyboardView}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={cambiarStyles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
           <Animated.View style={[cambiarStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={cambiarStyles.logo} />

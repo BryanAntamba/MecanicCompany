@@ -1,6 +1,7 @@
 import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
+import path from 'path';
 
 import authRoutes from './routes/auth.routes';
 import mecanicosRoutes from './routes/mecanicos.routes';
@@ -35,7 +36,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-app.use(express.json({ limit: '50kb' })); // límite de payload para evitar DoS
+app.use(express.json({ limit: '10mb' })); // límite ampliado para base64 de fotos de perfil
+
+// ─── Archivos estáticos: fotos de mecánicos ───────────────────────────────────
+// GET /uploads/mecanicos/:filename → sirve las fotos guardadas por multer
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // ─── Rutas ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);

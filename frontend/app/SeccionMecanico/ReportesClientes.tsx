@@ -4,7 +4,7 @@
 // y enviar el reporte técnico al correo del cliente.
 
 // Hooks de React para manejar estado local y efectos secundarios
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 // Componentes nativos de React Native
 import {
@@ -35,7 +35,7 @@ import styles from '@/Styles/ReportesClientes';
 import { useAuth } from '@/context/AuthContext';
 
 // API de mecánicos para cargar la lista dinámica
-import { mecanicosApi, mantenimientosApi, solicitudesApi, SolicitudBackend } from '@/utils/api';
+import { mecanicosApi, mantenimientosApi, solicitudesApi, reportesApi, SolicitudBackend } from '@/utils/api';
 
 // Validación del nombre completo en el modal de edición
 import {
@@ -153,10 +153,14 @@ export default function ReportesClientesScreen() {
   );
 
   // Token JWT del mecánico autenticado
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   // Lista de solicitudes de clientes
   const [lista, setLista] = useState<Solicitud[]>([]);
+  // true mientras carga desde el backend
+  const [cargando, setCargando] = useState(false);
+  // Mensaje de error si la carga falla
+  const [errorCarga, setErrorCarga] = useState('');
 
   // Lista de mecánicos cargada desde el backend
   const [mecanicosList, setMecanicosList] = useState<string[]>([]);
@@ -180,109 +184,124 @@ export default function ReportesClientesScreen() {
   };
 
   // Carga solicitudes y mecánicos al montar la pantalla
-  useEffect(() => {
-    if (!token) return;
+  // Recarga solicitudes y mecánicos cada vez que la pantalla entra en foco
+  useFocusEffect(
+    useCallback(() => {
+      if (!token) return;
+      setCargando(true);
+      setErrorCarga('');
 
-    solicitudesApi.listar(token)
-      .then((data: SolicitudBackend[]) => {
-        const mapped: Solicitud[] = data.map((s) => ({
-          id:                  s.id,
-          nombre:              s.nombreCliente,
-          telefono:            s.telefono,
-          correo:              s.correoCliente,
-          marca:               s.marca,
-          modelo:              s.modelo,
-          año:                 s.anio,
-          placa:               s.placa,
-          kilometraje:         s.kilometraje,
-          tipoServicio:        s.tipoServicio,
-          otroServicio:        s.otroServicio,
-          descripcionProblema: s.descripcionProblema,
-          fechaCita:           s.fechaCita,
-          horaCita:            s.horaCita,
-          estado:              (s.estado === 'En_proceso' ? 'En proceso' : s.estado) as EstadoSolicitud,
-          mantenimiento: s.mantenimiento ? {
-            marca:                s.mantenimiento.marca,
-            modelo:               s.mantenimiento.modelo,
-            placa:                s.mantenimiento.placa,
-            fechaServicio:        s.mantenimiento.fechaServicio,
-            mecanicoAsignado:     s.mantenimiento.mecanicoAsignado,
-            diagnostico:          s.mantenimiento.diagnostico,
-            trabajoRealizado:     s.mantenimiento.trabajoRealizado,
-            otroTrabajo:          s.mantenimiento.otroTrabajo,
-            repuestosUtilizados:  s.mantenimiento.repuestosUtilizados,
-            diagnosticoRealizado: s.mantenimiento.diagnosticoRealizado,
-            costoManoObra:        String(s.mantenimiento.costoManoObra),
-            costoRepuestos:       String(s.mantenimiento.costoRepuestos),
-            observaciones:        s.mantenimiento.observaciones,
-            fechaInicio:          s.mantenimiento.fechaInicio,
-            fechaFinalizacion:    s.mantenimiento.fechaFinalizacion,
-          } : null,
-        }));
-        setLista(mapped);
-      })
-      .catch(() => {});
+      solicitudesApi.listar(token)
+        .then((data: SolicitudBackend[]) => {
+          const mapped: Solicitud[] = data
+            // Todas las solicitudes que aún no tienen reporte enviado (no Completado)
+            .filter((s) => s.estado !== 'Completado')
+            .map((s) => ({
+            id: s.id,
+            nombre: s.nombreCliente,
+            telefono: s.telefono,
+            correo: s.correoCliente,
+            marca: s.marca,
+            modelo: s.modelo,
+            año: s.anio,
+            placa: s.placa,
+            kilometraje: s.kilometraje,
+            tipoServicio: s.tipoServicio,
+            otroServicio: s.otroServicio,
+            descripcionProblema: s.descripcionProblema,
+            fechaCita: s.fechaCita,
+            horaCita: s.horaCita,
+            estado: (s.estado === 'En_proceso' ? 'En proceso' : s.estado) as EstadoSolicitud,
+            mantenimiento: s.mantenimiento ? {
+              marca: s.mantenimiento.marca,
+              modelo: s.mantenimiento.modelo,
+              placa: s.mantenimiento.placa,
+              año: s.mantenimiento.año ?? s.anio,
+              kilometraje: s.mantenimiento.kilometraje ?? s.kilometraje,
+              fechaServicio: s.mantenimiento.fechaServicio,
+              mecanicoAsignado: s.mantenimiento.mecanicoAsignado,
+              diagnostico: s.mantenimiento.diagnostico,
+              trabajoRealizado: s.mantenimiento.trabajoRealizado,
+              otroTrabajo: s.mantenimiento.otroTrabajo,
+              repuestosUtilizados: s.mantenimiento.repuestosUtilizados,
+              diagnosticoRealizado: s.mantenimiento.diagnosticoRealizado,
+              costoManoObra: String(s.mantenimiento.costoManoObra),
+              costoRepuestos: String(s.mantenimiento.costoRepuestos),
+              observaciones: s.mantenimiento.observaciones,
+              fechaInicio: s.mantenimiento.fechaInicio,
+              fechaFinalizacion: s.mantenimiento.fechaFinalizacion,
+            } : null,
+          }));
+          setLista(mapped);
+        })
+        .catch((err: any) => {
+          setErrorCarga(err?.message ?? 'No se pudieron cargar las solicitudes.');
+        })
+        .finally(() => setCargando(false));
 
-    cargarMecanicos(token);
-  }, [token]);
+      cargarMecanicos(token);
+    }, [token, user?.id]),
+  );
 
   // ESTADOS DEL MODAL EDITAR SOLICITUD 
-  const [editModal, setEditModal]           = useState(false);
-  const [editId, setEditId]                 = useState<string | null>(null);
-  const [editForm, setEditForm]             = useState<Partial<Solicitud>>({});
+  const [editModal, setEditModal] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Solicitud>>({});
   const [editServDropdown, setEditServDropdown] = useState(false);
 
   // Estados de error — uno por campo del modal de edición
-  const [errNombre, setErrNombre]           = useState('');
-  const [errTelefono, setErrTelefono]       = useState('');
-  const [errCorreo, setErrCorreo]           = useState('');
-  const [errMarca, setErrMarca]             = useState('');
-  const [errModelo, setErrModelo]           = useState('');
-  const [errAño, setErrAño]                 = useState('');
-  const [errPlaca, setErrPlaca]             = useState('');
-  const [errKm, setErrKm]                   = useState('');
-  const [errServicio, setErrServicio]       = useState('');
+  const [errNombre, setErrNombre] = useState('');
+  const [errTelefono, setErrTelefono] = useState('');
+  const [errCorreo, setErrCorreo] = useState('');
+  const [errMarca, setErrMarca] = useState('');
+  const [errModelo, setErrModelo] = useState('');
+  const [errAño, setErrAño] = useState('');
+  const [errPlaca, setErrPlaca] = useState('');
+  const [errKm, setErrKm] = useState('');
+  const [errServicio, setErrServicio] = useState('');
   const [errOtroServicio, setErrOtroServicio] = useState('');
   const [errDescripcion, setErrDescripcion] = useState('');
 
   // ESTADOS DEL MODAL REGISTRO/EDITAR MANTENIMIENTO
-  const [maintModal, setMaintModal]         = useState(false);           // Visibilidad del modal
-  const [maintId, setMaintId]               = useState<string | null>(null); // ID de la solicitud a registrar
-  const [maintForm, setMaintForm]           = useState<Mantenimiento>(formMantVacio()); // Datos del formulario
-  const [mecDropdown, setMecDropdown]       = useState(false);           // Dropdown de mecánico abierto
+  const [maintModal, setMaintModal] = useState(false);           // Visibilidad del modal
+  const [maintId, setMaintId] = useState<string | null>(null); // ID de la solicitud a registrar
+  const [maintForm, setMaintForm] = useState<Mantenimiento>(formMantVacio()); // Datos del formulario
+  const [mecDropdown, setMecDropdown] = useState(false);           // Dropdown de mecánico abierto
   const [trabajoDropdown, setTrabajoDropdown] = useState(false);         // Dropdown de trabajo abierto
 
   // Estados de error del modal de mantenimiento
-  const [errMaintMarca, setErrMaintMarca]       = useState('');
-  const [errMaintModelo, setErrMaintModelo]     = useState('');
-  const [errMaintPlaca, setErrMaintPlaca]       = useState('');
-  const [errMaintAño, setErrMaintAño]           = useState('');
-  const [errMaintKm, setErrMaintKm]             = useState('');
+  const [errMaintMarca, setErrMaintMarca] = useState('');
+  const [errMaintModelo, setErrMaintModelo] = useState('');
+  const [errMaintPlaca, setErrMaintPlaca] = useState('');
+  const [errMaintAño, setErrMaintAño] = useState('');
+  const [errMaintKm, setErrMaintKm] = useState('');
   const [errMaintFechaServ, setErrMaintFechaServ] = useState('');
   const [errMaintMecAsinado, setErrMaintMecAsinado] = useState('');
   const [errMaintDiagnost, setErrMaintDiagnost] = useState('');
-  const [errMaintTrabajo, setErrMaintTrabajo]   = useState('');
+  const [errMaintTrabajo, setErrMaintTrabajo] = useState('');
   const [errMaintOtroTrabajo, setErrMaintOtroTrabajo] = useState('');
   const [errMaintRepuestos, setErrMaintRepuestos] = useState('');
   const [errMaintDiagReal, setErrMaintDiagReal] = useState('');
   const [errMaintManoObra, setErrMaintManoObra] = useState('');
   const [errMaintCostoRep, setErrMaintCostoRep] = useState('');
-  const [errMaintObserv, setErrMaintObserv]     = useState('');
+  const [errMaintObserv, setErrMaintObserv] = useState('');
   const [errMaintFechaInit, setErrMaintFechaInit] = useState('');
   const [errMaintFechaFinal, setErrMaintFechaFinal] = useState('');
 
   // ESTADOS DEL MODAL ENVIAR REPORTE
-  const [sendModal, setSendModal]           = useState(false);           // Visibilidad del modal
-  const [sendTarget, setSendTarget]         = useState<Solicitud | null>(null); // Solicitud a enviar
-  const [sendSuccess, setSendSuccess]       = useState(false);           // true = mostrar pantalla de éxito
+  const [sendModal, setSendModal] = useState(false);
+  const [sendTarget, setSendTarget] = useState<Solicitud | null>(null);
+  const [sendSuccess, setSendSuccess] = useState(false);
+  const [sendLoading, setSendLoading] = useState(false);   // Cargando mientras espera respuesta
+  const [sendError, setSendError] = useState('');          // Error del backend si falla
 
   // Estado de guardado del modal de mantenimiento
-  const [maintSaving, setMaintSaving]       = useState(false);
+  const [maintSaving, setMaintSaving] = useState(false);
   const [maintSaveError, setMaintSaveError] = useState('');
 
   // ESTADOS DEL MODAL ELIMINAR
-  const [deleteModal, setDeleteModal]       = useState(false);           // Visibilidad del modal
-  const [deleteTarget, setDeleteTarget]     = useState<Solicitud | null>(null); // Solicitud a eliminar
+  const [deleteModal, setDeleteModal] = useState(false);           // Visibilidad del modal
+  const [deleteTarget, setDeleteTarget] = useState<Solicitud | null>(null); // Solicitud a eliminar
 
   // FUNCIÓN: ABRIR MODAL EDITAR
   // Pre-llena el formulario con los datos actuales de la solicitud
@@ -301,18 +320,18 @@ export default function ReportesClientesScreen() {
   const guardarEditar = async () => {
     if (!editId || !token) return;
 
-    const eNombre      = validarNombreCompleto(editForm.nombre ?? '');
-    const eTelefono    = validarTelefono(editForm.telefono ?? '');
-    const eCorreo      = validarCorreoGmail(editForm.correo ?? '');
-    const eMarca       = validarSoloTexto(editForm.marca ?? '', 'La marca');
-    const eModelo      = validarModelo(editForm.modelo ?? '');
-    const eAño         = validarAño(editForm.año ?? '');
-    const ePlaca       = validarPlaca(editForm.placa ?? '');
-    const eKm          = validarSoloNumeros(editForm.kilometraje ?? '', 'El kilometraje');
-    const eServicio    = validarObligatorio(editForm.tipoServicio, 'El tipo de servicio');
-    const eOtroServ    = editForm.tipoServicio === 'Otro'
-                          ? validarOtroServicio(editForm.otroServicio ?? '')
-                          : null;
+    const eNombre = validarNombreCompleto(editForm.nombre ?? '');
+    const eTelefono = validarTelefono(editForm.telefono ?? '');
+    const eCorreo = validarCorreoGmail(editForm.correo ?? '');
+    const eMarca = validarSoloTexto(editForm.marca ?? '', 'La marca');
+    const eModelo = validarModelo(editForm.modelo ?? '');
+    const eAño = validarAño(editForm.año ?? '');
+    const ePlaca = validarPlaca(editForm.placa ?? '');
+    const eKm = validarSoloNumeros(editForm.kilometraje ?? '', 'El kilometraje');
+    const eServicio = validarObligatorio(editForm.tipoServicio, 'El tipo de servicio');
+    const eOtroServ = editForm.tipoServicio === 'Otro'
+      ? validarOtroServicio(editForm.otroServicio ?? '')
+      : null;
     const eDescripcion = validarTextoYNumeros(editForm.descripcionProblema ?? '', 'La descripción');
 
     setErrNombre(eNombre ?? '');
@@ -328,23 +347,23 @@ export default function ReportesClientesScreen() {
     setErrDescripcion(eDescripcion ?? '');
 
     if ([eNombre, eTelefono, eCorreo, eMarca, eModelo, eAño, ePlaca, eKm,
-         eServicio, eOtroServ, eDescripcion].some(Boolean)) return;
+      eServicio, eOtroServ, eDescripcion].some(Boolean)) return;
 
     try {
       await solicitudesApi.actualizar(editId, {
-        nombreCliente:       editForm.nombre ?? '',
-        telefono:            editForm.telefono ?? '',
-        correoCliente:       editForm.correo ?? '',
-        marca:               editForm.marca ?? '',
-        modelo:              editForm.modelo ?? '',
-        anio:                editForm.año ?? '',
-        placa:               editForm.placa ?? '',
-        kilometraje:         editForm.kilometraje ?? '',
-        tipoServicio:        editForm.tipoServicio ?? '',
-        otroServicio:        editForm.otroServicio ?? '',
+        nombreCliente: editForm.nombre ?? '',
+        telefono: editForm.telefono ?? '',
+        correoCliente: editForm.correo ?? '',
+        marca: editForm.marca ?? '',
+        modelo: editForm.modelo ?? '',
+        anio: editForm.año ?? '',
+        placa: editForm.placa ?? '',
+        kilometraje: editForm.kilometraje ?? '',
+        tipoServicio: editForm.tipoServicio ?? '',
+        otroServicio: editForm.otroServicio ?? '',
         descripcionProblema: editForm.descripcionProblema ?? '',
-        fechaCita:           editForm.fechaCita ?? '',
-        horaCita:            editForm.horaCita ?? '',
+        fechaCita: editForm.fechaCita ?? '',
+        horaCita: editForm.horaCita ?? '',
       }, token);
 
       setLista((prev) => prev.map((x) => x.id === editId ? { ...x, ...editForm } as Solicitud : x));
@@ -382,25 +401,25 @@ export default function ReportesClientesScreen() {
   const guardarMantenimiento = async () => {
     if (!maintId) return;
 
-    const eMarca       = validarSoloTexto(maintForm.marca ?? '', 'La marca');
-    const eModelo      = validarModelo(maintForm.modelo ?? '');
-    const ePlaca       = validarPlaca(maintForm.placa ?? '');
-    const eAño         = validarAño(maintForm.año ?? '');
-    const eKm          = validarSoloNumeros(maintForm.kilometraje ?? '', 'El kilometraje');
-    const eFechaServ   = validarFecha(maintForm.fechaServicio ?? '');
+    const eMarca = validarSoloTexto(maintForm.marca ?? '', 'La marca');
+    const eModelo = validarModelo(maintForm.modelo ?? '');
+    const ePlaca = validarPlaca(maintForm.placa ?? '');
+    const eAño = validarAño(maintForm.año ?? '');
+    const eKm = validarSoloNumeros(maintForm.kilometraje ?? '', 'El kilometraje');
+    const eFechaServ = validarFecha(maintForm.fechaServicio ?? '');
     const eMecAsignado = validarObligatorio(maintForm.mecanicoAsignado, 'El mecánico asignado');
-    const eDiagnost    = validarTextoYNumeros(maintForm.diagnostico ?? '', 'El diagnóstico');
-    const eTrabajo     = validarObligatorio(maintForm.trabajoRealizado, 'El trabajo realizado');
-    const eOtroTrab    = maintForm.trabajoRealizado === 'Otros'
-                          ? validarOtroServicio(maintForm.otroTrabajo ?? '')
-                          : null;
-    const eRepuestos   = validarTextoYNumeros(maintForm.repuestosUtilizados ?? '', 'Los repuestos utilizados');
-    const eDiagReal    = validarTextoYNumeros(maintForm.diagnosticoRealizado ?? '', 'El diagnóstico realizado');
-    const eManoObra    = validarCostoObligatorio(maintForm.costoManoObra ?? '', 'El costo de mano de obra');
-    const eCostoRep    = validarCostoObligatorio(maintForm.costoRepuestos ?? '', 'El costo de repuestos');
-    const eObserv      = validarTextoYNumeros(maintForm.observaciones ?? '', 'Las observaciones');
-    const eFechaInit   = validarFecha(maintForm.fechaInicio ?? '');
-    const eFechaFinal  = validarFecha(maintForm.fechaFinalizacion ?? '');
+    const eDiagnost = validarTextoYNumeros(maintForm.diagnostico ?? '', 'El diagnóstico');
+    const eTrabajo = validarObligatorio(maintForm.trabajoRealizado, 'El trabajo realizado');
+    const eOtroTrab = maintForm.trabajoRealizado === 'Otros'
+      ? validarOtroServicio(maintForm.otroTrabajo ?? '')
+      : null;
+    const eRepuestos = validarTextoYNumeros(maintForm.repuestosUtilizados ?? '', 'Los repuestos utilizados');
+    const eDiagReal = validarTextoYNumeros(maintForm.diagnosticoRealizado ?? '', 'El diagnóstico realizado');
+    const eManoObra = validarCostoObligatorio(maintForm.costoManoObra ?? '', 'El costo de mano de obra');
+    const eCostoRep = validarCostoObligatorio(maintForm.costoRepuestos ?? '', 'El costo de repuestos');
+    const eObserv = validarTextoYNumeros(maintForm.observaciones ?? '', 'Las observaciones');
+    const eFechaInit = validarFecha(maintForm.fechaInicio ?? '');
+    const eFechaFinal = validarFecha(maintForm.fechaFinalizacion ?? '');
 
     setErrMaintMarca(eMarca ?? '');
     setErrMaintModelo(eModelo ?? '');
@@ -421,7 +440,7 @@ export default function ReportesClientesScreen() {
     setErrMaintFechaFinal(eFechaFinal ?? '');
 
     const errores = [eMarca, eModelo, ePlaca, eAño, eKm, eFechaServ, eMecAsignado, eDiagnost, eTrabajo,
-         eOtroTrab, eRepuestos, eDiagReal, eManoObra, eCostoRep, eObserv, eFechaInit, eFechaFinal].filter(Boolean);
+      eOtroTrab, eRepuestos, eDiagReal, eManoObra, eCostoRep, eObserv, eFechaInit, eFechaFinal].filter(Boolean);
 
     if (errores.length > 0) return;
 
@@ -431,22 +450,22 @@ export default function ReportesClientesScreen() {
 
     try {
       await mantenimientosApi.crear({
-        solicitudId:         maintId,
-        marca:               maintForm.marca,
-        modelo:              maintForm.modelo,
-        placa:               maintForm.placa,
-        mecanicoAsignado:    maintForm.mecanicoAsignado,
-        diagnostico:         maintForm.diagnostico,
-        trabajoRealizado:    maintForm.trabajoRealizado,
-        otroTrabajo:         maintForm.otroTrabajo,
+        solicitudId: maintId,
+        marca: maintForm.marca,
+        modelo: maintForm.modelo,
+        placa: maintForm.placa,
+        mecanicoAsignado: maintForm.mecanicoAsignado,
+        diagnostico: maintForm.diagnostico,
+        trabajoRealizado: maintForm.trabajoRealizado,
+        otroTrabajo: maintForm.otroTrabajo,
         repuestosUtilizados: maintForm.repuestosUtilizados,
-        diagnosticoRealizado:maintForm.diagnosticoRealizado,
-        observaciones:       maintForm.observaciones,
-        costoManoObra:       maintForm.costoManoObra,
-        costoRepuestos:      maintForm.costoRepuestos,
-        fechaServicio:       maintForm.fechaServicio,
-        fechaInicio:         maintForm.fechaInicio,
-        fechaFinalizacion:   maintForm.fechaFinalizacion,
+        diagnosticoRealizado: maintForm.diagnosticoRealizado,
+        observaciones: maintForm.observaciones,
+        costoManoObra: maintForm.costoManoObra,
+        costoRepuestos: maintForm.costoRepuestos,
+        fechaServicio: maintForm.fechaServicio,
+        fechaInicio: maintForm.fechaInicio,
+        fechaFinalizacion: maintForm.fechaFinalizacion,
       }, token);
 
       // Actualiza el estado local y cierra el modal
@@ -479,15 +498,28 @@ export default function ReportesClientesScreen() {
 
   // FUNCIÓN: ABRIR MODAL ENVIAR
   const abrirEnviar = (s: Solicitud) => {
-    setSendTarget(s);                   // Guarda la solicitud a enviar
-    setSendSuccess(false);              // Resetea el estado de éxito
+    setSendTarget(s);
+    setSendSuccess(false);
+    setSendError('');
+    setSendLoading(false);
     setSendModal(true);
   };
 
   // FUNCIÓN: CONFIRMAR ENVÍO
-  // Simula el envío del reporte y muestra la pantalla de éxito
-  const confirmarEnvio = () => {
-    setSendSuccess(true);               // Cambia a la vista de éxito dentro del modal
+  const confirmarEnvio = async () => {
+    if (!sendTarget || !token) return;
+    setSendLoading(true);
+    setSendError('');
+    try {
+      await reportesApi.enviar(sendTarget.id, token);
+      // Solo quitar de lista y mostrar éxito si el backend confirmó OK
+      setLista((prev) => prev.filter((x) => x.id !== sendTarget.id));
+      setSendSuccess(true);
+    } catch (err: any) {
+      setSendError(err?.message ?? 'No se pudo enviar el reporte. Verifica la conexión.');
+    } finally {
+      setSendLoading(false);
+    }
   };
 
 
@@ -509,6 +541,25 @@ export default function ReportesClientesScreen() {
         {/* Título centrado */}
         <Text style={styles.screenTitle}>Reportes de clientes</Text>
         <Text style={styles.screenSubtitle}>Gestiona las solicitudes y registros de mantenimiento.</Text>
+
+        {/* Estado de carga */}
+        {cargando && (
+          <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 20 }}>Cargando solicitudes...</Text>
+        )}
+
+        {/* Error de carga */}
+        {!cargando && errorCarga ? (
+          <Text style={{ color: '#EF4444', textAlign: 'center', marginTop: 20, paddingHorizontal: 16 }}>
+            ⚠️ {errorCarga}
+          </Text>
+        ) : null}
+
+        {/* Lista vacía */}
+        {!cargando && !errorCarga && lista.length === 0 && (
+          <Text style={{ color: '#94A3B8', textAlign: 'center', marginTop: 20 }}>
+            No hay solicitudes pendientes.
+          </Text>
+        )}
 
         {/* Itera sobre la lista de solicitudes para renderizar una tarjeta por cada una */}
         {lista.map((s) => (
@@ -785,7 +836,7 @@ export default function ReportesClientesScreen() {
                 {errServicio ? <Text style={styles.errorText}>{errServicio}</Text> : null}
                 {editServDropdown && (
                   <ScrollView style={styles.dropdownList} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                    {['Cambio de aceite','Frenos','Suspensión','Motor','Electricidad','Aire acondicionado','Revisión general','Otro'].map((opt, i, arr) => (
+                    {['Cambio de aceite', 'Frenos', 'Suspensión', 'Motor', 'Electricidad', 'Aire acondicionado', 'Revisión general', 'Otro'].map((opt, i, arr) => (
                       <Pressable key={opt}
                         style={[styles.dropdownItem, i === arr.length - 1 && styles.dropdownItemLast, editForm.tipoServicio === opt && styles.dropdownItemActive]}
                         onPress={() => { setEditForm((p) => ({ ...p, tipoServicio: opt })); setEditServDropdown(false); setErrServicio(''); }}>
@@ -1053,7 +1104,7 @@ export default function ReportesClientesScreen() {
           Pide confirmación antes de enviar el reporte al correo del cliente.
           Muestra pantalla de éxito con ícono verde después del envío. */}
       <Modal visible={sendModal} animationType="fade" transparent
-        onRequestClose={() => { setSendModal(false); setSendSuccess(false); }}>
+        onRequestClose={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}>
         <View style={styles.sendModalOverlay}>
           <View style={styles.sendModalCard}>
             {sendSuccess ? (
@@ -1065,7 +1116,7 @@ export default function ReportesClientesScreen() {
                   <Text style={styles.sendModalHighlight}>{sendTarget?.nombre}</Text>.
                 </Text>
                 <Pressable style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                  onPress={() => { setSendModal(false); setSendSuccess(false); }}>
+                  onPress={() => { setSendModal(false); setSendSuccess(false); setSendError(''); }}>
                   <Text style={styles.sendModalBtnText}>Cerrar</Text>
                 </Pressable>
               </>
@@ -1079,15 +1130,24 @@ export default function ReportesClientesScreen() {
                   {' '}a su correo personal{' '}
                   <Text style={styles.sendModalHighlight}>{sendTarget?.correo}</Text>?
                 </Text>
+                {/* Mensaje de error si el envío falló */}
+                {sendError ? (
+                  <Text style={{ color: '#EF4444', fontSize: 13, marginBottom: 8, textAlign: 'center' }}>
+                    ⚠️ {sendError}
+                  </Text>
+                ) : null}
                 <View style={styles.sendModalBtns}>
-                  {/* Botón confirmar: llama a confirmarEnvio() que cambia sendSuccess a true */}
-                  <Pressable style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                    onPress={confirmarEnvio}>
-                    <Text style={styles.sendModalBtnText}>Enviar al correo</Text>
+                  <Pressable
+                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed, sendLoading && { opacity: 0.6 }]}
+                    onPress={confirmarEnvio}
+                    disabled={sendLoading}>
+                    <Text style={styles.sendModalBtnText}>{sendLoading ? 'Enviando...' : 'Enviar al correo'}</Text>
                   </Pressable>
                   {/* Botón cancelar: cierra el modal sin enviar */}
-                  <Pressable style={({ pressed }) => [styles.sendModalBtnCancel, pressed && styles.sendModalBtnCancelPressed]}
-                    onPress={() => { setSendModal(false); setSendSuccess(false); }}>
+                  <Pressable
+                    style={({ pressed }) => [styles.sendModalBtnCancel, pressed && styles.sendModalBtnCancelPressed, sendLoading && { opacity: 0.4 }]}
+                    onPress={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}
+                    disabled={sendLoading}>
                     <Text style={styles.sendModalBtnCancelText}>Cancelar envío</Text>
                   </Pressable>
                 </View>

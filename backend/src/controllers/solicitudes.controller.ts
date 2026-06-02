@@ -3,12 +3,17 @@ import prisma from '../lib/prisma';
 
 // GET /api/solicitudes
 export async function listarSolicitudes(_req: Request, res: Response): Promise<void> {
-    const solicitudes = await prisma.solicitud.findMany({
-        include: { mantenimiento: true, mecanico: { select: { id: true, nombres: true, apellidos: true } } },
-        orderBy: { createdAt: 'desc' },
-    });
+    try {
+        const solicitudes = await prisma.solicitud.findMany({
+            include: { mantenimiento: true, mecanico: { select: { id: true, nombres: true, apellidos: true } } },
+            orderBy: { createdAt: 'desc' },
+        });
 
-    res.json(solicitudes);
+        res.json(solicitudes);
+    } catch (err: any) {
+        console.error('[listarSolicitudes]', err?.message);
+        res.status(500).json({ message: 'Error al obtener las solicitudes' });
+    }
 }
 
 // POST /api/solicitudes  (público — cliente envía solicitud)
@@ -30,41 +35,46 @@ export async function crearSolicitud(req: Request, res: Response): Promise<void>
 
     const correoNorm = correoCliente.trim().toLowerCase();
 
-    // Busca un código válido (no usado, no expirado) para este correo
-    const codigoValido = await prisma.codigoVerificacion.findFirst({
-        where: {
-            correo: correoNorm,
-            usado: false,
-            expiresAt: { gt: new Date() },
-        },
-        orderBy: { createdAt: 'desc' },
-    });
-
-    if (!codigoValido) {
-        res.status(403).json({ message: 'El correo no ha sido verificado. Solicita un nuevo código.' });
-        return;
-    }
-
-    // Transacción: consume el código y crea la solicitud de forma atómica
-    const [solicitud] = await prisma.$transaction([
-        prisma.solicitud.create({
-            data: {
-                nombreCliente, telefono,
-                correoCliente: correoNorm,
-                marca, modelo,
-                anio: String(anio),
-                placa, kilometraje: String(kilometraje),
-                tipoServicio, otroServicio: otroServicio ?? '',
-                descripcionProblema, fechaCita, horaCita,
+    try {
+        // Busca un código válido (no usado, no expirado) para este correo
+        const codigoValido = await prisma.codigoVerificacion.findFirst({
+            where: {
+                correo: correoNorm,
+                usado: false,
+                expiresAt: { gt: new Date() },
             },
-        }),
-        prisma.codigoVerificacion.update({
-            where: { id: codigoValido.id },
-            data: { usado: true },
-        }),
-    ]);
+            orderBy: { createdAt: 'desc' },
+        });
 
-    res.status(201).json(solicitud);
+        if (!codigoValido) {
+            res.status(403).json({ message: 'El correo no ha sido verificado. Solicita un nuevo código.' });
+            return;
+        }
+
+        // Transacción: consume el código y crea la solicitud de forma atómica
+        const [solicitud] = await prisma.$transaction([
+            prisma.solicitud.create({
+                data: {
+                    nombreCliente, telefono,
+                    correoCliente: correoNorm,
+                    marca, modelo,
+                    anio: String(anio),
+                    placa, kilometraje: String(kilometraje),
+                    tipoServicio, otroServicio: otroServicio ?? '',
+                    descripcionProblema, fechaCita, horaCita,
+                },
+            }),
+            prisma.codigoVerificacion.update({
+                where: { id: codigoValido.id },
+                data: { usado: true },
+            }),
+        ]);
+
+        res.status(201).json(solicitud);
+    } catch (err: any) {
+        console.error('[crearSolicitud]', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al crear la solicitud' });
+    }
 }
 
 // PUT /api/solicitudes/:id

@@ -93,26 +93,31 @@ export async function solicitarRecuperacion(req: Request, res: Response): Promis
         return;
     }
 
-    const mecanico = await prisma.mecanico.findUnique({
-        where: { correo: correo.trim().toLowerCase() },
-    });
+    try {
+        const mecanico = await prisma.mecanico.findUnique({
+            where: { correo: correo.trim().toLowerCase() },
+        });
 
-    // Respuesta genérica para no revelar si el correo existe
-    if (!mecanico) {
+        // Respuesta genérica para no revelar si el correo existe
+        if (!mecanico) {
+            res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
+            return;
+        }
+
+        const codigo = generarCodigo();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+
+        await prisma.codigoVerificacion.create({
+            data: { correo: correo.trim().toLowerCase(), codigo, expiresAt },
+        });
+
+        await enviarCodigoEmail(correo, codigo, 'recuperacion');
+
         res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
-        return;
+    } catch (err: any) {
+        console.error('[solicitarRecuperacion]', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al procesar la solicitud de recuperación' });
     }
-
-    const codigo = generarCodigo();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
-
-    await prisma.codigoVerificacion.create({
-        data: { correo: correo.trim().toLowerCase(), codigo, expiresAt },
-    });
-
-    await enviarCodigoEmail(correo, codigo, 'recuperacion');
-
-    res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
 }
 
 // POST /api/auth/verificar-codigo
@@ -124,34 +129,39 @@ export async function verificarCodigo(req: Request, res: Response): Promise<void
         return;
     }
 
-    const registro = await prisma.codigoVerificacion.findFirst({
-        where: {
-            correo: correo.trim().toLowerCase(),
-            codigo,
-            usado: false,
-            expiresAt: { gt: new Date() },
-        },
-        orderBy: { createdAt: 'desc' },
-    });
+    try {
+        const registro = await prisma.codigoVerificacion.findFirst({
+            where: {
+                correo: correo.trim().toLowerCase(),
+                codigo,
+                usado: false,
+                expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
 
-    if (!registro) {
-        res.status(400).json({ message: 'Código inválido o expirado' });
-        return;
+        if (!registro) {
+            res.status(400).json({ message: 'Código inválido o expirado' });
+            return;
+        }
+
+        await prisma.codigoVerificacion.update({
+            where: { id: registro.id },
+            data: { usado: true },
+        });
+
+        // Token de un solo uso válido 10 minutos — el frontend debe pasarlo a /cambiar-password
+        const resetToken = jwt.sign(
+            { correo: correo.trim().toLowerCase(), type: 'password-reset' },
+            process.env.JWT_SECRET!,
+            { expiresIn: '10m' }
+        );
+
+        res.json({ message: 'Código verificado correctamente', resetToken });
+    } catch (err: any) {
+        console.error('[verificarCodigo]', err?.message);
+        res.status(500).json({ message: 'Error al verificar el código' });
     }
-
-    await prisma.codigoVerificacion.update({
-        where: { id: registro.id },
-        data: { usado: true },
-    });
-
-    // Token de un solo uso válido 10 minutos — el frontend debe pasarlo a /cambiar-password
-    const resetToken = jwt.sign(
-        { correo: correo.trim().toLowerCase(), type: 'password-reset' },
-        process.env.JWT_SECRET!,
-        { expiresIn: '10m' }
-    );
-
-    res.json({ message: 'Código verificado correctamente', resetToken });
 }
 
 // POST /api/auth/enviar-codigo-cliente
@@ -167,21 +177,26 @@ export async function enviarCodigoCliente(req: Request, res: Response): Promise<
 
     const correoNorm = correo.trim().toLowerCase();
 
-    // Elimina códigos anteriores del mismo correo para no acumular basura en la BD
-    await prisma.codigoVerificacion.deleteMany({
-        where: { correo: correoNorm },
-    });
+    try {
+        // Elimina códigos anteriores del mismo correo para no acumular basura en la BD
+        await prisma.codigoVerificacion.deleteMany({
+            where: { correo: correoNorm },
+        });
 
-    const codigo = generarCodigo();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
+        const codigo = generarCodigo();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
-    await prisma.codigoVerificacion.create({
-        data: { correo: correoNorm, codigo, expiresAt },
-    });
+        await prisma.codigoVerificacion.create({
+            data: { correo: correoNorm, codigo, expiresAt },
+        });
 
-    await enviarCodigoEmail(correoNorm, codigo, 'verificacion');
+        await enviarCodigoEmail(correoNorm, codigo, 'verificacion');
 
-    res.json({ message: 'Código enviado al correo indicado' });
+        res.json({ message: 'Código enviado al correo indicado' });
+    } catch (err: any) {
+        console.error('[enviarCodigoCliente]', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al enviar el código de verificación' });
+    }
 }
 
 // POST /api/auth/verificar-codigo-cliente
@@ -195,25 +210,30 @@ export async function verificarCodigoCliente(req: Request, res: Response): Promi
         return;
     }
 
-    const registro = await prisma.codigoVerificacion.findFirst({
-        where: {
-            correo: correo.trim().toLowerCase(),
-            codigo,
-            usado: false,
-            expiresAt: { gt: new Date() },
-        },
-        orderBy: { createdAt: 'desc' },
-    });
+    try {
+        const registro = await prisma.codigoVerificacion.findFirst({
+            where: {
+                correo: correo.trim().toLowerCase(),
+                codigo,
+                usado: false,
+                expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
 
-    if (!registro) {
-        res.status(400).json({ message: 'Código inválido o expirado' });
-        return;
+        if (!registro) {
+            res.status(400).json({ message: 'Código inválido o expirado' });
+            return;
+        }
+
+        // No se marca como usado aquí — se consume al crear la solicitud.
+        // Esto garantiza que la solicitud solo se guarda si el código sigue válido.
+
+        res.json({ verificado: true, correo: correo.trim().toLowerCase() });
+    } catch (err: any) {
+        console.error('[verificarCodigoCliente]', err?.message);
+        res.status(500).json({ message: 'Error al verificar el código' });
     }
-
-    // No se marca como usado aquí — se consume al crear la solicitud.
-    // Esto garantiza que la solicitud solo se guarda si el código sigue válido.
-
-    res.json({ verificado: true, correo: correo.trim().toLowerCase() });
 }
 
 // PUT /api/auth/cambiar-password
@@ -247,21 +267,26 @@ export async function cambiarPassword(req: Request, res: Response): Promise<void
         return;
     }
 
-    const mecanico = await prisma.mecanico.findUnique({
-        where: { correo },
-    });
+    try {
+        const mecanico = await prisma.mecanico.findUnique({
+            where: { correo },
+        });
 
-    if (!mecanico) {
-        res.status(404).json({ message: 'Usuario no encontrado' });
-        return;
+        if (!mecanico) {
+            res.status(404).json({ message: 'Usuario no encontrado' });
+            return;
+        }
+
+        const hash = await bcrypt.hash(nuevaContrasena, 12);
+
+        await prisma.mecanico.update({
+            where: { id: mecanico.id },
+            data: { contrasena: hash },
+        });
+
+        res.json({ message: 'Contraseña actualizada correctamente' });
+    } catch (err: any) {
+        console.error('[cambiarPassword]', err?.message);
+        res.status(500).json({ message: 'Error al actualizar la contraseña' });
     }
-
-    const hash = await bcrypt.hash(nuevaContrasena, 12);
-
-    await prisma.mecanico.update({
-        where: { id: mecanico.id },
-        data: { contrasena: hash },
-    });
-
-    res.json({ message: 'Contraseña actualizada correctamente' });
 }

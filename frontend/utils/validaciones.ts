@@ -203,16 +203,7 @@ export const validarObligatorio = (valor: string | null | undefined, campo: stri
 };
 
 
-// ─── validarCredencialesLogin ─────────────────────────────────────────────────
-// Verifica si el par correo + contraseña corresponde a un usuario registrado.
-export const validarCredencialesLogin = (email: string, password: string): string | null => {
-  const lower = email.trim().toLowerCase();
-  if (
-    (lower === 'admin@mecanic.com' && password === 'admin123') ||
-    (lower === 'bryan@mecanic.com' && password === 'bryan123')
-  ) return null;
-  return 'Correo o contraseña incorrectos.';
-};
+
 
 
 // ─── validarCorreoRegistrado ──────────────────────────────────────────────────

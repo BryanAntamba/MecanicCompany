@@ -22,7 +22,7 @@ export async function enviarReporte(req: Request, res: Response): Promise<void> 
             return;
         }
 
-        await enviarReporteEmail(solicitud.correoCliente, solicitud, solicitud.mantenimiento);
+        await enviarReporteEmail(solicitud.correoCliente, solicitud, solicitud.mantenimiento, solicitud.mecanico);
 
         // Marca la solicitud como Completado al enviar el reporte
         await prisma.solicitud.update({

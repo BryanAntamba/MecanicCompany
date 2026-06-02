@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+// import rateLimit from 'express-rate-limit'; // TODO: re-habilitar en producción
 import {
   login,
   solicitarRecuperacion,
@@ -11,41 +11,22 @@ import {
 
 const router = Router();
 
-// ─── Rate limiters ────────────────────────────────────────────────────────────
-// Login: máx 10 intentos por IP en 15 min → evita fuerza bruta de contraseñas
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 10,
-  message: { message: 'Demasiados intentos de inicio de sesión. Intenta de nuevo en 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Recuperación y verificación: máx 5 por IP en 15 min → evita enumeración de correos
-const recoveryLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  message: { message: 'Demasiadas solicitudes de recuperación. Intenta de nuevo en 15 minutos.' },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
 // POST /api/auth/login
-router.post('/login', loginLimiter, login);
+router.post('/login', login);
 
 // POST /api/auth/recuperar  → envía código al correo gmail del mecánico
-router.post('/recuperar', recoveryLimiter, solicitarRecuperacion);
+router.post('/recuperar', solicitarRecuperacion);
 
 // POST /api/auth/verificar-codigo
-router.post('/verificar-codigo', recoveryLimiter, verificarCodigo);
+router.post('/verificar-codigo', verificarCodigo);
 
 // PUT /api/auth/cambiar-password
-router.put('/cambiar-password', recoveryLimiter, cambiarPassword);
+router.put('/cambiar-password', cambiarPassword);
 
 // POST /api/auth/enviar-codigo-cliente  → verificación de correo de clientes externos
-router.post('/enviar-codigo-cliente', recoveryLimiter, enviarCodigoCliente);
+router.post('/enviar-codigo-cliente', enviarCodigoCliente);
 
 // POST /api/auth/verificar-codigo-cliente
-router.post('/verificar-codigo-cliente', recoveryLimiter, verificarCodigoCliente);
+router.post('/verificar-codigo-cliente', verificarCodigoCliente);
 
 export default router;

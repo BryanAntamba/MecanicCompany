@@ -35,6 +35,12 @@ import styles from '@/Styles/ReportesClientes';
 // Estilos exclusivos del historial (buscador, texto vacío, valores de detalle)
 import histStyles from '@/Styles/historial';
 
+// Contexto de autenticación
+import { useAuth } from '@/context/AuthContext';
+
+// API para cargar las solicitudes completadas y reenviar reportes
+import { solicitudesApi, reportesApi, SolicitudBackend } from '@/utils/api';
+
 
 // TIPOS
 
@@ -76,8 +82,43 @@ type RegistroHistorial = {
 
 // DATOS
 
-// Lista vacía — los registros reales vendrán del backend
+// Lista vacía — los registros reales se cargan desde el backend
 const MOCK_HISTORIAL: RegistroHistorial[] = [];
+
+// Mapea una SolicitudBackend completada a RegistroHistorial
+function backendAHistorial(s: SolicitudBackend): RegistroHistorial | null {
+  if (!s.mantenimiento) return null;
+  const m = s.mantenimiento;
+  return {
+    id: s.id,
+    clienteNombre: s.nombreCliente,
+    clienteCorreo: s.correoCliente,
+    marca: m.marca,
+    modelo: m.modelo,
+    placa: m.placa,
+    fechaMantenimiento: m.fechaFinalizacion,
+    mecanicoNombre: m.mecanicoAsignado,
+    mantenimiento: {
+      marca: m.marca,
+      modelo: m.modelo,
+      placa: m.placa,
+      año: m.año ?? s.anio,
+      kilometraje: m.kilometraje ?? s.kilometraje,
+      fechaServicio: m.fechaServicio,
+      mecanicoAsignado: m.mecanicoAsignado,
+      diagnostico: m.diagnostico,
+      trabajoRealizado: m.trabajoRealizado,
+      otroTrabajo: m.otroTrabajo,
+      repuestosUtilizados: m.repuestosUtilizados,
+      diagnosticoRealizado: m.diagnosticoRealizado,
+      costoManoObra: String(m.costoManoObra),
+      costoRepuestos: String(m.costoRepuestos),
+      observaciones: m.observaciones,
+      fechaInicio: m.fechaInicio,
+      fechaFinalizacion: m.fechaFinalizacion,
+    },
+  };
+}
 
 
 // COMPONENTE PRINCIPAL
@@ -92,11 +133,30 @@ export default function HistorialScreen() {
     }, []),
   );
 
+  // Token y usuario autenticado
+  const { token, user } = useAuth();
+
   // Estado del campo de búsqueda por placa
   const [busqueda, setBusqueda] = useState('');
 
-  // Lista de registros del historial (sin setter porque no se modifica en esta pantalla)
-  const [lista] = useState<RegistroHistorial[]>(MOCK_HISTORIAL);
+  // Lista de registros del historial (se carga desde el backend)
+  const [lista, setLista] = useState<RegistroHistorial[]>([]);
+
+  // Recarga el historial cada vez que la pantalla entra en foco
+  useFocusEffect(
+    useCallback(() => {
+      if (!token || !user?.id) return;
+      solicitudesApi.listar(token)
+        .then((data: SolicitudBackend[]) => {
+          const registros = data
+            .filter((s) => s.mecanicoId === user.id && s.estado === 'Completado')
+            .map(backendAHistorial)
+            .filter((r): r is RegistroHistorial => r !== null);
+          setLista(registros);
+        })
+        .catch(() => { });
+    }, [token, user?.id]),
+  );
 
   // Estado: controla si el modal de detalles está visible
   const [detallesModal, setDetallesModal] = useState(false);
@@ -107,8 +167,27 @@ export default function HistorialScreen() {
   const [sendModal, setSendModal] = useState(false);
   // Estado: registro al que se va a reenviar el reporte
   const [sendTarget, setSendTarget] = useState<RegistroHistorial | null>(null);
-  // Estado: true cuando el reenvío fue exitoso (muestra la pantalla de confirmación)
+  // Estado: true cuando el reenvío fue exitoso
   const [sendSuccess, setSendSuccess] = useState(false);
+  // Estado: true mientras espera respuesta del backend
+  const [sendLoading, setSendLoading] = useState(false);
+  // Estado: mensaje de error si el envío falló
+  const [sendError, setSendError] = useState('');
+
+  // Llama al backend para reenviar el reporte al correo del cliente
+  const reenviarReporte = async () => {
+    if (!sendTarget || !token) return;
+    setSendLoading(true);
+    setSendError('');
+    try {
+      await reportesApi.enviar(sendTarget.id, token);
+      setSendSuccess(true);
+    } catch (err: any) {
+      setSendError(err?.message ?? 'No se pudo reenviar el reporte. Verifica la conexión.');
+    } finally {
+      setSendLoading(false);
+    }
+  };
 
   // Filtra la lista por placa cuando hay texto en el buscador.
   // Si el buscador está vacío, muestra todos los registros.
@@ -355,7 +434,7 @@ export default function HistorialScreen() {
         visible={sendModal}
         animationType="fade"
         transparent
-        onRequestClose={() => { setSendModal(false); setSendSuccess(false); }}
+        onRequestClose={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}
       >
         <View style={styles.sendModalOverlay}>
           <View style={styles.sendModalCard}>
@@ -368,19 +447,17 @@ export default function HistorialScreen() {
                 <FontAwesome
                   name="check-circle"
                   size={64}
-                  color="#22C55E"                          // Verde de éxito
+                  color="#22C55E"
                   style={{ alignSelf: 'center', marginBottom: 16 }}
                 />
                 <Text style={styles.sendModalTitle}>Reporte reenviado</Text>
                 <Text style={styles.sendModalBody}>
                   El reporte fue enviado exitosamente al correo de{' '}
-                  {/* Nombre del cliente resaltado en azul */}
                   <Text style={styles.sendModalHighlight}>{sendTarget?.clienteNombre}</Text>.
                 </Text>
-                {/* Botón para cerrar el modal de éxito y resetear el estado */}
                 <Pressable
                   style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                  onPress={() => { setSendModal(false); setSendSuccess(false); }}
+                  onPress={() => { setSendModal(false); setSendSuccess(false); setSendError(''); }}
                 >
                   <Text style={styles.sendModalBtnText}>Cerrar</Text>
                 </Pressable>
@@ -391,27 +468,32 @@ export default function HistorialScreen() {
                 <Text style={styles.sendModalTitle}>Reenviar reporte</Text>
                 <Text style={styles.sendModalBody}>
                   ¿Deseas reenviar el reporte al señor{' '}
-                  {/* Nombre del cliente resaltado */}
                   <Text style={styles.sendModalHighlight}>{sendTarget?.clienteNombre}</Text>
                   {' '}a su correo{' '}
-                  {/* Correo del cliente resaltado */}
                   <Text style={styles.sendModalHighlight}>{sendTarget?.clienteCorreo}</Text>?
                 </Text>
+                {/* Mensaje de error si el reenvío falló */}
+                {sendError ? (
+                  <Text style={{ color: '#EF4444', fontSize: 13, marginBottom: 8, textAlign: 'center' }}>
+                    ⚠️ {sendError}
+                  </Text>
+                ) : null}
 
                 {/* Fila de botones: Enviar al correo + Cancelar envío */}
                 <View style={styles.sendModalBtns}>
-                  {/* Botón confirmar envío: cambia sendSuccess a true para mostrar éxito */}
                   <Pressable
-                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                    onPress={() => setSendSuccess(true)}
+                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed, sendLoading && { opacity: 0.6 }]}
+                    onPress={reenviarReporte}
+                    disabled={sendLoading}
                   >
-                    <Text style={styles.sendModalBtnText}>Enviar al correo</Text>
+                    <Text style={styles.sendModalBtnText}>{sendLoading ? 'Enviando...' : 'Enviar al correo'}</Text>
                   </Pressable>
 
                   {/* Botón cancelar: cierra el modal sin enviar */}
                   <Pressable
-                    style={({ pressed }) => [styles.sendModalBtnCancel, pressed && styles.sendModalBtnCancelPressed]}
-                    onPress={() => { setSendModal(false); setSendSuccess(false); }}
+                    style={({ pressed }) => [styles.sendModalBtnCancel, pressed && styles.sendModalBtnCancelPressed, sendLoading && { opacity: 0.4 }]}
+                    onPress={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}
+                    disabled={sendLoading}
                   >
                     <Text style={styles.sendModalBtnCancelText}>Cancelar envío</Text>
                   </Pressable>

@@ -55,6 +55,7 @@ model Mecanico {
   estadoLaboral       EstadoLaboral @default(Disponible)
   cuentaActiva        Boolean       @default(true)
   contrasena          String        // Almacenada con bcrypt
+  fotoPerfil          String?       // Ruta relativa al archivo subido (ej: /uploads/mecanicos/foto.jpg)
 
   // Relaciones
   solicitudes         Solicitud[]   // Solicitudes asignadas a este mecánico

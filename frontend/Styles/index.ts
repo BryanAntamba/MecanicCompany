@@ -230,7 +230,7 @@ export default StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingBottom: 0,
-    paddingTop: 40,
+    paddingTop: 12,
     zIndex: 2,
     width: '100%',
   },

@@ -24,6 +24,12 @@ import { useRouter } from 'expo-router';
 // Íconos vectoriales de FontAwesome (pencil, trash, toggle-on, etc.)
 import { FontAwesome } from '@expo/vector-icons';
 
+// Image optimizado de expo-image (caché nativo, formatos modernos)
+import { Image } from 'expo-image';
+
+// Selector de imágenes nativo (galería / cámara)
+import * as ImagePicker from 'expo-image-picker';
+
 // Barra de navegación del administrador (logo + botón cerrar sesión)
 import NavbarAdmin from '@/components/nadvarAdmin/nadvarAdmin';
 
@@ -66,6 +72,7 @@ export type Mecanico = {
   estadoLaboral: EstadoLaboral;  // Disponibilidad operativa en el taller
   cuentaActiva: boolean;         // Si puede iniciar sesión en el sistema
   contraseña?: string;           // Contraseña (no retornada por la API)
+  fotoPerfil?: string | null;    // String base64 (data URI) de la foto de perfil
 };
 
 
@@ -104,6 +111,7 @@ function apiAMecanico(m: any): Mecanico {
     añosExperiencia: m.anosExperiencia,
     estadoLaboral: m.estadoLaboral as EstadoLaboral,
     cuentaActiva: m.cuentaActiva,
+    fotoPerfil: m.fotoPerfil ?? null,
   };
 }
 
@@ -246,6 +254,9 @@ export default function GestionMecanicosScreen() {
   // Controla si la contraseña en el modal se muestra en texto plano
   const [showModalPassword, setShowModalPassword] = useState(false);
 
+  // URI / base64 de la foto seleccionada (null = sin foto)
+  const [fotoUri, setFotoUri] = useState<string | null>(null);
+
   // Errores del formulario de registro/edición
   const [errors, setErrors] = useState<FormErrors>({
     nombres: '',
@@ -275,6 +286,7 @@ export default function GestionMecanicosScreen() {
     setModo('crear');
     setEditandoId(null);
     setForm(formVacio());          // Formulario vacío para nuevo mecánico
+    setFotoUri(null);
     setErrors({
       nombres: '',
       apellidos: '',
@@ -297,6 +309,8 @@ export default function GestionMecanicosScreen() {
     setModo('editar');
     setEditandoId(m.id);           // Guarda el ID para saber qué mecánico actualizar
     setForm(mecanicoAForm(m));     // Pre-llena el formulario con los datos actuales
+    // La foto ya es un data URI base64 guardado en la BD — úsalo directamente
+    setFotoUri(m.fotoPerfil ?? null);
     setErrors({
       nombres: '',
       apellidos: '',
@@ -319,6 +333,7 @@ export default function GestionMecanicosScreen() {
     setModalVisible(false);
     setEditandoId(null);
     setForm(formVacio());          // Limpia el formulario al cerrar
+    setFotoUri(null);
     setErrors({
       nombres: '',
       apellidos: '',
@@ -331,6 +346,28 @@ export default function GestionMecanicosScreen() {
       estadoLaboral: '',
       contraseña: '',
     });
+  };
+
+  // Abre la galería y obtiene la foto como string base64 (data URI)
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso denegado', 'Se necesita acceso a la galería para seleccionar una foto.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,   // Devuelve base64 directamente
+    });
+    if (!result.canceled && result.assets[0]?.base64) {
+      const asset = result.assets[0];
+      const ext = asset.uri.split('.').pop()?.toLowerCase().split('?')[0] ?? 'jpg';
+      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+      setFotoUri(`data:${mime};base64,${asset.base64}`);
+    }
   };
 
   //FUNCIÓN GUARDAR
@@ -386,16 +423,18 @@ export default function GestionMecanicosScreen() {
       ? form.especialidadOtro.trim()
       : form.especialidadCatalogo;
 
+    // Cuerpo JSON — fotoPerfil es un string base64 (data URI) o null
     const body: Record<string, unknown> = {
-      nombres: form.nombres.trim(),
-      apellidos: form.apellidos.trim(),
+      nombres:           form.nombres.trim(),
+      apellidos:         form.apellidos.trim(),
       edad,
-      correo: form.correo.trim(),
+      correo:            form.correo.trim(),
       correoEmpresarial: form.correoEmpresarial.trim().toLowerCase(),
       especialidad,
-      anosExperiencia: años,
-      estadoLaboral: form.estadoLaboral,
-      cuentaActiva: form.cuentaActiva,
+      anosExperiencia:   años,
+      estadoLaboral:     form.estadoLaboral,
+      cuentaActiva:      form.cuentaActiva,
+      fotoPerfil:        fotoUri ?? null,
     };
     if (form.contraseña.trim()) body.contrasena = form.contraseña.trim();
 
@@ -531,6 +570,19 @@ export default function GestionMecanicosScreen() {
         {/* Itera sobre la lista de mecánicos para renderizar una tarjeta por cada uno */}
         {lista.map((m) => (
           <View key={m.id} style={styles.rowCard}>
+
+            {/* Foto de perfil del mecánico (o avatar placeholder si no tiene) */}
+            {m.fotoPerfil ? (
+              <Image
+                source={{ uri: m.fotoPerfil }}
+                style={{ width: 60, height: 60, borderRadius: 30, marginBottom: 10, backgroundColor: '#1E293B' }}
+                contentFit="cover"
+              />
+            ) : (
+              <View style={{ width: 60, height: 60, borderRadius: 30, marginBottom: 10, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' }}>
+                <FontAwesome name="user" size={26} color="#475569" />
+              </View>
+            )}
 
             {/* Parte superior de la tarjeta: nombre/meta a la izquierda, badges a la derecha */}
             <View style={styles.rowCardTop}>
@@ -750,6 +802,46 @@ export default function GestionMecanicosScreen() {
                   onChangeText={(t) => { setForm((p) => ({ ...p, edad: t })); setErrors((e) => ({ ...e, edad: '' })); }}
                 />
                 {errors.edad ? <Text style={styles.errorText}>{errors.edad}</Text> : null}
+
+                {/* Campo: Foto de perfil */}
+                <Text style={styles.label}>Foto de perfil</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 4 }}>
+                  {/* Vista previa de la foto o placeholder */}
+                  {fotoUri ? (
+                    <Image
+                      source={{ uri: fotoUri }}
+                      style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#1E293B' }}
+                      contentFit="cover"
+                    />
+                  ) : (
+                    <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#334155' }}>
+                      <FontAwesome name="user" size={30} color="#475569" />
+                    </View>
+                  )}
+                  {/* Botón para abrir la galería */}
+                  <Pressable
+                    onPress={pickImage}
+                    style={({ pressed }) => ({
+                      flex: 1,
+                      backgroundColor: pressed ? '#1E40AF' : '#1E293B',
+                      borderRadius: 8,
+                      paddingVertical: 12,
+                      alignItems: 'center',
+                      borderWidth: 1,
+                      borderColor: '#334155',
+                    })}
+                  >
+                    <Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>
+                      {fotoUri ? 'Cambiar foto' : 'Seleccionar foto'}
+                    </Text>
+                  </Pressable>
+                </View>
+                {/* Botón para quitar la foto seleccionada */}
+                {fotoUri && (
+                  <Pressable onPress={() => { setFotoUri(null); }}>
+                    <Text style={{ color: '#EF4444', fontSize: 12, marginBottom: 4 }}>Quitar foto</Text>
+                  </Pressable>
+                )}
               </View>
 
               {/*SECCIÓN: CONTACTO*/}
