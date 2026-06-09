@@ -489,11 +489,18 @@ export default function ReportesClientesScreen() {
   };
 
   // FUNCIÓN: CONFIRMAR ELIMINAR
-  // Filtra la solicitud de la lista y cierra el modal
-  const confirmarEliminar = () => {
-    if (deleteTarget) setLista((p) => p.filter((x) => x.id !== deleteTarget.id));
-    setDeleteModal(false);
-    setDeleteTarget(null);              // Limpia el target
+  // Llama al backend para eliminar la solicitud y luego la quita del estado local
+  const confirmarEliminar = async () => {
+    if (!deleteTarget || !token) return;
+    try {
+      await solicitudesApi.eliminar(deleteTarget.id, token);
+      setLista((p) => p.filter((x) => x.id !== deleteTarget.id));
+    } catch {
+      // Si falla el backend, se cierra el modal sin modificar la lista
+    } finally {
+      setDeleteModal(false);
+      setDeleteTarget(null);            // Limpia el target
+    }
   };
 
   // FUNCIÓN: ABRIR MODAL ENVIAR

@@ -4,7 +4,7 @@
 // ⚠️  URL base:
 //   - iOS simulator  → localhost funciona directamente
 //   - Android emulator → cambia por http://10.0.2.2:3000/api
-//   - Dispositivo real → usa la IP local del PC, p. ej. http://192.168.1.X:3000/api
+//   - Dispositivo real Expo Go → usa http://192.168.70.215:3000/api
 
 export const BASE_URL = 'http://192.168.70.215:3000/api';
 

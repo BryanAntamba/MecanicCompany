@@ -5,7 +5,7 @@ import {
   actualizarSolicitud,
   eliminarSolicitud,
 } from '../controllers/solicitudes.controller';
-import { authMiddleware, soloAdmin } from '../middlewares/auth.middleware';
+import { authMiddleware } from '../middlewares/auth.middleware';
 
 const router = Router();
 
@@ -18,7 +18,7 @@ router.post('/', crearSolicitud);
 // PUT  /api/solicitudes/:id  → mecánico actualiza estado/datos
 router.put('/:id', authMiddleware, actualizarSolicitud);
 
-// DELETE /api/solicitudes/:id  → solo el admin puede eliminar registros
-router.delete('/:id', authMiddleware, soloAdmin, eliminarSolicitud);
+// DELETE /api/solicitudes/:id  → mecánico autenticado puede eliminar solicitudes
+router.delete('/:id', authMiddleware, eliminarSolicitud);
 
 export default router;

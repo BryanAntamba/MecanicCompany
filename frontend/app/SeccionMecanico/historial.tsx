@@ -455,12 +455,14 @@ export default function HistorialScreen() {
                   El reporte fue enviado exitosamente al correo de{' '}
                   <Text style={styles.sendModalHighlight}>{sendTarget?.clienteNombre}</Text>.
                 </Text>
-                <Pressable
-                  style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                  onPress={() => { setSendModal(false); setSendSuccess(false); setSendError(''); }}
-                >
-                  <Text style={styles.sendModalBtnText}>Cerrar</Text>
-                </Pressable>
+                <View style={styles.sendModalBtns}>
+                  <Pressable
+                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
+                    onPress={() => { setSendModal(false); setSendSuccess(false); setSendError(''); }}
+                  >
+                    <Text style={styles.sendModalBtnText}>Cerrar</Text>
+                  </Pressable>
+                </View>
               </>
             ) : (
               // PANTALLA DE CONFIRMACIÓN 

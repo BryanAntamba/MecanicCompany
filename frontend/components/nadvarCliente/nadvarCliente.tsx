@@ -127,7 +127,7 @@ export default function NavbarCliente({ onScrollToAbout, onScrollToTop }: Navbar
           </Pressable>
           {/* Opción Soporte → Contactanos */}
           <Pressable style={styles.menuItem} onPress={handleSoporte}>
-            <Text style={styles.menuItemText}>Soporte</Text>
+            <Text style={styles.menuItemText}>Contáctanos</Text>
           </Pressable>
           {/* Opción Nosotros → scroll a las cards del carrusel */}
           <Pressable style={styles.menuItem} onPress={handleNosotros}>
