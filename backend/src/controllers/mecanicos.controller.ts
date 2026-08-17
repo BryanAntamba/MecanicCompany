@@ -38,6 +38,32 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
             especialidad, anosExperiencia, contrasena,
         } = req.body;
 
+        // Validar si el correoEmpresarial ya existe
+        const correoEmpresarialNormalizado = correoEmpresarial.trim().toLowerCase();
+        const existeCorreoEmpresarial = await prisma.mecanico.findUnique({
+            where: { correoEmpresarial: correoEmpresarialNormalizado },
+        });
+
+        if (existeCorreoEmpresarial) {
+            res.status(400).json({ 
+                message: 'El correo empresarial ya está registrado' 
+            });
+            return;
+        }
+
+        // Validar si el correo personal ya existe
+        const correoNormalizado = correo.trim().toLowerCase();
+        const existeCorreo = await prisma.mecanico.findUnique({
+            where: { correo: correoNormalizado },
+        });
+
+        if (existeCorreo) {
+            res.status(400).json({ 
+                message: 'El correo personal ya está registrado' 
+            });
+            return;
+        }
+
         const hash = await bcrypt.hash(contrasena, 12);
 
         // fotoPerfil llega como string base64 (data URI) desde el frontend
@@ -48,8 +74,8 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
                 nombres,
                 apellidos,
                 edad: Number(edad),
-                correo: correo.trim().toLowerCase(),
-                correoEmpresarial: correoEmpresarial.trim().toLowerCase(),
+                correo: correoNormalizado,
+                correoEmpresarial: correoEmpresarialNormalizado,
                 especialidad,
                 anosExperiencia: Number(anosExperiencia),
                 contrasena: hash,
@@ -74,9 +100,47 @@ export async function actualizarMecanico(req: Request, res: Response): Promise<v
             especialidad, anosExperiencia, estadoLaboral, contrasena,
         } = req.body;
 
+        // Validar si el correoEmpresarial ya existe en otro mecánico
+        if (correoEmpresarial) {
+            const correoNormalizado = correoEmpresarial.trim().toLowerCase();
+            const mecanicoExistente = await prisma.mecanico.findUnique({
+                where: { correoEmpresarial: correoNormalizado },
+            });
+
+            // Si existe y no es el mismo mecánico que estamos actualizando
+            if (mecanicoExistente && mecanicoExistente.id !== id) {
+                res.status(400).json({ 
+                    message: 'El correo empresarial ya está registrado en otro mecánico' 
+                });
+                return;
+            }
+        }
+
+        // Validar si el correo personal ya existe en otro mecánico
+        if (correo) {
+            const correoNormalizado = correo.trim().toLowerCase();
+            const mecanicoExistente = await prisma.mecanico.findUnique({
+                where: { correo: correoNormalizado },
+            });
+
+            // Si existe y no es el mismo mecánico que estamos actualizando
+            if (mecanicoExistente && mecanicoExistente.id !== id) {
+                res.status(400).json({ 
+                    message: 'El correo personal ya está registrado en otro mecánico' 
+                });
+                return;
+            }
+        }
+
         const data: Record<string, unknown> = {
-            nombres, apellidos, edad: Number(edad), correo, correoEmpresarial,
-            especialidad, anosExperiencia: Number(anosExperiencia), estadoLaboral,
+            nombres, 
+            apellidos, 
+            edad: Number(edad), 
+            correo: correo?.trim().toLowerCase(), 
+            correoEmpresarial: correoEmpresarial?.trim().toLowerCase(),
+            especialidad, 
+            anosExperiencia: Number(anosExperiencia), 
+            estadoLaboral,
         };
 
         if (contrasena) {

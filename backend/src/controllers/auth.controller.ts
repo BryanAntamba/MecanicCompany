@@ -84,6 +84,10 @@ export async function login(req: Request, res: Response): Promise<void> {
     });
 }
 
+// Mapa en memoria para controlar intentos de reenvío por correo
+// En producción esto debería estar en Redis o base de datos
+const reenviosMap = new Map<string, { intentos: number; bloqueadoHasta: Date | null }>();
+
 // POST /api/auth/recuperar
 export async function solicitarRecuperacion(req: Request, res: Response): Promise<void> {
     const { correo } = req.body;
@@ -93,9 +97,28 @@ export async function solicitarRecuperacion(req: Request, res: Response): Promis
         return;
     }
 
+    const correoNorm = correo.trim().toLowerCase();
+
+    // Verificar si está bloqueado
+    const estadoReenvio = reenviosMap.get(correoNorm);
+    if (estadoReenvio?.bloqueadoHasta) {
+        if (new Date() < estadoReenvio.bloqueadoHasta) {
+            const tiempoRestante = Math.ceil((estadoReenvio.bloqueadoHasta.getTime() - Date.now()) / 1000);
+            res.status(429).json({ 
+                message: 'Has excedido el límite de intentos',
+                bloqueado: true,
+                tiempoRestante 
+            });
+            return;
+        } else {
+            // El bloqueo expiró, resetear
+            reenviosMap.delete(correoNorm);
+        }
+    }
+
     try {
         const mecanico = await prisma.mecanico.findUnique({
-            where: { correo: correo.trim().toLowerCase() },
+            where: { correo: correoNorm },
         });
 
         // Respuesta genérica para no revelar si el correo existe
@@ -108,15 +131,175 @@ export async function solicitarRecuperacion(req: Request, res: Response): Promis
         const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutos
 
         await prisma.codigoVerificacion.create({
-            data: { correo: correo.trim().toLowerCase(), codigo, expiresAt },
+            data: { correo: correoNorm, codigo, expiresAt },
         });
 
-        await enviarCodigoEmail(correo, codigo, 'recuperacion');
+        console.log(`[solicitarRecuperacion] Código generado: ${codigo} para ${correo}`);
+        
+        try {
+            await enviarCodigoEmail(correo, codigo, 'recuperacion');
+            console.log(`[solicitarRecuperacion] Correo enviado exitosamente a ${correo}`);
+        } catch (emailErr: any) {
+            console.error('[solicitarRecuperacion] Error al enviar correo:', emailErr?.message);
+            console.error('[solicitarRecuperacion] Stack:', emailErr?.stack);
+            res.status(500).json({ message: `Error al enviar correo: ${emailErr?.message}` });
+            return;
+        }
+
+        // Inicializar contador de reenvíos si no existe (no contar el envío inicial)
+        if (!reenviosMap.has(correoNorm)) {
+            reenviosMap.set(correoNorm, { intentos: 0, bloqueadoHasta: null });
+        }
 
         res.json({ message: 'Si el correo está registrado, recibirás un código en breve' });
     } catch (err: any) {
-        console.error('[solicitarRecuperacion]', err?.message);
+        console.error('[solicitarRecuperacion] Error general:', err?.message);
+        console.error('[solicitarRecuperacion] Stack:', err?.stack);
         res.status(500).json({ message: err?.message ?? 'Error al procesar la solicitud de recuperación' });
+    }
+}
+
+// POST /api/auth/reenviar-codigo
+export async function reenviarCodigo(req: Request, res: Response): Promise<void> {
+    const { correo } = req.body;
+
+    if (!correo) {
+        res.status(400).json({ message: 'Correo requerido' });
+        return;
+    }
+
+    const correoNorm = correo.trim().toLowerCase();
+    const MAX_INTENTOS = 5;
+    const TIEMPO_BLOQUEO = 15 * 60 * 1000; // 15 minutos
+
+    // Obtener o inicializar estado de reenvíos
+    let estadoReenvio = reenviosMap.get(correoNorm);
+    if (!estadoReenvio) {
+        estadoReenvio = { intentos: 0, bloqueadoHasta: null };
+        reenviosMap.set(correoNorm, estadoReenvio);
+    }
+
+    // Verificar si está bloqueado
+    if (estadoReenvio.bloqueadoHasta) {
+        if (new Date() < estadoReenvio.bloqueadoHasta) {
+            const tiempoRestante = Math.ceil((estadoReenvio.bloqueadoHasta.getTime() - Date.now()) / 1000);
+            res.status(429).json({ 
+                message: 'Has excedido el límite de intentos. Espera antes de intentar nuevamente.',
+                bloqueado: true,
+                tiempoRestante,
+                intentosRestantes: 0
+            });
+            return;
+        } else {
+            // El bloqueo expiró, resetear
+            estadoReenvio.intentos = 0;
+            estadoReenvio.bloqueadoHasta = null;
+        }
+    }
+
+    // Incrementar intentos
+    estadoReenvio.intentos++;
+
+    // Verificar si alcanzó el máximo
+    if (estadoReenvio.intentos >= MAX_INTENTOS) {
+        estadoReenvio.bloqueadoHasta = new Date(Date.now() + TIEMPO_BLOQUEO);
+        const tiempoRestante = Math.ceil(TIEMPO_BLOQUEO / 1000);
+        
+        console.log(`[reenviarCodigo] Correo ${correoNorm} bloqueado por ${tiempoRestante}s`);
+        
+        res.status(429).json({ 
+            message: 'Has alcanzado el límite máximo de reenvíos. Espera 15 minutos.',
+            bloqueado: true,
+            tiempoRestante,
+            intentosRestantes: 0
+        });
+        return;
+    }
+
+    try {
+        const mecanico = await prisma.mecanico.findUnique({
+            where: { correo: correoNorm },
+        });
+
+        if (!mecanico) {
+            res.json({ 
+                message: 'Si el correo está registrado, recibirás un código en breve',
+                intentosRestantes: MAX_INTENTOS - estadoReenvio.intentos
+            });
+            return;
+        }
+
+        // Invalidar códigos anteriores (marcarlos como usados)
+        await prisma.codigoVerificacion.updateMany({
+            where: { correo: correoNorm, usado: false },
+            data: { usado: true },
+        });
+
+        const codigo = generarCodigo();
+        const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+        await prisma.codigoVerificacion.create({
+            data: { correo: correoNorm, codigo, expiresAt },
+        });
+
+        console.log(`[reenviarCodigo] Nuevo código generado: ${codigo} para ${correo} (intento ${estadoReenvio.intentos}/${MAX_INTENTOS})`);
+        
+        try {
+            await enviarCodigoEmail(correo, codigo, 'recuperacion');
+            console.log(`[reenviarCodigo] Correo enviado exitosamente a ${correo}`);
+        } catch (emailErr: any) {
+            console.error('[reenviarCodigo] Error al enviar correo:', emailErr?.message);
+            res.status(500).json({ message: `Error al enviar correo: ${emailErr?.message}` });
+            return;
+        }
+
+        res.json({ 
+            message: 'Código reenviado exitosamente',
+            intentosRestantes: MAX_INTENTOS - estadoReenvio.intentos
+        });
+    } catch (err: any) {
+        console.error('[reenviarCodigo] Error general:', err?.message);
+        res.status(500).json({ message: err?.message ?? 'Error al reenviar el código' });
+    }
+}
+
+// POST /api/auth/verificar-estado-reenvio
+export async function verificarEstadoReenvio(req: Request, res: Response): Promise<void> {
+    const { correo } = req.body;
+
+    if (!correo) {
+        res.status(400).json({ message: 'Correo requerido' });
+        return;
+    }
+
+    const correoNorm = correo.trim().toLowerCase();
+    const MAX_INTENTOS = 5;
+    const estadoReenvio = reenviosMap.get(correoNorm);
+
+    if (!estadoReenvio || !estadoReenvio.bloqueadoHasta) {
+        res.json({ 
+            bloqueado: false,
+            intentosRestantes: estadoReenvio ? MAX_INTENTOS - estadoReenvio.intentos : MAX_INTENTOS,
+            tiempoRestante: 0
+        });
+        return;
+    }
+
+    if (new Date() < estadoReenvio.bloqueadoHasta) {
+        const tiempoRestante = Math.ceil((estadoReenvio.bloqueadoHasta.getTime() - Date.now()) / 1000);
+        res.json({ 
+            bloqueado: true,
+            intentosRestantes: 0,
+            tiempoRestante
+        });
+    } else {
+        // El bloqueo expiró
+        reenviosMap.delete(correoNorm);
+        res.json({ 
+            bloqueado: false,
+            intentosRestantes: MAX_INTENTOS,
+            tiempoRestante: 0
+        });
     }
 }
 

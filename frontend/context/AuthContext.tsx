@@ -2,8 +2,10 @@
 // Contexto global de autenticación.
 // Provee: usuario autenticado, token JWT, funciones login/logout, estado de carga.
 // El token se persiste en AsyncStorage para mantener la sesión entre reinicios de la app.
+// IMPORTANTE: Cierra sesión automáticamente cuando la app pasa a background (usuario cierra la app).
 
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authApi, LoginResponse } from '@/utils/api';
 
@@ -59,6 +61,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  // Listener de AppState: cierra sesión automáticamente cuando la app pasa a background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextAppState: AppStateStatus) => {
+      // Cuando la app pasa de activa a background o inactiva → logout automático
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        // Solo hacer logout si hay una sesión activa
+        if (token && user) {
+          await Promise.all([
+            AsyncStorage.removeItem(TOKEN_KEY),
+            AsyncStorage.removeItem(USER_KEY),
+          ]);
+          setToken(null);
+          setUser(null);
+        }
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [token, user]);
 
   const login = useCallback(async (correoEmpresarial: string, contrasena: string): Promise<AuthUser> => {
     const data = await authApi.login(correoEmpresarial, contrasena);

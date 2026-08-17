@@ -5,7 +5,7 @@
 
 
 // Hook de React para manejar estado local
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 // Componentes nativos de React Native
 import {
@@ -22,24 +22,28 @@ import {
 
 // Íconos vectoriales de FontAwesome (search, car, calendar, user, file-text, send, check-circle)
 import { FontAwesome } from '@expo/vector-icons';
+import * as ScreenCapture from 'expo-screen-capture';
 
 // Barra de navegación del mecánico con opciones Reportes, Historial y Cerrar sesión
-import NavbarMecanico from '@/components/nadvarMecanico/nadvarMecanico';
+import NavbarMecanico from '@/components/navbarMecanico/navbarMecanico';
 
 // useFocusEffect: ejecuta un efecto solo mientras la pantalla está en foco
-import { useFocusEffect } from 'expo-router';
+// useRouter: para navegar entre pantallas
+import { useFocusEffect, useRouter } from 'expo-router';
 
 // Estilos compartidos con ReportesClientes (tarjetas, modales, botones)
-import styles from '@/Styles/ReportesClientes';
+import styles from '@/Styles/pantallaMecanico/ReportesClientes';
 
 // Estilos exclusivos del historial (buscador, texto vacío, valores de detalle)
-import histStyles from '@/Styles/historial';
+import histStyles from '@/Styles/pantallaMecanico/historial';
 
 // Contexto de autenticación
 import { useAuth } from '@/context/AuthContext';
 
-// API para cargar las solicitudes completadas y reenviar reportes
-import { solicitudesApi, reportesApi, SolicitudBackend } from '@/utils/api';
+// Modales del historial
+import VisualizarReporte from './modalesHistorial/visualizarReporte';
+import ConfirmarReenvioReporte from './modalesHistorial/confirmarReenvioReporte';
+import ReenvioReporte from './modalesHistorial/reenvioReporte';
 
 
 // TIPOS
@@ -71,6 +75,7 @@ type RegistroHistorial = {
   id: string;                  // Identificador único del registro
   clienteNombre: string;       // Nombre completo del cliente
   clienteCorreo: string;       // Correo del cliente para reenviar el reporte
+  telefono: string;            // Teléfono del cliente
   marca: string;               // Marca del vehículo (para mostrar en la tarjeta)
   modelo: string;              // Modelo del vehículo
   placa: string;               // Placa del vehículo (campo de búsqueda)
@@ -82,62 +87,60 @@ type RegistroHistorial = {
 
 // DATOS
 
-// Lista vacía — los registros reales se cargan desde el backend
+// Lista vacía — los registros reales se cargan desde datosSimulados
 const MOCK_HISTORIAL: RegistroHistorial[] = [];
-
-// Mapea una SolicitudBackend completada a RegistroHistorial
-function backendAHistorial(s: SolicitudBackend): RegistroHistorial | null {
-  if (!s.mantenimiento) return null;
-  const m = s.mantenimiento;
-  return {
-    id: s.id,
-    clienteNombre: s.nombreCliente,
-    clienteCorreo: s.correoCliente,
-    marca: m.marca,
-    modelo: m.modelo,
-    placa: m.placa,
-    fechaMantenimiento: m.fechaFinalizacion,
-    mecanicoNombre: m.mecanicoAsignado,
-    mantenimiento: {
-      marca: m.marca,
-      modelo: m.modelo,
-      placa: m.placa,
-      año: m.año ?? s.anio,
-      kilometraje: m.kilometraje ?? s.kilometraje,
-      fechaServicio: m.fechaServicio,
-      mecanicoAsignado: m.mecanicoAsignado,
-      diagnostico: m.diagnostico,
-      trabajoRealizado: m.trabajoRealizado,
-      otroTrabajo: m.otroTrabajo,
-      repuestosUtilizados: m.repuestosUtilizados,
-      diagnosticoRealizado: m.diagnosticoRealizado,
-      costoManoObra: String(m.costoManoObra),
-      costoRepuestos: String(m.costoRepuestos),
-      observaciones: m.observaciones,
-      fechaInicio: m.fechaInicio,
-      fechaFinalizacion: m.fechaFinalizacion,
-    },
-  };
-}
 
 
 // COMPONENTE PRINCIPAL
 
 
 export default function HistorialScreen() {
-  // Bloquea el botón físico de atrás en Android mientras esta pantalla está activa
+  const router = useRouter();
+  const { token, user, logout } = useAuth();
+
+  // Bloquear capturas de pantalla
+  useEffect(() => {
+    const preventCapture = async () => {
+      await ScreenCapture.preventScreenCaptureAsync();
+    };
+    preventCapture();
+    // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
+  }, []);
+
+  // Función para cerrar sesión y limpiar historial
+  const handleSignOut = async () => {
+    await logout();
+    // Navegar al login con parámetro que indica cierre de sesión
+    router.replace('/(auth)/login?fromLogout=true' as any);
+  };
+
+  // BackHandler: navega a ReportesClientes al presionar back
   useFocusEffect(
     useCallback(() => {
-      const sub = BackHandler.addEventListener('hardwareBackPress', () => true);
+      const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+        router.push('/SeccionMecanico/ReportesClientes' as any);
+        return true; // Previene el comportamiento por defecto
+      });
       return () => sub.remove();
-    }, []),
+    }, [router]),
   );
 
-  // Token y usuario autenticado
-  const { token, user } = useAuth();
-
-  // Estado del campo de búsqueda por placa
+  // Estado del campo de búsqueda (placa, nombre, correo, teléfono)
   const [busqueda, setBusqueda] = useState('');
+  
+  // Estado de orden A-Z / Z-A
+  const [ordenAZ, setOrdenAZ] = useState<'A-Z' | 'Z-A'>('A-Z');
+  const [ordenDropdownOpen, setOrdenDropdownOpen] = useState(false);
+  
+  // Estado de fechas
+  const [fechaMinima, setFechaMinima] = useState<Date | null>(null);
+  const [fechaMaxima, setFechaMaxima] = useState<Date | null>(null);
+  const [calendarMinimaVisible, setCalendarMinimaVisible] = useState(false);
+  const [calendarMaximaVisible, setCalendarMaximaVisible] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const d = new Date();
+    return new Date(d.getFullYear(), d.getMonth(), 1);
+  });
 
   // Lista de registros del historial (se carga desde el backend)
   const [lista, setLista] = useState<RegistroHistorial[]>([]);
@@ -145,17 +148,43 @@ export default function HistorialScreen() {
   // Recarga el historial cada vez que la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
-      if (!token || !user?.id) return;
-      solicitudesApi.listar(token)
-        .then((data: SolicitudBackend[]) => {
-          const registros = data
-            .filter((s) => s.mecanicoId === user.id && s.estado === 'Completado')
-            .map(backendAHistorial)
-            .filter((r): r is RegistroHistorial => r !== null);
-          setLista(registros);
-        })
-        .catch(() => { });
-    }, [token, user?.id]),
+      // Cargar desde datos simulados
+      const { obtenerSolicitudesSimuladas } = require('@/utils/datosSimulados');
+      const solicitudes = obtenerSolicitudesSimuladas();
+      const registros = solicitudes
+        .filter((s: any) => s.estado === 'Completado')
+        .map((s: any) => ({
+          id: s.id,
+          clienteNombre: s.nombreCliente,
+          clienteCorreo: s.correoCliente,
+          telefono: s.telefono || 'No especificado',
+          marca: s.marca,
+          modelo: s.modelo,
+          placa: s.placa,
+          fechaMantenimiento: s.fechaFinalizacion || s.fechaCita,
+          mecanicoNombre: s.mecanicoAsignado || 'No asignado',
+          mantenimiento: {
+            marca: s.marca,
+            modelo: s.modelo,
+            placa: s.placa,
+            año: s.anio,
+            kilometraje: s.kilometraje,
+            fechaServicio: s.fechaServicio || s.fechaCita,
+            mecanicoAsignado: s.mecanicoAsignado || 'No asignado',
+            diagnostico: s.diagnostico || '',
+            trabajoRealizado: s.trabajoRealizado || '',
+            otroTrabajo: s.otroTrabajo || '',
+            repuestosUtilizados: s.repuestosUtilizados || '',
+            diagnosticoRealizado: s.diagnosticoRealizado || '',
+            costoManoObra: s.costoManoObra || '0',
+            costoRepuestos: s.costoRepuestos || '0',
+            observaciones: s.observaciones || '',
+            fechaInicio: s.fechaInicio || '',
+            fechaFinalizacion: s.fechaFinalizacion || '',
+          },
+        }));
+      setLista(registros);
+    }, []),
   );
 
   // Estado: controla si el modal de detalles está visible
@@ -174,27 +203,81 @@ export default function HistorialScreen() {
   // Estado: mensaje de error si el envío falló
   const [sendError, setSendError] = useState('');
 
-  // Llama al backend para reenviar el reporte al correo del cliente
+  // Llama al backend para reenviar el reporte al correo del cliente (SIMULADO)
   const reenviarReporte = async () => {
-    if (!sendTarget || !token) return;
+    if (!sendTarget) return;
     setSendLoading(true);
     setSendError('');
-    try {
-      await reportesApi.enviar(sendTarget.id, token);
-      setSendSuccess(true);
-    } catch (err: any) {
-      setSendError(err?.message ?? 'No se pudo reenviar el reporte. Verifica la conexión.');
-    } finally {
+    
+    // Simulación de envío exitoso
+    setTimeout(() => {
       setSendLoading(false);
-    }
+      setSendSuccess(true);
+    }, 500);
   };
 
-  // Filtra la lista por placa cuando hay texto en el buscador.
-  // Si el buscador está vacío, muestra todos los registros.
-  // toLowerCase() hace la búsqueda insensible a mayúsculas/minúsculas.
-  const listaFiltrada = busqueda.trim()
-    ? lista.filter((r) => r.placa.toLowerCase().includes(busqueda.trim().toLowerCase()))
-    : lista;
+  // Funciones auxiliares de calendario
+  const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
+    const year = monthStart.getFullYear();
+    const month = monthStart.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const blanks: null[] = Array(firstWeekday).fill(null);
+    const days: Date[] = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+    return [...blanks, ...days];
+  };
+
+  const formatDate = (date: Date | null) =>
+    date ? date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Seleccionar';
+
+  // Filtra la lista por búsqueda, orden y rango de fechas
+  const listaFiltrada = lista
+    .filter((r) => {
+      // Búsqueda por nombre, placa, correo o teléfono
+      const textoBusqueda = busqueda.trim().toLowerCase();
+      if (!textoBusqueda) return true;
+      
+      return (
+        r.clienteNombre.toLowerCase().includes(textoBusqueda) ||
+        r.placa.toLowerCase().includes(textoBusqueda) ||
+        r.clienteCorreo.toLowerCase().includes(textoBusqueda)
+      );
+    })
+    .filter((r) => {
+      // Filtro de rango de fechas
+      if (!fechaMinima && !fechaMaxima) return true;
+      
+      // Parsear la fecha del registro (formato DD/MM/YYYY)
+      const partes = r.fechaMantenimiento.split('/');
+      if (partes.length !== 3) return true;
+      
+      const fechaRegistro = new Date(parseInt(partes[2]), parseInt(partes[1]) - 1, parseInt(partes[0]));
+      fechaRegistro.setHours(0, 0, 0, 0);
+      
+      if (fechaMinima) {
+        const fechaMin = new Date(fechaMinima);
+        fechaMin.setHours(0, 0, 0, 0);
+        if (fechaRegistro < fechaMin) return false;
+      }
+      
+      if (fechaMaxima) {
+        const fechaMax = new Date(fechaMaxima);
+        fechaMax.setHours(23, 59, 59, 999);
+        if (fechaRegistro > fechaMax) return false;
+      }
+      
+      return true;
+    })
+    .sort((a, b) => {
+      // Ordenar por nombre del cliente
+      const nombreA = a.clienteNombre;
+      const nombreB = b.clienteNombre;
+      return ordenAZ === 'A-Z' ? nombreA.localeCompare(nombreB) : nombreB.localeCompare(nombreA);
+    });
+
+  // Calcular totales
+  const totalReportes = lista.length;
+  const reportesEncontrados = listaFiltrada.length;
 
   // RENDER
 
@@ -202,8 +285,8 @@ export default function HistorialScreen() {
     // Contenedor raíz que ocupa toda la pantalla
     <View style={styles.page}>
 
-      {/* Navbar del mecánico con "historial" como pestaña activa (resaltada en azul) */}
-      <NavbarMecanico activeTab="historial" />
+      {/* Navbar del mecánico */}
+      <NavbarMecanico onSignOut={handleSignOut} />
 
       {/* ScrollView principal con la lista de registros */}
       <ScrollView
@@ -212,299 +295,268 @@ export default function HistorialScreen() {
         keyboardShouldPersistTaps="handled" // Cierra el teclado al tocar fuera del input
       >
         {/* Título centrado de la pantalla */}
-        <Text style={styles.screenTitle}>Historial</Text>
+        <Text style={styles.screenTitle}>HISTORIAL</Text>
 
-        {/* Subtítulo descriptivo */}
-        <Text style={styles.screenSubtitle}>Registros de mantenimientos completados.</Text>
+        {/* FILTROS */}
+        <View style={styles.filterContainer}>
+          {/* Barra de búsqueda */}
+          <Text style={styles.filterLabel}>Buscar Reporte</Text>
+          <View style={styles.searchBox}>
+            <FontAwesome name="search" size={16} color="#64748B" style={styles.searchIcon} />
+            <TextInput
+              placeholder="Busca lo que necesitas"
+              placeholderTextColor="#94A3B8"
+              value={busqueda}
+              onChangeText={setBusqueda}
+              style={styles.searchInput}
+            />
+          </View>
 
-        {/* ── BUSCADOR POR PLACA ──
-            Fila con ícono de lupa + input + botón limpiar (X) */}
-        <View style={histStyles.searchRow}>
-          {/* Ícono de lupa a la izquierda del input */}
-          <FontAwesome name="search" size={16} color="#64748B" style={histStyles.searchIcon} />
-
-          {/* Campo de texto para ingresar la placa a buscar
-              autoCapitalize="characters" convierte automáticamente a mayúsculas */}
-          <TextInput
-            style={histStyles.searchInput}
-            placeholder="Buscar por placa..."
-            placeholderTextColor="#64748B"
-            value={busqueda}
-            onChangeText={setBusqueda}         // Actualiza el estado al escribir
-            autoCapitalize="characters"        // Las placas suelen estar en mayúsculas
-          />
-
-          {/* Botón X para limpiar el buscador — solo visible cuando hay texto */}
-          {busqueda.length > 0 && (
-            <Pressable onPress={() => setBusqueda('')} hitSlop={8}>
-              <FontAwesome name="times-circle" size={16} color="#64748B" />
-            </Pressable>
+          {/* Orden A-Z / Z-A */}
+          <Text style={styles.filterLabel}>Orden</Text>
+          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
+            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+          </Pressable>
+          {ordenDropdownOpen && (
+            <View style={styles.dropdownList}>
+              {(['A-Z', 'Z-A'] as const).map((option) => (
+                <Pressable
+                  key={option}
+                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                  onPress={() => {
+                    setOrdenAZ(option);
+                    setOrdenDropdownOpen(false);
+                  }}
+                >
+                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                  <Text style={styles.dropdownItemText}>{option}</Text>
+                </Pressable>
+              ))}
+            </View>
           )}
+
+          {/* Rango de fechas */}
+          <Text style={styles.filterLabel}>Rango de Fechas del Reporte Generado</Text>
+          <View style={styles.filterRow}>
+            <View style={styles.filterHalf}>
+              <Pressable
+                style={styles.dateButton}
+                onPress={() => {
+                  setCalendarMonth(fechaMinima || new Date());
+                  setCalendarMinimaVisible(true);
+                }}
+              >
+                <Text style={styles.dateButtonText}>{formatDate(fechaMinima)}</Text>
+                <FontAwesome name="calendar" size={14} color="#64748B" />
+              </Pressable>
+            </View>
+            <View style={styles.filterHalf}>
+              <Pressable
+                style={styles.dateButton}
+                onPress={() => {
+                  setCalendarMonth(fechaMaxima || new Date());
+                  setCalendarMaximaVisible(true);
+                }}
+              >
+                <Text style={styles.dateButtonText}>{formatDate(fechaMaxima)}</Text>
+                <FontAwesome name="calendar" size={14} color="#64748B" />
+              </Pressable>
+            </View>
+          </View>
+        </View>
+
+        {/* RESUMEN */}
+        <View style={styles.summaryContainer}>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalReportes}</Text>
+            <Text style={styles.summaryLabel}>Total Reportes</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{reportesEncontrados}</Text>
+            <Text style={styles.summaryLabel}>Reportes Encontrados</Text>
+          </View>
         </View>
 
         {/* Mensaje cuando no hay resultados para la búsqueda actual */}
         {listaFiltrada.length === 0 && (
-          <Text style={histStyles.emptyText}>No se encontraron registros para "{busqueda}".</Text>
+          <Text style={styles.emptyText}>No se encontraron reportes</Text>
         )}
 
         {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
+        <View style={styles.solicitudesContainer}>
+
+        {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
         {listaFiltrada.map((r) => (
-          <View key={r.id} style={styles.rowCard}>
+          <View key={r.id} style={styles.card}>
 
             {/* Nombre completo del cliente */}
-            <Text style={styles.clientName}>{r.clienteNombre}</Text>
+            <Text style={styles.cardName}>{r.clienteNombre}</Text>
 
-            {/* Fila: ícono de carro + marca/modelo/placa */}
-            <View style={styles.metaRow}>
-              <FontAwesome name="car" size={13} color="#64748B" style={styles.metaIcon} />
-              <Text style={styles.clientMeta}>{r.marca} {r.modelo} · {r.placa}</Text>
-            </View>
+            {/* Correo */}
+            <Text style={styles.cardMeta} numberOfLines={1}>
+              {r.clienteCorreo}
+            </Text>
 
-            {/* Fila: ícono de calendario + fecha del mantenimiento */}
-            <View style={styles.metaRow}>
-              <FontAwesome name="calendar" size={13} color="#64748B" style={styles.metaIcon} />
-              <Text style={styles.clientMeta}>Mantenimiento: {r.fechaMantenimiento}</Text>
-            </View>
+            {/* Teléfono */}
+            <Text style={styles.cardMeta} numberOfLines={1}>
+              {r.telefono}
+            </Text>
 
-            {/* Fila: ícono de usuario + nombre del mecánico que atendió */}
-            <View style={styles.metaRow}>
-              <FontAwesome name="user" size={13} color="#64748B" style={styles.metaIcon} />
-              <Text style={styles.clientMeta}>Mecánico: {r.mecanicoNombre}</Text>
-            </View>
+            {/* Marca y modelo */}
+            <Text style={styles.cardMeta} numberOfLines={1}>
+              {r.marca} {r.modelo}
+            </Text>
 
-            {/* Línea divisoria entre la info y los botones */}
-            <View style={styles.divider} />
+            {/* Placa */}
+            <Text style={styles.cardMeta} numberOfLines={1}>
+              Placa: {r.placa}
+            </Text>
 
-            {/* Fila de botones de acción */}
-            <View style={styles.actionsRow}>
-
-              {/* Botón Detalles: abre el modal con el reporte completo del mantenimiento */}
+            {/* Botones de acción */}
+            <View style={{ marginTop: 16, gap: 8 }}>
+              {/* Botón VISUALIZAR REPORTE */}
               <Pressable
                 onPress={() => { setDetallesTarget(r); setDetallesModal(true); }}
-                style={({ pressed }) => [styles.actionBtn, styles.btnEdit, pressed && styles.btnEditPressed]}
+                style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
               >
                 {({ pressed }) => (
-                  <View style={styles.btnInnerRow}>
-                    {/* Ícono de documento de texto */}
-                    <FontAwesome name="file-text" size={12} color="#FFFFFF" style={styles.btnIcon} />
-                    <Text style={[styles.actionBtnText, styles.btnEditText]}>Detalles</Text>
-                  </View>
+                  <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
+                    VISUALIZAR REPORTE
+                  </Text>
                 )}
               </Pressable>
 
-              {/* Botón Reenviar: abre el modal de confirmación para reenviar el reporte */}
+              {/* Botón REENVIAR FACTURA */}
               <Pressable
                 onPress={() => { setSendTarget(r); setSendSuccess(false); setSendModal(true); }}
-                style={({ pressed }) => [styles.actionBtn, styles.btnSend, pressed && styles.btnSendPressed]}
+                style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
               >
                 {({ pressed }) => (
-                  <View style={styles.btnInnerRow}>
-                    {/* Ícono de envío */}
-                    <FontAwesome name="send" size={12} color="#FFFFFF" style={styles.btnIcon} />
-                    <Text style={[styles.actionBtnText, styles.btnSendText]}>Reenviar</Text>
-                  </View>
+                  <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                    REENVIAR FACTURA
+                  </Text>
                 )}
               </Pressable>
             </View>
           </View>
         ))}
+        </View>
       </ScrollView>
 
-      {/* MODAL DETALLES DEL MANTENIMIENTO
-          Muestra todos los campos del reporte en modo solo lectura.
-          Reutiliza el mismo diseño visual que el modal de registro de ReportesClientes.*/}
-      <Modal
-        visible={detallesModal}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setDetallesModal(false)} // Cierra con botón atrás en Android
-      >
-        {/* KeyboardAvoidingView evita que el teclado tape el contenido en iOS */}
-        <KeyboardAvoidingView
-          style={styles.modalOverlay}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          <View style={styles.modalCard}>
-
-            {/* Cabecera del modal: título + marca/modelo/placa + botón cerrar */}
-            <View style={styles.modalHeader}>
-              <View style={styles.modalHeaderTextBlock}>
-                <Text style={styles.modalTitle}>Registro de mantenimiento</Text>
-                {/* Subtítulo con los datos del vehículo del registro seleccionado */}
-                <Text style={styles.modalSubtitle}>
-                  {detallesTarget?.marca} {detallesTarget?.modelo} · {detallesTarget?.placa}
-                </Text>
-              </View>
-              {/* Botón X rojo para cerrar el modal */}
-              <Pressable
-                onPress={() => setDetallesModal(false)}
-                style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
-              >
-                <Text style={styles.closeBtnText}>✕</Text>
+      {/* MODAL CALENDARIO FECHA MÍNIMA */}
+      <Modal visible={calendarMinimaVisible} transparent animationType="fade" onRequestClose={() => setCalendarMinimaVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCalendarMinimaVisible(false)}>
+          <Pressable style={styles.calendarModal} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.calendarHeader}>
+              <Pressable onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))} style={styles.calendarNavBtn}>
+                <Text style={styles.calendarNavText}>‹</Text>
+              </Pressable>
+              <Text style={styles.calendarMonthLabel}>
+                {calendarMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}
+              </Text>
+              <Pressable onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))} style={styles.calendarNavBtn}>
+                <Text style={styles.calendarNavText}>›</Text>
               </Pressable>
             </View>
-
-            {/* Contenido scrolleable del modal */}
-            <ScrollView
-              nestedScrollEnabled              // Permite scroll dentro del modal
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.modalScrollContent}
-            >
-              {/* IIFE: solo se ejecuta si hay un registro seleccionado */}
-              {detallesTarget && (() => {
-                const m = detallesTarget.mantenimiento; // Alias para acceder al mantenimiento
-
-                // Función auxiliar que renderiza un campo de solo lectura.
-                // Usa TextInput con editable={false} para mantener el mismo estilo visual
-                // que los campos editables del modal de registro.
-                const campo = (label: string, valor: string) => (
-                  <View key={label}>
-                    <Text style={styles.label}>{label}</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={valor}
-                      editable={false}                    // Solo lectura
-                      multiline={valor.length > 60}       // Multilínea si el texto es largo
-                      placeholderTextColor="#64748B"
-                    />
-                  </View>
-                );
-
+            <View style={styles.calendarWeekRow}>
+              {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => (
+                <Text key={i} style={styles.calendarWeekLabel}>{day}</Text>
+              ))}
+            </View>
+            <View style={styles.calendarGrid}>
+              {buildCalendarDays(calendarMonth).map((day, i) => {
+                if (!day) return <View key={i} style={styles.calendarCell} />;
+                const isSelected = fechaMinima?.toDateString() === day.toDateString();
                 return (
-                  <>
-                    {/* Sección: Datos del vehículo */}
-                    <View style={[styles.modalSection, styles.modalSectionFirst]}>
-                      <Text style={styles.modalSectionTitle}>Datos del vehículo</Text>
-                      {campo('Marca', m.marca)}
-                      {campo('Modelo', m.modelo)}
-                      {campo('Placa', m.placa)}
-                      {campo('Año', m.año)}
-                      {campo('Kilometraje (km)', m.kilometraje)}
-                      {campo('Fecha del servicio', m.fechaServicio)}
-                    </View>
-
-                    {/* Sección: Mecánico asignado */}
-                    <View style={styles.modalSection}>
-                      <Text style={styles.modalSectionTitle}>Mecánico asignado</Text>
-                      {campo('Mecánico', m.mecanicoAsignado)}
-                    </View>
-
-                    {/* Sección: Diagnóstico inicial */}
-                    <View style={styles.modalSection}>
-                      <Text style={styles.modalSectionTitle}>Diagnóstico inicial</Text>
-                      {campo('Diagnóstico', m.diagnostico)}
-                    </View>
-
-                    {/* Sección: Trabajo realizado
-                        Si el trabajo fue "Otros", muestra la descripción personalizada */}
-                    <View style={styles.modalSection}>
-                      <Text style={styles.modalSectionTitle}>Trabajo realizado</Text>
-                      {campo('Trabajo', m.trabajoRealizado === 'Otros' ? m.otroTrabajo : m.trabajoRealizado)}
-                      {campo('Repuestos utilizados', m.repuestosUtilizados)}
-                      {campo('Diagnóstico realizado', m.diagnosticoRealizado)}
-                    </View>
-
-                    {/* Sección: Costos del servicio */}
-                    <View style={styles.modalSection}>
-                      <Text style={styles.modalSectionTitle}>Costos del servicio</Text>
-                      {campo('Mano de obra ($)', m.costoManoObra)}
-                      {campo('Costo repuestos ($)', m.costoRepuestos)}
-                    </View>
-
-                    {/* Sección: Observaciones y fechas */}
-                    <View style={styles.modalSection}>
-                      <Text style={styles.modalSectionTitle}>Observaciones y fechas</Text>
-                      {campo('Observaciones', m.observaciones)}
-                      {campo('Fecha de inicio', m.fechaInicio)}
-                      {campo('Fecha de finalización', m.fechaFinalizacion)}
-                    </View>
-                  </>
+                  <Pressable key={i} style={[styles.calendarCell, isSelected && styles.calendarCellSelected]} onPress={() => { setFechaMinima(day); setCalendarMinimaVisible(false); }}>
+                    <Text style={[styles.calendarCellText, isSelected && styles.calendarCellSelectedText]}>{day.getDate()}</Text>
+                  </Pressable>
                 );
-              })()}
-            </ScrollView>
-          </View>
-        </KeyboardAvoidingView>
+              })}
+            </View>
+            <Pressable onPress={() => setCalendarMinimaVisible(false)} style={({ pressed }) => [styles.calendarCloseBtn, pressed && styles.calendarCloseBtnPressed]}>
+              {({ pressed }) => (<Text style={[styles.calendarCloseBtnText, pressed && styles.calendarCloseBtnTextPressed]}>ACEPTAR</Text>)}
+            </Pressable>
+            <Pressable onPress={() => { setFechaMinima(null); setCalendarMinimaVisible(false); }} style={styles.calendarCancelBtn}>
+              <Text style={styles.calendarCancelBtnText}>LIMPIAR FECHA</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
 
-      {/* 
-          MODAL REENVIAR REPORTE
-          Muestra una confirmación antes de reenviar el reporte al cliente.
-          Después del envío muestra una pantalla de éxito con ícono verde. */}
-      <Modal
-        visible={sendModal}
-        animationType="fade"
-        transparent
-        onRequestClose={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}
-      >
-        <View style={styles.sendModalOverlay}>
-          <View style={styles.sendModalCard}>
-
-            {/* Renderizado condicional: éxito o confirmación */}
-            {sendSuccess ? (
-              // PANTALLA DE ÉXITO 
-              <>
-                {/* Ícono grande de check verde centrado */}
-                <FontAwesome
-                  name="check-circle"
-                  size={64}
-                  color="#22C55E"
-                  style={{ alignSelf: 'center', marginBottom: 16 }}
-                />
-                <Text style={styles.sendModalTitle}>Reporte reenviado</Text>
-                <Text style={styles.sendModalBody}>
-                  El reporte fue enviado exitosamente al correo de{' '}
-                  <Text style={styles.sendModalHighlight}>{sendTarget?.clienteNombre}</Text>.
-                </Text>
-                <View style={styles.sendModalBtns}>
-                  <Pressable
-                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed]}
-                    onPress={() => { setSendModal(false); setSendSuccess(false); setSendError(''); }}
-                  >
-                    <Text style={styles.sendModalBtnText}>Cerrar</Text>
+      {/* MODAL CALENDARIO FECHA MÁXIMA */}
+      <Modal visible={calendarMaximaVisible} transparent animationType="fade" onRequestClose={() => setCalendarMaximaVisible(false)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setCalendarMaximaVisible(false)}>
+          <Pressable style={styles.calendarModal} onPress={(e) => e.stopPropagation()}>
+            <View style={styles.calendarHeader}>
+              <Pressable onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))} style={styles.calendarNavBtn}>
+                <Text style={styles.calendarNavText}>‹</Text>
+              </Pressable>
+              <Text style={styles.calendarMonthLabel}>
+                {calendarMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}
+              </Text>
+              <Pressable onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))} style={styles.calendarNavBtn}>
+                <Text style={styles.calendarNavText}>›</Text>
+              </Pressable>
+            </View>
+            <View style={styles.calendarWeekRow}>
+              {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => (
+                <Text key={i} style={styles.calendarWeekLabel}>{day}</Text>
+              ))}
+            </View>
+            <View style={styles.calendarGrid}>
+              {buildCalendarDays(calendarMonth).map((day, i) => {
+                if (!day) return <View key={i} style={styles.calendarCell} />;
+                const isSelected = fechaMaxima?.toDateString() === day.toDateString();
+                return (
+                  <Pressable key={i} style={[styles.calendarCell, isSelected && styles.calendarCellSelected]} onPress={() => { setFechaMaxima(day); setCalendarMaximaVisible(false); }}>
+                    <Text style={[styles.calendarCellText, isSelected && styles.calendarCellSelectedText]}>{day.getDate()}</Text>
                   </Pressable>
-                </View>
-              </>
-            ) : (
-              // PANTALLA DE CONFIRMACIÓN 
-              <>
-                <Text style={styles.sendModalTitle}>Reenviar reporte</Text>
-                <Text style={styles.sendModalBody}>
-                  ¿Deseas reenviar el reporte al señor{' '}
-                  <Text style={styles.sendModalHighlight}>{sendTarget?.clienteNombre}</Text>
-                  {' '}a su correo{' '}
-                  <Text style={styles.sendModalHighlight}>{sendTarget?.clienteCorreo}</Text>?
-                </Text>
-                {/* Mensaje de error si el reenvío falló */}
-                {sendError ? (
-                  <Text style={{ color: '#EF4444', fontSize: 13, marginBottom: 8, textAlign: 'center' }}>
-                    ⚠️ {sendError}
-                  </Text>
-                ) : null}
-
-                {/* Fila de botones: Enviar al correo + Cancelar envío */}
-                <View style={styles.sendModalBtns}>
-                  <Pressable
-                    style={({ pressed }) => [styles.sendModalBtnSend, pressed && styles.sendModalBtnSendPressed, sendLoading && { opacity: 0.6 }]}
-                    onPress={reenviarReporte}
-                    disabled={sendLoading}
-                  >
-                    <Text style={styles.sendModalBtnText}>{sendLoading ? 'Enviando...' : 'Enviar al correo'}</Text>
-                  </Pressable>
-
-                  {/* Botón cancelar: cierra el modal sin enviar */}
-                  <Pressable
-                    style={({ pressed }) => [styles.sendModalBtnCancel, pressed && styles.sendModalBtnCancelPressed, sendLoading && { opacity: 0.4 }]}
-                    onPress={() => { if (!sendLoading) { setSendModal(false); setSendSuccess(false); setSendError(''); } }}
-                    disabled={sendLoading}
-                  >
-                    <Text style={styles.sendModalBtnCancelText}>Cancelar envío</Text>
-                  </Pressable>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
+                );
+              })}
+            </View>
+            <Pressable onPress={() => setCalendarMaximaVisible(false)} style={({ pressed }) => [styles.calendarCloseBtn, pressed && styles.calendarCloseBtnPressed]}>
+              {({ pressed }) => (<Text style={[styles.calendarCloseBtnText, pressed && styles.calendarCloseBtnTextPressed]}>ACEPTAR</Text>)}
+            </Pressable>
+            <Pressable onPress={() => { setFechaMaxima(null); setCalendarMaximaVisible(false); }} style={styles.calendarCancelBtn}>
+              <Text style={styles.calendarCancelBtnText}>LIMPIAR FECHA</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
       </Modal>
+
+      {/* MODALES */}
+      
+      {/* Modal para visualizar el reporte completo */}
+      <VisualizarReporte
+        visible={detallesModal}
+        registro={detallesTarget}
+        onCerrar={() => setDetallesModal(false)}
+      />
+
+      {/* Modal de confirmación de reenvío */}
+      <ConfirmarReenvioReporte
+        visible={sendModal && !sendSuccess}
+        nombreCliente={sendTarget?.clienteNombre || ''}
+        onCancelar={() => {
+          setSendModal(false);
+          setSendSuccess(false);
+          setSendError('');
+        }}
+        onConfirmar={reenviarReporte}
+      />
+
+      {/* Modal de éxito de reenvío */}
+      <ReenvioReporte
+        visible={sendModal && sendSuccess}
+        nombreCliente={sendTarget?.clienteNombre || ''}
+        correoCliente={sendTarget?.clienteCorreo || ''}
+        onCerrar={() => {
+          setSendModal(false);
+          setSendSuccess(false);
+        }}
+      />
     </View>
   );
 }

@@ -1,13 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated, ImageBackground, KeyboardAvoidingView,
-  Platform, Pressable, ScrollView, Text, TextInput, View,
+  Animated, BackHandler, ImageBackground, KeyboardAvoidingView,
+  Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
-import codigoStyles from '@/Styles/codigoVerificacion';
+import { FontAwesome } from '@expo/vector-icons';
+
+// Importar estilos desde la carpeta auth
+import codigoStyles from '@/Styles/auth/codigoVerificacion';
+
 import { validarCodigoVerificacion } from '@/utils/validaciones';
-import { authApi } from '@/utils/api';
+import { obtenerEstadoReenvio, obtenerTiempoRestanteBloqueo, reenviarCodigoVerificacion } from '@/utils/datosSimulados';
 
 export default function CodigoVerificacionScreen() {
   const router = useRouter();
@@ -17,19 +21,118 @@ export default function CodigoVerificacionScreen() {
   const [codigo, setCodigo] = useState('');
   const [loading, setLoading] = useState(false);
   const [errCodigo, setErrCodigo] = useState('');
+  
+  // Estados para control de reenvío
+  const [intentosRestantes, setIntentosRestantes] = useState(5);
+  const [bloqueado, setBloqueado] = useState(false);
+  const [tiempoRestante, setTiempoRestante] = useState(0); // en segundos
+  const [enviandoCodigo, setEnviandoCodigo] = useState(false);
+  const [mensajeExito, setMensajeExito] = useState(''); // Mensaje de éxito separado
 
   const slideAnim = useRef(new Animated.Value(60)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
+
+    // BackHandler: va de regreso a restablecimiento
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.back();
+      return true;
+    });
+
+    // Verificar estado inicial de reenvíos
+    verificarEstadoInicial();
+
+    return () => {
+      backHandler.remove();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
   }, []);
 
+  // Verificar estado inicial al cargar la pantalla
+  const verificarEstadoInicial = () => {
+    const estado = obtenerEstadoReenvio(correo);
+    setIntentosRestantes(estado.intentosRestantes);
+    setBloqueado(estado.bloqueado);
+    
+    if (estado.bloqueado) {
+      const tiempoRestante = obtenerTiempoRestanteBloqueo(correo);
+      if (tiempoRestante > 0) {
+        setTiempoRestante(tiempoRestante);
+        iniciarTemporizador(tiempoRestante);
+      } else {
+        // Ya pasaron los 15 minutos, desbloquear
+        setBloqueado(false);
+        setIntentosRestantes(5);
+      }
+    }
+  };
+
+  // Iniciar temporizador de cuenta regresiva
+  const iniciarTemporizador = (segundos: number) => {
+    setTiempoRestante(segundos);
+    
+    if (timerRef.current) clearInterval(timerRef.current);
+    
+    timerRef.current = setInterval(() => {
+      setTiempoRestante((prev) => {
+        if (prev <= 1) {
+          if (timerRef.current) clearInterval(timerRef.current);
+          setBloqueado(false);
+          setIntentosRestantes(5);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  // Formatear tiempo en MM:SS
+  const formatearTiempo = (segundos: number): string => {
+    const minutos = Math.floor(segundos / 60);
+    const segs = segundos % 60;
+    return `${minutos.toString().padStart(2, '0')}:${segs.toString().padStart(2, '0')}`;
+  };
+
+  const handleReenviarCodigo = async () => {
+    if (bloqueado || enviandoCodigo) return;
+
+    setEnviandoCodigo(true);
+    setErrCodigo('');
+    setMensajeExito('');
+
+    try {
+      // Simular delay de red
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const resultado = reenviarCodigoVerificacion(correo);
+      
+      if (resultado.bloqueado) {
+        setBloqueado(true);
+        setIntentosRestantes(0);
+        iniciarTemporizador(resultado.tiempoRestante);
+        setErrCodigo('Has alcanzado el límite de reenvíos. Espera 15 minutos.');
+      } else {
+        setIntentosRestantes(resultado.intentosRestantes);
+        // Mostrar mensaje de éxito temporal
+        setMensajeExito('Código reenviado exitosamente');
+        setTimeout(() => setMensajeExito(''), 3000);
+      }
+    } catch (err: any) {
+      setErrCodigo('Error al reenviar el código');
+    } finally {
+      setEnviandoCodigo(false);
+    }
+  };
+
   const handleVerificar = async () => {
-    // Valida formato (6 dígitos) antes de llamar al backend
+    // Valida formato (6 dígitos) antes de continuar
     const err = validarCodigoVerificacion(codigo);
     if (err) {
       setErrCodigo(err);
@@ -38,9 +141,11 @@ export default function CodigoVerificacionScreen() {
 
     setLoading(true);
     try {
-      const { resetToken } = await authApi.verificarCodigo(correo, codigo.trim());
-      // Pasa el resetToken (no el correo) a cambiarPassword
-      router.push(`/(auth)/cambiarPassword?resetToken=${encodeURIComponent(resetToken)}` as any);
+      // Simular verificación del código (acepta cualquier código de 6 dígitos)
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Pasa el correo a cambiarPassword para actualizar la contraseña
+      router.push(`/(auth)/cambiarPassword?correo=${encodeURIComponent(correo)}` as any);
     } catch (err: any) {
       setErrCodigo(err?.message ?? 'Código inválido o expirado. Intenta de nuevo.');
     } finally {
@@ -57,15 +162,24 @@ export default function CodigoVerificacionScreen() {
       <View style={codigoStyles.overlay} />
       <KeyboardAvoidingView
         style={codigoStyles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
+        behavior='height'
+        keyboardVerticalOffset={0}
       >
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={codigoStyles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
-          bounces={false}
         >
+          {/* Botón regresar */}
+          <Pressable
+            onPress={() => router.back()}
+            style={codigoStyles.backButton}
+            hitSlop={8}
+          >
+            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
+          </Pressable>
+
           <Animated.View style={[codigoStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={codigoStyles.logo} />
@@ -97,9 +211,45 @@ export default function CodigoVerificacionScreen() {
               )}
             </Pressable>
 
-            <Pressable onPress={() => router.back()} style={codigoStyles.backRow}>
-              <Text style={codigoStyles.backText}>← Volver atrás</Text>
-            </Pressable>
+            {/* Texto informativo y enlace de reenvío - DEBAJO DEL BOTÓN */}
+            {!bloqueado && (
+              <View style={codigoStyles.resendContainer}>
+                <Text style={codigoStyles.resendInfo}>
+                  ¿No recibiste el código de 6 dígitos?
+                </Text>
+                <Pressable 
+                  onPress={handleReenviarCodigo} 
+                  style={codigoStyles.resendRow}
+                  disabled={enviandoCodigo}
+                >
+                  <Text style={codigoStyles.resendText}>
+                    {enviandoCodigo ? 'Reenviando...' : 'Reenviar código'}
+                  </Text>
+                </Pressable>
+                <Text style={codigoStyles.resendInfo}>
+                  Intentos restantes: {intentosRestantes}
+                </Text>
+                {/* Mensaje de éxito debajo del enlace */}
+                {mensajeExito ? (
+                  <Text style={codigoStyles.successText}>{mensajeExito}</Text>
+                ) : null}
+              </View>
+            )}
+
+            {/* Temporizador cuando está bloqueado */}
+            {bloqueado && tiempoRestante > 0 && (
+              <View style={codigoStyles.blockedContainer}>
+                <Text style={codigoStyles.blockedText}>
+                  Has excedido el límite de reenvíos.
+                </Text>
+                <Text style={codigoStyles.blockedText}>
+                  Podrás intentar nuevamente en:
+                </Text>
+                <Text style={codigoStyles.timerText}>
+                  {formatearTiempo(tiempoRestante)}
+                </Text>
+              </View>
+            )}
 
           </Animated.View>
         </ScrollView>

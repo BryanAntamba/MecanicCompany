@@ -1,12 +1,35 @@
 // api.ts
 // Utilidades para comunicarse con el backend de MecanicCompany.
 //
-// ⚠️  URL base:
-//   - iOS simulator  → localhost funciona directamente
-//   - Android emulator → cambia por http://10.0.2.2:3000/api
-//   - Dispositivo real Expo Go → usa http://192.168.70.215:3000/api
+// ⚠️  URL base - AUTOMÁTICAMENTE DETECTA EL ENTORNO:
+//   - Android Studio Emulator → http://10.0.2.2:3000/api
+//   - iOS simulator             → http://localhost:3000/api
+//   - Dispositivo físico / Expo Go → http://TU_IP:3000/api
 
-export const BASE_URL = 'http://192.168.70.215:3000/api';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+
+// Función para obtener la URL base según el entorno
+function getBaseUrl(): string {
+  // Si estás en desarrollo y tienes debuggerHost (dispositivo físico con Expo)
+  const debuggerHost = Constants.expoConfig?.hostUri;
+  
+  if (debuggerHost) {
+    // Extraer solo la IP (sin el puerto de Metro)
+    const ip = debuggerHost.split(':')[0];
+    return `http://${ip}:3000/api`;
+  }
+  
+  // Para emulador de Android Studio
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:3000/api';
+  }
+  
+  // Para simulador de iOS
+  return 'http://localhost:3000/api';
+}
+
+export const BASE_URL = getBaseUrl();
 
 // ─── Tipo de error de API ─────────────────────────────────────────────────────
 export interface ApiError {
@@ -80,6 +103,12 @@ export const authApi = {
     solicitarRecuperacion: (correo: string) =>
         request<{ message: string }>('POST', '/auth/recuperar', { correo }),
 
+    reenviarCodigo: (correo: string) =>
+        request<{ message: string; intentosRestantes: number; bloqueado?: boolean; tiempoRestante?: number }>('POST', '/auth/reenviar-codigo', { correo }),
+
+    verificarEstadoReenvio: (correo: string) =>
+        request<{ bloqueado: boolean; intentosRestantes: number; tiempoRestante: number }>('POST', '/auth/verificar-estado-reenvio', { correo }),
+
     verificarCodigo: (correo: string, codigo: string) =>
         request<{ message: string; resetToken: string }>('POST', '/auth/verificar-codigo', { correo, codigo }),
 
@@ -110,6 +139,10 @@ export interface CrearSolicitudBody {
     descripcionProblema: string;
     fechaCita: string; // ISO string
     horaCita?: string;
+    provincia?: string;
+    ubicacionMecanicaId?: string;
+    ubicacionMecanicaNombre?: string;
+    ubicacionMecanicaDireccion?: string;
 }
 
 // Tipo que devuelve el backend al listar solicitudes

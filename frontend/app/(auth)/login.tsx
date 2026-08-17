@@ -1,18 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated, ImageBackground, KeyboardAvoidingView,
+  Animated, BackHandler, ImageBackground, KeyboardAvoidingView,
   Platform, Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
-import loginStyles from '@/Styles/login';
-import { validarCorreoMecanic, validarContrasena } from '@/utils/validaciones';
+import loginStyles from '@/Styles/auth/login';
+import { validarContrasena, validarCredencial } from '@/utils/validaciones';
 import { useAuth } from '@/context/AuthContext';
+import { verificarUsuario } from '@/utils/datosSimulados';
+import { useCliente } from '@/context/ClienteContext';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
+  const { iniciarSesionCliente } = useCliente();
+  // Detectar si viene de un cierre de sesión o de cambio de contraseña exitoso
+  const params = useLocalSearchParams<{ fromLogout?: string; fromPasswordReset?: string }>();
+  
+  // Almacenar en ref para que el BackHandler pueda acceder incluso después de limpiar parámetros
+  const fromLogoutRef = useRef(params.fromLogout === 'true');
+  const fromPasswordResetRef = useRef(params.fromPasswordReset === 'true');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,8 +44,29 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
+  // BackHandler para retroceder
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Usar los ref para mantener el valor original incluso después de limpiar parámetros
+      const esDesdeLogout = fromLogoutRef.current;
+      const esDesdePasswordReset = fromPasswordResetRef.current;
+      
+      if (esDesdeLogout || esDesdePasswordReset) {
+        // Ir directo al index
+        router.replace('/PantallaCliente' as any);
+        return true; // Consumir el evento
+      } else {
+        // Navegación normal
+        router.back();
+        return true; // Consumir el evento
+      }
+    });
+
+    return () => backHandler.remove();
+  }, [router]);
+
   const validar = (): boolean => {
-    const eEmail = validarCorreoMecanic(email);
+    const eEmail = validarCredencial(email);
     const ePassword = validarContrasena(password, 'La contraseña');
     setErrEmail(eEmail ?? '');
     setErrPassword(ePassword ?? '');
@@ -49,14 +79,32 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      // Llama a la API real y guarda token + usuario en AuthContext
-      const user = await login(email.trim().toLowerCase(), password);
-
-      // Redirige según el rol
-      if (user.esAdmin) {
-        router.replace('/Admin/GestionMecanicos' as any);
+      const correoLower = email.trim().toLowerCase();
+      
+      // Si es un correo @gmail.com, verificar en datosSimulados (usuarios clientes)
+      if (correoLower.endsWith('@gmail.com')) {
+        const usuario = verificarUsuario(correoLower, password);
+        
+        if (usuario) {
+          // Guardar sesión del cliente
+          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+          await iniciarSesionCliente(correoLower, nombreCompleto);
+          
+          // Usuario cliente encontrado, redirigir a pantalla de cliente
+          router.replace('/PantallaCliente' as any);
+        } else {
+          setErrGeneral('Correo o contraseña incorrectos.');
+        }
       } else {
-        router.replace('/SeccionMecanico/ReportesClientes' as any);
+        // Si es @mecanic.com, usar la API real (mecánicos y admin)
+        const user = await login(correoLower, password);
+
+        // Redirige según el rol
+        if (user.esAdmin) {
+          router.replace('/Admin/GestionUsuarios' as any);
+        } else {
+          router.replace('/SeccionMecanico/ReportesClientes' as any);
+        }
       }
     } catch (err: any) {
       setErrGeneral(err?.message ?? 'Correo o contraseña incorrectos.');
@@ -72,9 +120,11 @@ export default function LoginScreen() {
       resizeMode="cover"
     >
       <View style={loginStyles.overlay} />
+      
       <KeyboardAvoidingView
         style={loginStyles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <ScrollView
           ref={scrollRef}
@@ -82,16 +132,26 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* Botón regresar */}
+          <Pressable
+            onPress={() => router.push('/PantallaCliente' as any)}
+            style={loginStyles.backButton}
+            hitSlop={8}
+          >
+            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
+          </Pressable>
+
           <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
-            <Text style={loginStyles.title}>INICIA SESION</Text>
+            <Text style={loginStyles.title}>INICIAR SESIÓN</Text>
             <Text style={loginStyles.subtitle}>Ingresa tus credenciales para acceder al sistema.</Text>
 
-            {/* Campo: correo empresarial */}
+            {/* Campo: credencial (correo) */}
+            <Text style={loginStyles.fieldLabel}>Credencial</Text>
             <TextInput
               style={[loginStyles.input, errEmail ? loginStyles.inputError : null]}
-              placeholder="Correo empresarial"
+              placeholder="correo@ejemplo.com"
               placeholderTextColor="#94A3B8"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -101,21 +161,26 @@ export default function LoginScreen() {
             {errEmail ? <Text style={loginStyles.errorText}>{errEmail}</Text> : null}
 
             {/* Campo: contraseña */}
+            <Text style={loginStyles.fieldLabel}>Contraseña</Text>
             <View style={[loginStyles.passwordRow, errPassword ? loginStyles.inputError : null]}>
               <TextInput
                 style={loginStyles.passwordInput}
-                placeholder="Contraseña"
+                placeholder="Ingresa tu contraseña"
                 placeholderTextColor="#94A3B8"
                 secureTextEntry={!showPassword}
                 value={password}
                 onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
               />
               <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
                 <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
               </Pressable>
             </View>
             {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
+
+            {/* Enlace registro */}
+            <Pressable onPress={() => router.replace('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
+              <Text style={loginStyles.forgotText}>Registrarse</Text>
+            </Pressable>
 
             {/* Enlace recuperación */}
             <Pressable onPress={() => router.push('/(auth)/restablecimientoPassword' as any)} style={loginStyles.forgotRow}>

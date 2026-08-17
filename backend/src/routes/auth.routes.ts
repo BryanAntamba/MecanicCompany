@@ -3,6 +3,8 @@ import { Router } from 'express';
 import {
   login,
   solicitarRecuperacion,
+  reenviarCodigo,
+  verificarEstadoReenvio,
   verificarCodigo,
   cambiarPassword,
   enviarCodigoCliente,
@@ -16,6 +18,12 @@ router.post('/login', login);
 
 // POST /api/auth/recuperar  → envía código al correo gmail del mecánico
 router.post('/recuperar', solicitarRecuperacion);
+
+// POST /api/auth/reenviar-codigo → reenvía el código (máximo 5 intentos)
+router.post('/reenviar-codigo', reenviarCodigo);
+
+// POST /api/auth/verificar-estado-reenvio → verifica si está bloqueado y tiempo restante
+router.post('/verificar-estado-reenvio', verificarEstadoReenvio);
 
 // POST /api/auth/verificar-codigo
 router.post('/verificar-codigo', verificarCodigo);

@@ -45,8 +45,13 @@ export const validarNombreCompleto = (valor: string): string | null => {
 // Solo letras (con acentos y ñ) y espacios. Sin números ni símbolos.
 export const validarSoloTexto = (valor: string, campo: string): string | null => {
   if (!valor.trim()) return `${campo} es obligatorio.`;
-  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim()))
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim())) {
+    // Mensajes personalizados según el campo
+    if (campo.toLowerCase().includes('marca')) {
+      return 'Ingrese la marca de manera correcta.';
+    }
     return `${campo} solo puede contener letras y espacios.`;
+  }
   return null;
 };
 
@@ -55,8 +60,13 @@ export const validarSoloTexto = (valor: string, campo: string): string | null =>
 // Letras, números y espacios. Sin símbolos.
 export const validarTextoYNumeros = (valor: string, campo: string): string | null => {
   if (!valor.trim()) return `${campo} es obligatorio.`;
-  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim()))
+  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim())) {
+    // Mensajes personalizados según el campo
+    if (campo.toLowerCase().includes('modelo')) {
+      return 'Ingrese el modelo del vehiculo de manera correcta.';
+    }
     return `${campo} solo puede contener letras, números y espacios.`;
+  }
   return null;
 };
 
@@ -85,8 +95,13 @@ export const validarOtroServicio = (valor: string): string | null => {
 // Solo dígitos numéricos (0-9).
 export const validarSoloNumeros = (valor: string, campo: string): string | null => {
   if (!valor.trim()) return `${campo} es obligatorio.`;
-  if (!/^\d+$/.test(valor.trim()))
+  if (!/^\d+$/.test(valor.trim())) {
+    // Mensajes personalizados según el campo
+    if (campo.toLowerCase().includes('kilometraje')) {
+      return 'Ingrese el kilometraje de manera correcta.';
+    }
     return `${campo} solo puede contener números.`;
+  }
   return null;
 };
 
@@ -106,7 +121,7 @@ export const validarTelefono = (valor: string): string | null => {
 export const validarCorreoGmail = (valor: string): string | null => {
   if (!valor.trim()) return 'El correo electrónico es obligatorio.';
   if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(valor.trim().toLowerCase()))
-    return 'Correo personal mal registrado, escriba nuevamente.';
+    return 'Ingrese una direccion de correo valido.';
   return null;
 };
 
@@ -130,12 +145,28 @@ export const validarCorreoMecanic = (valor: string): string | null => {
   return null;
 };
 
+// ─── validarCredencial ───────────────────────────────────────────────────────
+// Valida correo que puede ser @gmail.com o @mecanic.com
+export const validarCredencial = (valor: string): string | null => {
+  if (!valor.trim()) return 'La credencial es obligatoria.';
+  
+  const correoLower = valor.trim().toLowerCase();
+  const esGmail = /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(correoLower);
+  const esMecanic = /^[a-zA-Z0-9._%+-]+@mecanic\.com$/.test(correoLower);
+  
+  if (!esGmail && !esMecanic) {
+    return 'Ingresa un correo válido (@gmail.com o @mecanic.com).';
+  }
+  
+  return null;
+};
+
 
 // ─── validarAño ──────────────────────────────────────────────────────────────
 // Exactamente 4 dígitos, entre 1900 y año actual + 1.
 export const validarAño = (valor: string): string | null => {
   if (!valor.trim()) return 'El año es obligatorio.';
-  if (!/^\d{4}$/.test(valor.trim())) return 'El año debe tener exactamente 4 dígitos.';
+  if (!/^\d{4}$/.test(valor.trim())) return 'Ingrese el año del vehiculo de manera correcta.';
   const num = parseInt(valor.trim(), 10);
   const actual = new Date().getFullYear();
   if (num < 1900 || num > actual + 1)
@@ -145,11 +176,13 @@ export const validarAño = (valor: string): string | null => {
 
 
 // ─── validarPlaca ─────────────────────────────────────────────────────────────
-// Letras, números y guiones.
+// Formato Ecuador: 3 letras + 4 números (EPC4613) - sin guion, acepta minúsculas
 export const validarPlaca = (valor: string): string | null => {
   if (!valor.trim()) return 'La placa es obligatoria.';
-  if (!/^[a-zA-Z0-9-]+$/.test(valor.trim()))
-    return 'La placa solo puede contener letras, números y guiones.';
+  const placa = valor.trim();
+  // Acepta letras mayúsculas o minúsculas: ABC1234 o abc1234
+  if (!/^[a-zA-Z]{3}\d{4}$/.test(placa))
+    return 'Ingrese un numero de placa valido.';
   return null;
 };
 
@@ -168,17 +201,44 @@ export const validarFecha = (valor: string): string | null => {
 };
 
 
+// ─── validarCostoObligatorio ──────────────────────────────────────────────────
+// Costo obligatorio con números decimales sin limitación
+export const validarCostoObligatorio = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  // No permitir que inicie con punto o coma
+  if (/^[.,]/.test(valor.trim())) {
+    return 'Ingrese una cantidad valida.';
+  }
+  if (!/^\d+(\.\d+)?$/.test(valor.trim())) {
+    return 'Ingrese una cantidad valida.';
+  }
+  return null;
+};
+
+// ─── validarTextoNumerosCaracteresEspeciales ──────────────────────────────────
+// Permite texto, números y caracteres especiales
+export const validarTextoNumerosCaracteresEspeciales = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  return null;
+};
+
+// ─── validarFechaFormato ──────────────────────────────────────────────────────
+// Valida formato de fecha DD/MM/AAAA
+export const validarFechaFormato = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatoria.`;
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(valor.trim()))
+    return `${campo} debe tener el formato DD/MM/AAAA.`;
+  const [d, m, y] = valor.trim().split('/').map(Number);
+  if (m < 1 || m > 12) return 'El mes debe estar entre 01 y 12.';
+  if (d < 1 || d > 31) return 'El día debe estar entre 01 y 31.';
+  if (y < 2000 || y > 2100) return 'El año no es válido.';
+  return null;
+};
+
 // ─── validarCosto ─────────────────────────────────────────────────────────────
 // Número decimal positivo con hasta 2 decimales. Campo opcional.
 export const validarCosto = (valor: string, campo: string): string | null => {
   if (!valor.trim()) return null;
-  if (!/^\d+(\.\d{1,2})?$/.test(valor.trim()))
-    return `${campo} debe ser un número válido (ej: 25.00).`;
-  return null;
-};
-
-export const validarCostoObligatorio = (valor: string, campo: string): string | null => {
-  if (!valor.trim()) return `${campo} es obligatorio.`;
   if (!/^\d+(\.\d{1,2})?$/.test(valor.trim()))
     return `${campo} debe ser un número válido (ej: 25.00).`;
   return null;
@@ -220,5 +280,119 @@ export const validarCorreoRegistrado = (email: string): string | null => {
 export const validarCodigoVerificacion = (codigo: string): string | null => {
   if (!codigo.trim()) return 'El código de verificación es obligatorio.';
   if (!/^\d{6}$/.test(codigo.trim())) return 'El código debe tener exactamente 6 dígitos.';
+  return null;
+};
+
+
+// ─── validarUnNombre ──────────────────────────────────────────────────────────
+// Solo letras, máximo una palabra (un nombre o un apellido).
+export const validarUnNombre = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  
+  // Verificar que no contenga números
+  if (/\d/.test(valor.trim())) {
+    if (campo.toLowerCase().includes('nombre')) {
+      return 'Ingrese un Nombre válido.';
+    } else {
+      return 'Ingrese un Apellido válido.';
+    }
+  }
+  
+  // Verificar que solo contenga letras (sin espacios)
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$/.test(valor.trim())) {
+    if (campo.toLowerCase().includes('nombre')) {
+      return 'Ingrese un Nombre válido.';
+    } else {
+      return 'Ingrese un Apellido válido.';
+    }
+  }
+  
+  return null;
+};
+
+// ─── validarSegundoNombre ─────────────────────────────────────────────────────
+// Opcional, solo letras, máximo una palabra.
+export const validarSegundoNombre = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return null; // Campo opcional
+  
+  // Verificar que no contenga números
+  if (/\d/.test(valor.trim())) {
+    if (campo.toLowerCase().includes('nombre')) {
+      return 'Ingrese un Nombre válido.';
+    } else {
+      return 'Ingrese un Apellido válido.';
+    }
+  }
+  
+  // Verificar que solo contenga letras (sin espacios)
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]+$/.test(valor.trim())) {
+    if (campo.toLowerCase().includes('nombre')) {
+      return 'Ingrese un Nombre válido.';
+    } else {
+      return 'Ingrese un Apellido válido.';
+    }
+  }
+  
+  return null;
+};
+
+// ─── validarFechaNacimiento ───────────────────────────────────────────────────
+// Valida que sea una fecha válida y que la persona sea mayor de 18 años
+export const validarFechaNacimiento = (fecha: Date | null): string | null => {
+  if (!fecha) return 'La fecha de nacimiento es obligatoria.';
+  
+  const hoy = new Date();
+  const edad = hoy.getFullYear() - fecha.getFullYear();
+  const mes = hoy.getMonth() - fecha.getMonth();
+  
+  if (edad < 18 || (edad === 18 && mes < 0)) {
+    return 'Debes ser mayor de 18 años para registrarte.';
+  }
+  
+  if (edad > 120) {
+    return 'La fecha de nacimiento no es válida.';
+  }
+  
+  return null;
+};
+
+// ─── validarConfirmarContrasena ───────────────────────────────────────────────
+// Valida que ambas contraseñas coincidan
+export const validarConfirmarContrasena = (contrasena: string, confirmar: string): string | null => {
+  if (!confirmar.trim()) return 'Debes confirmar tu contraseña.';
+  if (contrasena !== confirmar) return 'Las contraseñas no coinciden.';
+  return null;
+};
+
+
+// ─── validarSegundoNombreOpcional ─────────────────────────────────────────────
+// Segundo nombre es opcional, pero si se proporciona debe ser solo letras
+export const validarSegundoNombreOpcional = (valor: string, campo: string): string | null => {
+  const v = valor.trim();
+  if (!v) return null; // Opcional - si está vacío es válido
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(v)) {
+    return `${campo} solo puede contener letras y espacios.`;
+  }
+  if (v.length < 2) return `${campo} debe tener al menos 2 caracteres.`;
+  return null;
+};
+
+// ─── validarEspecialidadOServicio ─────────────────────────────────────────────
+// Validación para especialidad personalizada o servicio personalizado
+// Solo acepta letras (con acentos y ñ) y espacios. Sin números ni caracteres especiales.
+export const validarEspecialidadOServicio = (valor: string, tipo: 'especialidad' | 'servicio'): string | null => {
+  if (!valor.trim()) {
+    return tipo === 'especialidad' 
+      ? 'La especialidad es obligatoria.' 
+      : 'La descripción del servicio es obligatoria.';
+  }
+  
+  // Verificar que solo contenga letras (con acentos y ñ) y espacios
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim())) {
+    return tipo === 'especialidad' 
+      ? 'Escriba la especialidad de manera correcta.' 
+      : 'Escriba el servicio de manera correcta.';
+  }
+  
   return null;
 };

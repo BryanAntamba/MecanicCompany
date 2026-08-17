@@ -25,14 +25,17 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 // Proveedor global de autenticación: expone usuario, token, login y logout a toda la app
 import { AuthProvider } from '@/context/AuthContext';
 
+// Proveedor global de cliente: maneja sesión de usuarios @gmail.com
+import { ClienteProvider } from '@/context/ClienteContext';
+
 
 // CONFIGURACIÓN DE EXPO ROUTER
 
 // unstable_settings: configuración especial de Expo Router.
 // anchor: define la pantalla inicial cuando la app se abre por primera vez.
-// '(tabs)' significa que la app arranca en el grupo de pestañas (index.tsx).
+// 'PantallaCliente' significa que la app arranca en la pantalla del cliente (index.tsx).
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'PantallaCliente',
 };
 
 
@@ -44,17 +47,18 @@ export default function RootLayout() {
 
   return (
     <AuthProvider>
-      {/* ThemeProvider aplica el tema a todos los navegadores y componentes hijos.
-          Si el dispositivo está en modo oscuro usa DarkTheme, si no usa DefaultTheme. */}
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+      <ClienteProvider>
+        {/* ThemeProvider aplica el tema a todos los navegadores y componentes hijos.
+            Si el dispositivo está en modo oscuro usa DarkTheme, si no usa DefaultTheme. */}
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
 
         {/* Stack raíz: navegador en pila que contiene todas las rutas de la app.
             screenOptions={{ headerShown: false }} oculta el header nativo en TODAS
             las pantallas por defecto, evitando que aparezca el nombre de la ruta. */}
         <Stack screenOptions={{ headerShown: false }}>
 
-          {/* Grupo (tabs): pantalla principal del cliente (index.tsx). */}
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          {/* PantallaCliente: pantalla principal del cliente (index.tsx). */}
+          <Stack.Screen name="PantallaCliente" options={{ headerShown: false }} />
 
           {/* Grupo (auth): agrupa todas las pantallas de autenticación. */}
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -88,6 +92,7 @@ export default function RootLayout() {
         <StatusBar style="auto" />
 
       </ThemeProvider>
+      </ClienteProvider>
     </AuthProvider>
   );
 }

@@ -1,13 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import {
-  Animated, ImageBackground, KeyboardAvoidingView,
+  Animated, BackHandler, ImageBackground, KeyboardAvoidingView,
   Platform, Pressable, ScrollView, Text, TextInput, View,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
-import restablecerStyles from '@/Styles/restablecimientoPaswword';
+import { FontAwesome } from '@expo/vector-icons';
+import restablecerStyles from '@/Styles/auth/restablecimientoPassword';
 import { validarCorreoGmail } from '@/utils/validaciones';
-import { authApi } from '@/utils/api';
+import { buscarUsuarioPorCorreo } from '@/utils/datosSimulados';
 
 export default function RestablecimientoPasswordScreen() {
   const router = useRouter();
@@ -18,12 +19,22 @@ export default function RestablecimientoPasswordScreen() {
 
   const slideAnim = useRef(new Animated.Value(60)).current;
   const opacityAnim = useRef(new Animated.Value(0)).current;
+  const scrollRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
+  }, []);
+
+  // BackHandler: va de regreso al login
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.back();
+      return true;
+    });
+    return () => backHandler.remove();
   }, []);
 
   const handleSend = async () => {
@@ -35,7 +46,18 @@ export default function RestablecimientoPasswordScreen() {
 
     setLoading(true);
     try {
-      await authApi.solicitarRecuperacion(email.trim().toLowerCase());
+      // Verificar que el correo exista en los datos simulados
+      const usuario = buscarUsuarioPorCorreo(email.trim().toLowerCase());
+      
+      if (!usuario) {
+        setErrEmail('El correo ingresado no está registrado en el sistema.');
+        setLoading(false);
+        return;
+      }
+
+      // Simular envío de código (en producción llamaría al API)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       // Pasa el correo a la siguiente pantalla como parámetro
       router.push(`/(auth)/codigoVerificacion?correo=${encodeURIComponent(email.trim().toLowerCase())}` as any);
     } catch (err: any) {
@@ -52,8 +74,26 @@ export default function RestablecimientoPasswordScreen() {
       resizeMode="cover"
     >
       <View style={restablecerStyles.overlay} />
-      <KeyboardAvoidingView style={restablecerStyles.keyboardView} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={restablecerStyles.scrollContent} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView 
+        style={restablecerStyles.keyboardView} 
+        behavior='height'
+        keyboardVerticalOffset={0}
+      >
+        <ScrollView 
+          ref={scrollRef}
+          contentContainerStyle={restablecerStyles.scrollContent} 
+          keyboardShouldPersistTaps="handled" 
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Botón regresar */}
+          <Pressable
+            onPress={() => router.back()}
+            style={restablecerStyles.backButton}
+            hitSlop={8}
+          >
+            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
+          </Pressable>
+
           <Animated.View style={[restablecerStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={restablecerStyles.logo} />
@@ -70,6 +110,7 @@ export default function RestablecimientoPasswordScreen() {
               autoCapitalize="none"
               value={email}
               onChangeText={(t) => { setEmail(t); setErrEmail(''); }}
+              onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
             />
             {errEmail ? <Text style={restablecerStyles.errorText}>{errEmail}</Text> : null}
 
@@ -83,10 +124,6 @@ export default function RestablecimientoPasswordScreen() {
                   {loading ? 'Cargando...' : 'Restablecer contraseña'}
                 </Text>
               )}
-            </Pressable>
-
-            <Pressable onPress={() => router.back()} style={restablecerStyles.backRow}>
-              <Text style={restablecerStyles.backText}>← Volver al inicio de sesión</Text>
             </Pressable>
 
           </Animated.View>
