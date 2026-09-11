@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import {
   Animated, BackHandler, ImageBackground, KeyboardAvoidingView,
-  Pressable, ScrollView, Text, TextInput, View,
+  Pressable, ScrollView, Text, TextInput, View, Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
@@ -12,6 +12,7 @@ import codigoStyles from '@/Styles/auth/codigoVerificacion';
 
 import { validarCodigoVerificacion } from '@/utils/validaciones';
 import { obtenerEstadoReenvio, obtenerTiempoRestanteBloqueo, reenviarCodigoVerificacion } from '@/utils/datosSimulados';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 export default function CodigoVerificacionScreen() {
   const router = useRouter();
@@ -40,7 +41,14 @@ export default function CodigoVerificacionScreen() {
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
 
-    // BackHandler: va de regreso a restablecimiento
+    // BackHandler: va de regreso a restablecimiento (solo en móvil)
+    if (Platform.OS === 'web') {
+      verificarEstadoInicial();
+      return () => {
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.back();
       return true;
@@ -154,106 +162,108 @@ export default function CodigoVerificacionScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoCodigoVerificacion.png')}
-      style={codigoStyles.background}
-      resizeMode="cover"
-    >
-      <View style={codigoStyles.overlay} />
-      <KeyboardAvoidingView
-        style={codigoStyles.keyboardView}
-        behavior='height'
-        keyboardVerticalOffset={0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoCodigoVerificacion.png')}
+        style={codigoStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={codigoStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <View style={codigoStyles.overlay} />
+        <KeyboardAvoidingView
+          style={codigoStyles.keyboardView}
+          behavior='height'
+          keyboardVerticalOffset={0}
         >
-          {/* Botón regresar */}
-          <Pressable
-            onPress={() => router.back()}
-            style={codigoStyles.backButton}
-            hitSlop={8}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={codigoStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
-          </Pressable>
-
-          <Animated.View style={[codigoStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
-
-            <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={codigoStyles.logo} />
-            <Text style={codigoStyles.title}>CÓDIGO DE VERIFICACIÓN</Text>
-            <Text style={codigoStyles.subtitle}>
-              Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.
-            </Text>
-
-            <TextInput
-              style={[codigoStyles.input, errCodigo ? codigoStyles.inputError : null]}
-              placeholder="000000"
-              placeholderTextColor="#94A3B8"
-              keyboardType="number-pad"
-              maxLength={6}
-              value={codigo}
-              onChangeText={(t) => { setCodigo(t); setErrCodigo(''); }}
-            />
-            {errCodigo ? <Text style={codigoStyles.errorText}>{errCodigo}</Text> : null}
-
+            {/* Botón regresar */}
             <Pressable
-              style={({ pressed }) => [codigoStyles.button, pressed && codigoStyles.buttonPressed]}
-              onPress={handleVerificar}
-              disabled={loading}
+              onPress={() => router.back()}
+              style={codigoStyles.backButton}
+              hitSlop={8}
             >
-              {({ pressed }) => (
-                <Text style={[codigoStyles.buttonText, pressed && codigoStyles.buttonTextPressed]}>
-                  {loading ? 'Verificando...' : 'Verificar código'}
-                </Text>
-              )}
+              <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
             </Pressable>
 
-            {/* Texto informativo y enlace de reenvío - DEBAJO DEL BOTÓN */}
-            {!bloqueado && (
-              <View style={codigoStyles.resendContainer}>
-                <Text style={codigoStyles.resendInfo}>
-                  ¿No recibiste el código de 6 dígitos?
-                </Text>
-                <Pressable 
-                  onPress={handleReenviarCodigo} 
-                  style={codigoStyles.resendRow}
-                  disabled={enviandoCodigo}
-                >
-                  <Text style={codigoStyles.resendText}>
-                    {enviandoCodigo ? 'Reenviando...' : 'Reenviar código'}
+            <Animated.View style={[codigoStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
+
+              <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={codigoStyles.logo} />
+              <Text style={codigoStyles.title}>CÓDIGO DE VERIFICACIÓN</Text>
+              <Text style={codigoStyles.subtitle}>
+                Ingresa el código de 6 dígitos que enviamos a tu correo electrónico.
+              </Text>
+
+              <TextInput
+                style={[codigoStyles.input, errCodigo ? codigoStyles.inputError : null]}
+                placeholder="000000"
+                placeholderTextColor="#94A3B8"
+                keyboardType="number-pad"
+                maxLength={6}
+                value={codigo}
+                onChangeText={(t) => { setCodigo(t); setErrCodigo(''); }}
+              />
+              {errCodigo ? <Text style={codigoStyles.errorText}>{errCodigo}</Text> : null}
+
+              <Pressable
+                style={({ pressed }) => [codigoStyles.button, pressed && codigoStyles.buttonPressed]}
+                onPress={handleVerificar}
+                disabled={loading}
+              >
+                {({ pressed }) => (
+                  <Text style={[codigoStyles.buttonText, pressed && codigoStyles.buttonTextPressed]}>
+                    {loading ? 'Verificando...' : 'Verificar código'}
                   </Text>
-                </Pressable>
-                <Text style={codigoStyles.resendInfo}>
-                  Intentos restantes: {intentosRestantes}
-                </Text>
-                {/* Mensaje de éxito debajo del enlace */}
-                {mensajeExito ? (
-                  <Text style={codigoStyles.successText}>{mensajeExito}</Text>
-                ) : null}
-              </View>
-            )}
+                )}
+              </Pressable>
 
-            {/* Temporizador cuando está bloqueado */}
-            {bloqueado && tiempoRestante > 0 && (
-              <View style={codigoStyles.blockedContainer}>
-                <Text style={codigoStyles.blockedText}>
-                  Has excedido el límite de reenvíos.
-                </Text>
-                <Text style={codigoStyles.blockedText}>
-                  Podrás intentar nuevamente en:
-                </Text>
-                <Text style={codigoStyles.timerText}>
-                  {formatearTiempo(tiempoRestante)}
-                </Text>
-              </View>
-            )}
+              {/* Texto informativo y enlace de reenvío - DEBAJO DEL BOTÓN */}
+              {!bloqueado && (
+                <View style={codigoStyles.resendContainer}>
+                  <Text style={codigoStyles.resendInfo}>
+                    ¿No recibiste el código de 6 dígitos?
+                  </Text>
+                  <Pressable 
+                    onPress={handleReenviarCodigo} 
+                    style={codigoStyles.resendRow}
+                    disabled={enviandoCodigo}
+                  >
+                    <Text style={codigoStyles.resendText}>
+                      {enviandoCodigo ? 'Reenviando...' : 'Reenviar código'}
+                    </Text>
+                  </Pressable>
+                  <Text style={codigoStyles.resendInfo}>
+                    Intentos restantes: {intentosRestantes}
+                  </Text>
+                  {/* Mensaje de éxito debajo del enlace */}
+                  {mensajeExito ? (
+                    <Text style={codigoStyles.successText}>{mensajeExito}</Text>
+                  ) : null}
+                </View>
+              )}
 
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+              {/* Temporizador cuando está bloqueado */}
+              {bloqueado && tiempoRestante > 0 && (
+                <View style={codigoStyles.blockedContainer}>
+                  <Text style={codigoStyles.blockedText}>
+                    Has excedido el límite de reenvíos.
+                  </Text>
+                  <Text style={codigoStyles.blockedText}>
+                    Podrás intentar nuevamente en:
+                  </Text>
+                  <Text style={codigoStyles.timerText}>
+                    {formatearTiempo(tiempoRestante)}
+                  </Text>
+                </View>
+              )}
+
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </ResponsiveContainer>
   );
 }

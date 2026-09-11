@@ -362,7 +362,7 @@ export default StyleSheet.create({
     alignItems: 'center',    // Centra el texto horizontalmente
     justifyContent: 'center',// Centra el texto verticalmente
     alignSelf: 'center',     // Alinea la flecha al centro verticalmente
-    zIndex: 1,               // Por debajo del navbar (navbar tiene zIndex 10000)
+    zIndex: -1,              // Por debajo del navbar para que no sobresalga
   },
 
   // Flecha invisible (cuando está en el primer o último elemento)

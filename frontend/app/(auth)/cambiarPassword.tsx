@@ -15,6 +15,7 @@ import ConfirmacionPasswordNuevo from './modalAuth/confirmacionPasswordNuevo';
 
 import { validarContrasena } from '@/utils/validaciones';
 import { actualizarContrasena } from '@/utils/datosSimulados';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 export default function CambiarPasswordScreen() {
   const router = useRouter();
@@ -43,7 +44,9 @@ export default function CambiarPasswordScreen() {
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
 
-    // BackHandler: va de regreso a código verificación (navegación natural)
+    // BackHandler: va de regreso a código verificación (navegación natural, solo en móvil)
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.back();
       return true;
@@ -105,98 +108,100 @@ export default function CambiarPasswordScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoCodigoVerificacion.png')}
-      style={cambiarStyles.background}
-      resizeMode="cover"
-    >
-      <View style={cambiarStyles.overlay} />
-      <KeyboardAvoidingView
-        style={cambiarStyles.keyboardView}
-        behavior='height'
-        keyboardVerticalOffset={0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoCodigoVerificacion.png')}
+        style={cambiarStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={cambiarStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <View style={cambiarStyles.overlay} />
+        <KeyboardAvoidingView
+          style={cambiarStyles.keyboardView}
+          behavior='height'
+          keyboardVerticalOffset={0}
         >
-          {/* Botón regresar */}
-          <Pressable
-            onPress={() => router.back()}
-            style={cambiarStyles.backButton}
-            hitSlop={8}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={cambiarStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
-          </Pressable>
-
-          <Animated.View style={[cambiarStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
-
-            <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={cambiarStyles.logo} />
-            <Text style={cambiarStyles.title}>NUEVA CONTRASEÑA</Text>
-            <Text style={cambiarStyles.subtitle}>Ingresa y confirma tu nueva contraseña para recuperar el acceso.</Text>
-
-            {/* Campo: nueva contraseña */}
-            <Text style={cambiarStyles.label}>Nueva contraseña</Text>
-            <View style={[cambiarStyles.passwordRow, errNew ? cambiarStyles.inputError : null]}>
-              <TextInput
-                style={cambiarStyles.passwordInput}
-                placeholder="Mínimo 8 caracteres"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={!showNew}
-                value={newPassword}
-                onChangeText={(t) => { setNewPassword(t); setErrNew(''); }}
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
-              />
-              <Pressable onPress={() => setShowNew((v) => !v)} style={cambiarStyles.eyeBtn} hitSlop={8}>
-                <FontAwesome name={showNew ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
-              </Pressable>
-            </View>
-            {errNew ? <Text style={cambiarStyles.errorText}>{errNew}</Text> : null}
-
-            {/* Campo: confirmar contraseña */}
-            <Text style={cambiarStyles.label}>Confirmar contraseña</Text>
-            <View style={[cambiarStyles.passwordRow, errConfirm ? cambiarStyles.inputError : null]}>
-              <TextInput
-                style={cambiarStyles.passwordInput}
-                placeholder="Repite la contraseña"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={!showConfirm}
-                value={confirmPassword}
-                onChangeText={(t) => { setConfirmPassword(t); setErrConfirm(''); }}
-                onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
-              />
-              <Pressable onPress={() => setShowConfirm((v) => !v)} style={cambiarStyles.eyeBtn} hitSlop={8}>
-                <FontAwesome name={showConfirm ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
-              </Pressable>
-            </View>
-            {errConfirm ? <Text style={cambiarStyles.errorText}>{errConfirm}</Text> : null}
-
+            {/* Botón regresar */}
             <Pressable
-              style={({ pressed }) => [cambiarStyles.button, pressed && cambiarStyles.buttonPressed]}
-              onPress={handleReset}
-              disabled={loading}
+              onPress={() => router.back()}
+              style={cambiarStyles.backButton}
+              hitSlop={8}
             >
-              {({ pressed }) => (
-                <Text style={[cambiarStyles.buttonText, pressed && cambiarStyles.buttonTextPressed]}>
-                  {loading ? 'Guardando...' : 'Guardar contraseña'}
-                </Text>
-              )}
+              <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
             </Pressable>
 
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <Animated.View style={[cambiarStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
-      {/* Modal de confirmación */}
-      <ConfirmacionPasswordNuevo
-        visible={modalVisible}
-        onClose={() => {
-          setModalVisible(false);
-          router.replace('/(auth)/login' as any);
-        }}
-      />
-    </ImageBackground>
+              <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={cambiarStyles.logo} />
+              <Text style={cambiarStyles.title}>NUEVA CONTRASEÑA</Text>
+              <Text style={cambiarStyles.subtitle}>Ingresa y confirma tu nueva contraseña para recuperar el acceso.</Text>
+
+              {/* Campo: nueva contraseña */}
+              <Text style={cambiarStyles.label}>Nueva contraseña</Text>
+              <View style={[cambiarStyles.passwordRow, errNew ? cambiarStyles.inputError : null]}>
+                <TextInput
+                  style={cambiarStyles.passwordInput}
+                  placeholder="Mínimo 8 caracteres"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showNew}
+                  value={newPassword}
+                  onChangeText={(t) => { setNewPassword(t); setErrNew(''); }}
+                  onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+                />
+                <Pressable onPress={() => setShowNew((v) => !v)} style={cambiarStyles.eyeBtn} hitSlop={8}>
+                  <FontAwesome name={showNew ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
+                </Pressable>
+              </View>
+              {errNew ? <Text style={cambiarStyles.errorText}>{errNew}</Text> : null}
+
+              {/* Campo: confirmar contraseña */}
+              <Text style={cambiarStyles.label}>Confirmar contraseña</Text>
+              <View style={[cambiarStyles.passwordRow, errConfirm ? cambiarStyles.inputError : null]}>
+                <TextInput
+                  style={cambiarStyles.passwordInput}
+                  placeholder="Repite la contraseña"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showConfirm}
+                  value={confirmPassword}
+                  onChangeText={(t) => { setConfirmPassword(t); setErrConfirm(''); }}
+                  onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 150)}
+                />
+                <Pressable onPress={() => setShowConfirm((v) => !v)} style={cambiarStyles.eyeBtn} hitSlop={8}>
+                  <FontAwesome name={showConfirm ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
+                </Pressable>
+              </View>
+              {errConfirm ? <Text style={cambiarStyles.errorText}>{errConfirm}</Text> : null}
+
+              <Pressable
+                style={({ pressed }) => [cambiarStyles.button, pressed && cambiarStyles.buttonPressed]}
+                onPress={handleReset}
+                disabled={loading}
+              >
+                {({ pressed }) => (
+                  <Text style={[cambiarStyles.buttonText, pressed && cambiarStyles.buttonTextPressed]}>
+                    {loading ? 'Guardando...' : 'Guardar contraseña'}
+                  </Text>
+                )}
+              </Pressable>
+
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+
+        {/* Modal de confirmación */}
+        <ConfirmacionPasswordNuevo
+          visible={modalVisible}
+          onClose={() => {
+            setModalVisible(false);
+            router.replace('/(auth)/login' as any);
+          }}
+        />
+      </ImageBackground>
+    </ResponsiveContainer>
   );
 }

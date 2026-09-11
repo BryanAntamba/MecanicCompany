@@ -238,4 +238,30 @@ export default StyleSheet.create({
   saveBtnTextPressed: {
     color: '#FFFFFF',
   },
+  roleButtonsContainer: {
+    flexDirection: 'column',
+    gap: 12,
+    marginBottom: 20,
+  },
+  roleButton: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#475569',
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  roleButtonActive: {
+    borderColor: '#3B82F6',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  roleButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  roleButtonTextActive: {
+    color: '#3B82F6',
+  },
 });

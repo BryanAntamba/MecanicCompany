@@ -42,11 +42,11 @@ export default function ReenvioReporte({
           </View>
 
           {/* Título */}
-          <Text style={styles.title}>Factura Reenviada</Text>
+          <Text style={styles.title}>Reporte Reenviado</Text>
 
           {/* Mensaje */}
           <Text style={styles.message}>
-            La factura fue reenviada al usuario:
+            El Reporte fue reenviado al usuario:
           </Text>
 
           <Text style={styles.nombreDestacado}>{nombreCliente}</Text>

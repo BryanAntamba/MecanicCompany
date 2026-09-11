@@ -6,6 +6,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import {
   Animated,
   BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -27,6 +28,7 @@ import {
   validarObligatorio,
   validarTextoYNumeros,
 } from '@/utils/validaciones';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 // Opciones de tipos de asunto
 const tiposAsunto = [
@@ -43,9 +45,11 @@ export default function SoporteScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  // BackHandler: regresa a index (PantallaCliente)
+  // BackHandler: regresa a index (PantallaCliente, solo en móvil)
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') return;
+
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         router.push('/PantallaCliente' as any);
         return true;
@@ -177,13 +181,14 @@ export default function SoporteScreen() {
   };
 
   return (
-    <View style={styles.page}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]}
-      >
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[0]}
+        >
         {/* Navbar sticky del cliente */}
         <NavbarCliente
           onScrollToAbout={handleScrollToAbout}
@@ -413,6 +418,7 @@ export default function SoporteScreen() {
         visible={exitosoVisible}
         onCerrar={handleCerrarExitoso}
       />
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

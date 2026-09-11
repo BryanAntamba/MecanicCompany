@@ -18,6 +18,7 @@ import {
   validarConfirmarContrasena,
 } from '@/utils/validaciones';
 import { agregarUsuario, correoYaRegistrado } from '@/utils/datosSimulados';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 // import ConfirmacionRegistro from './modalAuth/confirmacionRegistro';
 
 export default function RegistroUsuarioScreen() {
@@ -59,6 +60,9 @@ export default function RegistroUsuarioScreen() {
 
   // Manejo del botón de retroceso: va de regreso al login
   useEffect(() => {
+    // Solo usar BackHandler en plataformas móviles
+    if (Platform.OS === 'web') return;
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.replace('/(auth)/login' as any);
       return true;
@@ -242,22 +246,23 @@ export default function RegistroUsuarioScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoLogin.png')}
-      style={registroStyles.background}
-      resizeMode="cover"
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={registroStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoLogin.png')}
+        style={registroStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={registroStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={registroStyles.keyboardView}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={registroStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           {/* Botón regresar */}
           <Pressable
             onPress={() => router.replace('/(auth)/login' as any)}
@@ -465,5 +470,6 @@ export default function RegistroUsuarioScreen() {
         </View>
       </Modal>
     </ImageBackground>
+    </ResponsiveContainer>
   );
 }

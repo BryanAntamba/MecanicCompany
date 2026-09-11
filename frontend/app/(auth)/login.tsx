@@ -11,6 +11,7 @@ import { validarContrasena, validarCredencial } from '@/utils/validaciones';
 import { useAuth } from '@/context/AuthContext';
 import { verificarUsuario } from '@/utils/datosSimulados';
 import { useCliente } from '@/context/ClienteContext';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -46,6 +47,9 @@ export default function LoginScreen() {
 
   // BackHandler para retroceder
   useEffect(() => {
+    // Solo usar BackHandler en plataformas móviles
+    if (Platform.OS === 'web') return;
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       // Usar los ref para mantener el valor original incluso después de limpiar parámetros
       const esDesdeLogout = fromLogoutRef.current;
@@ -93,9 +97,29 @@ export default function LoginScreen() {
           // Usuario cliente encontrado, redirigir a pantalla de cliente
           router.replace('/PantallaCliente' as any);
         } else {
-          setErrGeneral('Correo o contraseña incorrectos.');
+          setErrGeneral('Ingrese una credencial válida.');
         }
-      } else {
+      } else if (correoLower.endsWith('@inventariomecanic.com')) {
+        // Usuario de inventario - verificar en datos simulados
+        const usuario = verificarUsuario(correoLower, password);
+        
+        if (usuario) {
+          // Redirigir a sistema de inventario
+          router.replace('/pantallaInventario/sistemaInventario' as any);
+        } else {
+          setErrGeneral('Ingrese una credencial válida.');
+        }
+      } else if (correoLower.endsWith('@finanzasmecanic.com')) {
+        // Usuario financiero - verificar en datos simulados
+        const usuario = verificarUsuario(correoLower, password);
+        
+        if (usuario) {
+          // Redirigir a sistema financiero
+          router.replace('/SeccionFinanciero/financiero' as any);
+        } else {
+          setErrGeneral('Ingrese una credencial válida.');
+        }
+      } else if (correoLower.endsWith('@mecanic.com')) {
         // Si es @mecanic.com, usar la API real (mecánicos y admin)
         const user = await login(correoLower, password);
 
@@ -103,109 +127,114 @@ export default function LoginScreen() {
         if (user.esAdmin) {
           router.replace('/Admin/GestionUsuarios' as any);
         } else {
+          // Mecánico
           router.replace('/SeccionMecanico/ReportesClientes' as any);
         }
+      } else {
+        setErrGeneral('Ingrese una credencial válida.');
       }
     } catch (err: any) {
-      setErrGeneral(err?.message ?? 'Correo o contraseña incorrectos.');
+      setErrGeneral('Ingrese una credencial válida.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoLogin.png')}
-      style={loginStyles.background}
-      resizeMode="cover"
-    >
-      <View style={loginStyles.overlay} />
-      
-      <KeyboardAvoidingView
-        style={loginStyles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoLogin.png')}
+        style={loginStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={loginStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <View style={loginStyles.overlay} />
+        
+        <KeyboardAvoidingView
+          style={loginStyles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          {/* Botón regresar */}
-          <Pressable
-            onPress={() => router.push('/PantallaCliente' as any)}
-            style={loginStyles.backButton}
-            hitSlop={8}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={loginStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
-          </Pressable>
-
-          <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
-
-            <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
-            <Text style={loginStyles.title}>INICIAR SESIÓN</Text>
-            <Text style={loginStyles.subtitle}>Ingresa tus credenciales para acceder al sistema.</Text>
-
-            {/* Campo: credencial (correo) */}
-            <Text style={loginStyles.fieldLabel}>Credencial</Text>
-            <TextInput
-              style={[loginStyles.input, errEmail ? loginStyles.inputError : null]}
-              placeholder="correo@ejemplo.com"
-              placeholderTextColor="#94A3B8"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(t) => { setEmail(t); setErrEmail(''); setErrGeneral(''); }}
-            />
-            {errEmail ? <Text style={loginStyles.errorText}>{errEmail}</Text> : null}
-
-            {/* Campo: contraseña */}
-            <Text style={loginStyles.fieldLabel}>Contraseña</Text>
-            <View style={[loginStyles.passwordRow, errPassword ? loginStyles.inputError : null]}>
-              <TextInput
-                style={loginStyles.passwordInput}
-                placeholder="Ingresa tu contraseña"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
-              />
-              <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
-                <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
-              </Pressable>
-            </View>
-            {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
-
-            {/* Enlace registro */}
-            <Pressable onPress={() => router.replace('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
-              <Text style={loginStyles.forgotText}>Registrarse</Text>
-            </Pressable>
-
-            {/* Enlace recuperación */}
-            <Pressable onPress={() => router.push('/(auth)/restablecimientoPassword' as any)} style={loginStyles.forgotRow}>
-              <Text style={loginStyles.forgotText}>¿Olvidaste tu contraseña?</Text>
-            </Pressable>
-
-            {/* Botón iniciar sesión */}
+            {/* Botón regresar */}
             <Pressable
-              style={({ pressed }) => [loginStyles.button, pressed && loginStyles.buttonPressed]}
-              onPress={handleLogin}
-              disabled={loading}
+              onPress={() => router.push('/PantallaCliente' as any)}
+              style={loginStyles.backButton}
+              hitSlop={8}
             >
-              {({ pressed }) => (
-                <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
-                  {loading ? 'Ingresando...' : 'Iniciar sesión'}
-                </Text>
-              )}
+              <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
             </Pressable>
 
-            {/* Error general de credenciales — centrado debajo del botón */}
-            {errGeneral ? <Text style={loginStyles.errorTextCentered}>{errGeneral}</Text> : null}
+            <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+              <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
+              <Text style={loginStyles.title}>INICIAR SESIÓN</Text>
+              <Text style={loginStyles.subtitle}>Ingresa tus credenciales para acceder al sistema.</Text>
+
+              {/* Campo: credencial (correo) */}
+              <Text style={loginStyles.fieldLabel}>Credencial</Text>
+              <TextInput
+                style={[loginStyles.input, errEmail ? loginStyles.inputError : null]}
+                placeholder="correo@ejemplo.com"
+                placeholderTextColor="#94A3B8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(t) => { setEmail(t); setErrEmail(''); setErrGeneral(''); }}
+              />
+              {errEmail ? <Text style={loginStyles.errorText}>{errEmail}</Text> : null}
+
+              {/* Campo: contraseña */}
+              <Text style={loginStyles.fieldLabel}>Contraseña</Text>
+              <View style={[loginStyles.passwordRow, errPassword ? loginStyles.inputError : null]}>
+                <TextInput
+                  style={loginStyles.passwordInput}
+                  placeholder="Ingresa tu contraseña"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
+                />
+                <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
+                  <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
+                </Pressable>
+              </View>
+              {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
+
+              {/* Enlace registro */}
+              <Pressable onPress={() => router.replace('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
+                <Text style={loginStyles.forgotText}>Registrarse</Text>
+              </Pressable>
+
+              {/* Enlace recuperación */}
+              <Pressable onPress={() => router.push('/(auth)/restablecimientoPassword' as any)} style={loginStyles.forgotRow}>
+                <Text style={loginStyles.forgotText}>¿Olvidaste tu contraseña?</Text>
+              </Pressable>
+
+              {/* Botón iniciar sesión */}
+              <Pressable
+                style={({ pressed }) => [loginStyles.button, pressed && loginStyles.buttonPressed]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {({ pressed }) => (
+                  <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
+                    {loading ? 'Ingresando...' : 'Iniciar sesión'}
+                  </Text>
+                )}
+              </Pressable>
+
+              {/* Error general de credenciales — centrado debajo del botón */}
+              {errGeneral ? <Text style={loginStyles.errorTextCentered}>{errGeneral}</Text> : null}
+
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </ResponsiveContainer>
   );
 }

@@ -280,6 +280,12 @@ export default StyleSheet.create({
   badgeRolAdmin: {
     backgroundColor: '#DBEAFE', // Azul claro
   },
+  badgeRolInventario: {
+    backgroundColor: '#D1FAE5', // Verde claro
+  },
+  badgeRolFinanciero: {
+    backgroundColor: '#FED7AA', // Naranja claro
+  },
   // Botones
   // Botón principal (Ver Perfil)
   btnPerfil: {

@@ -1,5 +1,5 @@
-// registroAdministrador.tsx
-// Modal para registro de nuevo administrador
+// registroPersonal.tsx
+// Modal para registro de nuevo personal (Mecánico, Inventario o Financiero)
 
 import { useEffect, useState } from 'react';
 import {
@@ -14,19 +14,38 @@ import {
   View,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
-import styles from '@/Styles/pantallaAdmin/modalesRegistros/registroAministrador';
+import styles from '@/Styles/pantallaAdmin/modalesRegistros/registroPersonal';
 import {
   validarUnNombre,
   validarSegundoNombre,
   validarTelefono,
+  validarObligatorio,
   validarCorreoGmail,
   validarCorreoMecanic,
   validarContrasena,
   validarConfirmarContrasena,
   validarSoloNumeros,
+  validarEspecialidadOServicio,
 } from '@/utils/validaciones';
 import { BASE_URL } from '@/utils/api';
+
+const ESPECIALIDADES = [
+  'Motor',
+  'Frenos',
+  'Suspensión',
+  'Electricidad automotriz',
+  'Aire acondicionado',
+  'Transmisión',
+  'Diagnóstico computarizado',
+  'Enderezado y pintura',
+  'Mecánica general',
+  'Otros',
+] as const;
+
+type TipoPersonal = 'Mecánico' | 'Inventario' | 'Financiero' | 'Administrador';
 
 type FormState = {
   nombres: string;
@@ -37,9 +56,13 @@ type FormState = {
   telefono: string;
   correo: string;
   correoEmpresarial: string;
+  especialidadCatalogo: string;
+  especialidadOtro: string;
+  añosExperiencia: string;
   contraseña: string;
   confirmarContraseña: string;
   cuentaActiva: boolean;
+  tipoPersonal: TipoPersonal;
 };
 
 type FormErrors = {
@@ -51,23 +74,26 @@ type FormErrors = {
   telefono: string;
   correo: string;
   correoEmpresarial: string;
+  especialidadCatalogo: string;
+  especialidadOtro: string;
+  añosExperiencia: string;
   contraseña: string;
   confirmarContraseña: string;
 };
 
-interface RegistroAdministradorProps {
+interface RegistroPersonalProps {
   visible: boolean;
   onClose: () => void;
-  onSuccess: (admin: any) => void;
+  onSuccess: (mecanico: any) => void;
   token: string;
 }
 
-export default function RegistroAdministrador({
+export default function RegistroPersonal({
   visible,
   onClose,
   onSuccess,
   token,
-}: RegistroAdministradorProps) {
+}: RegistroPersonalProps) {
   const [form, setForm] = useState<FormState>({
     nombres: '',
     segundoNombre: '',
@@ -77,9 +103,13 @@ export default function RegistroAdministrador({
     telefono: '',
     correo: '',
     correoEmpresarial: '',
+    especialidadCatalogo: 'Motor',
+    especialidadOtro: '',
+    añosExperiencia: '',
     contraseña: '',
     confirmarContraseña: '',
     cuentaActiva: true,
+    tipoPersonal: 'Mecánico',
   });
 
   const [errors, setErrors] = useState<FormErrors>({
@@ -91,12 +121,17 @@ export default function RegistroAdministrador({
     telefono: '',
     correo: '',
     correoEmpresarial: '',
+    especialidadCatalogo: '',
+    especialidadOtro: '',
+    añosExperiencia: '',
     contraseña: '',
     confirmarContraseña: '',
   });
 
+  const [espDropdown, setEspDropdown] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [fotoUri, setFotoUri] = useState<string | null>(null);
 
   // Bloquear capturas de pantalla cuando el modal está visible
   useEffect(() => {
@@ -106,7 +141,6 @@ export default function RegistroAdministrador({
       };
       preventCapture();
     }
-    // No llamamos allowScreenCaptureAsync() porque la pantalla principal debe mantener el bloqueo
   }, [visible]);
 
   // Limpiar formulario al abrir/cerrar modal
@@ -121,9 +155,13 @@ export default function RegistroAdministrador({
         telefono: '',
         correo: '',
         correoEmpresarial: '',
+        especialidadCatalogo: 'Motor',
+        especialidadOtro: '',
+        añosExperiencia: '',
         contraseña: '',
         confirmarContraseña: '',
         cuentaActiva: true,
+        tipoPersonal: 'Mecánico',
       });
       setErrors({
         nombres: '',
@@ -134,11 +172,57 @@ export default function RegistroAdministrador({
         telefono: '',
         correo: '',
         correoEmpresarial: '',
+        especialidadCatalogo: '',
+        especialidadOtro: '',
+        añosExperiencia: '',
         contraseña: '',
         confirmarContraseña: '',
       });
+      setFotoUri(null);
     }
   }, [visible]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permiso denegado', 'Se necesita acceso a la galería.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+      base64: true,
+    });
+    if (!result.canceled && result.assets[0]?.base64) {
+      const asset = result.assets[0];
+      const ext = asset.uri.split('.').pop()?.toLowerCase().split('?')[0] ?? 'jpg';
+      const mime = ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg';
+      setFotoUri(`data:${mime};base64,${asset.base64}`);
+    }
+  };
+
+  const validarCorreoEmpresarial = (correo: string): string | null => {
+    const tipo = form.tipoPersonal;
+    if (tipo === 'Mecánico' || tipo === 'Administrador') {
+      if (!correo.trim()) return 'El correo empresarial es obligatorio.';
+      if (!/^[a-zA-Z0-9._%+-]+@mecanic\.com$/.test(correo.trim().toLowerCase())) {
+        return 'Ingrese un correo empresarial válido.';
+      }
+    } else if (tipo === 'Inventario') {
+      if (!correo.trim()) return 'El correo empresarial es obligatorio.';
+      if (!/^[a-zA-Z0-9._%+-]+@inventariomecanic\.com$/.test(correo.trim().toLowerCase())) {
+        return 'Ingrese un correo empresarial válido.';
+      }
+    } else if (tipo === 'Financiero') {
+      if (!correo.trim()) return 'El correo empresarial es obligatorio.';
+      if (!/^[a-zA-Z0-9._%+-]+@finanzasmecanic\.com$/.test(correo.trim().toLowerCase())) {
+        return 'Ingrese un correo empresarial válido.';
+      }
+    }
+    return null;
+  };
 
   const guardar = async () => {
     const errorNombres = validarUnNombre(form.nombres, 'El nombre');
@@ -148,14 +232,31 @@ export default function RegistroAdministrador({
     const errorEdad = validarSoloNumeros(form.edad, 'La edad');
     const errorTelefono = validarTelefono(form.telefono);
     const errorCorreo = validarCorreoGmail(form.correo);
-    const errorCorreoEmpresarial = validarCorreoMecanic(form.correoEmpresarial);
+    const errorCorreoEmpresarial = validarCorreoEmpresarial(form.correoEmpresarial);
+    
+    // Solo validar especialidad y años si es Mecánico
+    const errorEspecialidadCatalogo = form.tipoPersonal === 'Mecánico' 
+      ? validarObligatorio(form.especialidadCatalogo, 'La especialidad')
+      : null;
+    const errorEspecialidadOtro =
+      form.tipoPersonal === 'Mecánico' && form.especialidadCatalogo === 'Otros'
+        ? validarEspecialidadOServicio(form.especialidadOtro, 'especialidad')
+        : null;
+    const errorAñosExperiencia = form.tipoPersonal === 'Mecánico'
+      ? validarSoloNumeros(form.añosExperiencia, 'Los años de experiencia')
+      : null;
+    
     const errorContraseña = validarContrasena(form.contraseña);
     const errorConfirmarContraseña = validarConfirmarContrasena(form.contraseña, form.confirmarContraseña);
 
     const edad = parseInt(form.edad, 10);
+    const años = form.tipoPersonal === 'Mecánico' ? parseInt(form.añosExperiencia, 10) : 0;
 
     const errorEdadRango = !Number.isNaN(edad) && (edad < 18 || edad > 80)
       ? 'La edad debe estar entre 18 y 80 años.'
+      : null;
+    const errorAñosRango = form.tipoPersonal === 'Mecánico' && !Number.isNaN(años) && años < 0
+      ? 'Los años de experiencia no pueden ser negativos.'
       : null;
 
     const nuevosErrores: FormErrors = {
@@ -167,6 +268,9 @@ export default function RegistroAdministrador({
       telefono: errorTelefono ?? '',
       correo: errorCorreo ?? '',
       correoEmpresarial: errorCorreoEmpresarial ?? '',
+      especialidadCatalogo: errorEspecialidadCatalogo ?? '',
+      especialidadOtro: errorEspecialidadOtro ?? '',
+      añosExperiencia: errorAñosExperiencia ?? errorAñosRango ?? '',
       contraseña: errorContraseña ?? '',
       confirmarContraseña: errorConfirmarContraseña ?? '',
     };
@@ -176,7 +280,15 @@ export default function RegistroAdministrador({
     const hayErrores = Object.values(nuevosErrores).some((value) => value.length > 0);
     if (hayErrores) return;
 
-    const body: Record<string, unknown> = {
+    const especialidad = form.tipoPersonal === 'Mecánico'
+      ? (form.especialidadCatalogo === 'Otros'
+          ? form.especialidadOtro.trim()
+          : form.especialidadCatalogo)
+      : form.tipoPersonal;
+
+    // MODO SIMULADO: Generar personal localmente sin backend
+    const nuevoPersonal = {
+      id: `temp-${Date.now()}`,
       nombres: form.nombres.trim(),
       segundoNombre: form.segundoNombre.trim() || null,
       apellidos: form.apellidos.trim(),
@@ -185,23 +297,25 @@ export default function RegistroAdministrador({
       telefono: form.telefono.trim(),
       correo: form.correo.trim(),
       correoEmpresarial: form.correoEmpresarial.trim().toLowerCase(),
+      especialidad,
+      anosExperiencia: años,
+      añosExperiencia: años,
       cuentaActiva: true,
-      contrasena: form.contraseña.trim(),
+      estadoConexion: 'DESCONECTADO',
+      fotoPerfil: fotoUri ?? null,
+      tipoPersonal: form.tipoPersonal,
+      rol: form.tipoPersonal === 'Administrador' ? 'Administrador' : 'Mecánico',
+      createdAt: new Date().toISOString(),
     };
 
-    try {
-      const resp = await fetch(`${BASE_URL}/admin`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify(body),
-      });
-      if (!resp.ok) throw new Error((await resp.json()).message ?? 'Error al crear');
-      const nuevo = await resp.json();
-      onSuccess(nuevo);
-      onClose();
-    } catch (e: any) {
-      Alert.alert('Error', e.message ?? 'No se pudo guardar el administrador.');
-    }
+    onSuccess(nuevoPersonal);
+    onClose();
+  };
+
+  const getPlaceholderCorreo = () => {
+    if (form.tipoPersonal === 'Mecánico' || form.tipoPersonal === 'Administrador') return 'juan@mecanic.com';
+    if (form.tipoPersonal === 'Inventario') return 'juan@inventariomecanic.com';
+    return 'juan@finanzasmecanic.com';
   };
 
   return (
@@ -213,9 +327,9 @@ export default function RegistroAdministrador({
         <View style={styles.modalCard}>
           <View style={styles.modalHeader}>
             <View style={styles.modalHeaderTextBlock}>
-              <Text style={styles.modalTitle}>Registrar Administrador</Text>
+              <Text style={styles.modalTitle}>Registrar Personal</Text>
               <Text style={styles.modalSubtitle}>
-                Añade un nuevo administrador al sistema. Completa todos los campos obligatorios.
+                Añade un profesional al equipo. Completa todos los campos obligatorios.
               </Text>
               <View style={styles.modalBadge}>
                 <Text style={styles.modalBadgeText}>Nuevo ingreso</Text>
@@ -236,6 +350,90 @@ export default function RegistroAdministrador({
             contentContainerStyle={styles.modalScrollContent}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Selección de Tipo de Personal */}
+            <Text style={styles.label}>Tipo de Personal</Text>
+            <View style={styles.roleButtonsContainer}>
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Mecánico' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Mecánico' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Mecánico' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Mecánico
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Inventario' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Inventario' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Inventario' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Inventario
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Financiero' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Financiero' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Financiero' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Financiero
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Administrador' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Administrador' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Administrador' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Administrador
+                </Text>
+              </Pressable>
+            </View>
+
+            {/* Foto de perfil */}
+            <Pressable onPress={pickImage} style={styles.fotoContainer}>
+              {fotoUri ? (
+                <Image source={{ uri: fotoUri }} style={styles.foto} contentFit="cover" />
+              ) : (
+                <View style={styles.fotoPlaceholder}>
+                  <FontAwesome name="camera" size={32} color="#64748B" />
+                  <Text style={styles.fotoPlaceholderText}>Agregar foto</Text>
+                </View>
+              )}
+            </Pressable>
+
             {/* Nombres */}
             <Text style={styles.label}>Nombre</Text>
             <TextInput
@@ -328,7 +526,7 @@ export default function RegistroAdministrador({
             {/* Correo Personal */}
             <Text style={styles.label}>Correo Personal</Text>
             <TextInput
-              placeholder="admin@gmail.com"
+              placeholder="juan@gmail.com"
               placeholderTextColor="#64748B"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -344,7 +542,7 @@ export default function RegistroAdministrador({
             {/* Correo Empresarial */}
             <Text style={styles.label}>Correo Empresarial</Text>
             <TextInput
-              placeholder="admin@mecanic.com"
+              placeholder={getPlaceholderCorreo()}
               placeholderTextColor="#64748B"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -356,6 +554,85 @@ export default function RegistroAdministrador({
               style={[styles.input, errors.correoEmpresarial && styles.inputError]}
             />
             {!!errors.correoEmpresarial && <Text style={styles.errorText}>{errors.correoEmpresarial}</Text>}
+
+            {/* Campos específicos para Mecánicos */}
+            {form.tipoPersonal === 'Mecánico' && (
+              <>
+                {/* Especialidad */}
+                <Text style={styles.label}>Especialidad</Text>
+                <Pressable
+                  style={styles.dropdown}
+                  onPress={() => {
+                    setEspDropdown((v) => !v);
+                    setErrors({ ...errors, especialidadCatalogo: '' });
+                  }}
+                >
+                  <Text style={styles.dropdownText}>{form.especialidadCatalogo}</Text>
+                  <Text style={styles.dropdownArrow}>{espDropdown ? '▲' : '▼'}</Text>
+                </Pressable>
+                {espDropdown && (
+                  <ScrollView 
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {ESPECIALIDADES.map((esp) => (
+                      <Pressable
+                        key={esp}
+                        style={[
+                          styles.dropdownItem,
+                          form.especialidadCatalogo === esp && styles.dropdownItemActive,
+                        ]}
+                        onPress={() => {
+                          setForm({ ...form, especialidadCatalogo: esp });
+                          setEspDropdown(false);
+                          setErrors({ ...errors, especialidadCatalogo: '' });
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>
+                          {form.especialidadCatalogo === esp ? '✓ ' : '    '}
+                        </Text>
+                        <Text style={styles.dropdownItemText}>{esp}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+
+                {/* Otra especialidad */}
+                {form.especialidadCatalogo === 'Otros' && (
+                  <>
+                    <Text style={styles.label}>Especifica la especialidad</Text>
+                    <TextInput
+                      placeholder="Describe la especialidad"
+                      placeholderTextColor="#64748B"
+                      value={form.especialidadOtro}
+                      onChangeText={(v) => {
+                        setForm({ ...form, especialidadOtro: v });
+                        setErrors({ ...errors, especialidadOtro: '' });
+                      }}
+                      style={[styles.input, errors.especialidadOtro && styles.inputError]}
+                    />
+                    {!!errors.especialidadOtro && <Text style={styles.errorText}>{errors.especialidadOtro}</Text>}
+                  </>
+                )}
+
+                {/* Años de experiencia */}
+                <Text style={styles.label}>Años de Experiencia</Text>
+                <TextInput
+                  placeholder="5"
+                  placeholderTextColor="#64748B"
+                  keyboardType="numeric"
+                  value={form.añosExperiencia}
+                  onChangeText={(v) => {
+                    const soloNumeros = v.replace(/[^0-9]/g, '');
+                    setForm({ ...form, añosExperiencia: soloNumeros });
+                    setErrors({ ...errors, añosExperiencia: '' });
+                  }}
+                  style={[styles.input, errors.añosExperiencia && styles.inputError]}
+                />
+                {!!errors.añosExperiencia && <Text style={styles.errorText}>{errors.añosExperiencia}</Text>}
+              </>
+            )}
 
             {/* Contraseña */}
             <Text style={styles.label}>Contraseña</Text>
@@ -404,7 +681,7 @@ export default function RegistroAdministrador({
             >
               {({ pressed }) => (
                 <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  GUARDAR ADMINISTRADOR
+                  GUARDAR PERSONAL
                 </Text>
               )}
             </Pressable>

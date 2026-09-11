@@ -1,5 +1,5 @@
-// visualizarPerfilMecanico.tsx
-// Modal para visualizar el perfil completo de un mecánico (sin contraseña)
+// visualizarPerfilPersonal.tsx
+// Modal para visualizar el perfil completo del personal (sin contraseña)
 
 import { useEffect } from 'react';
 import {
@@ -12,19 +12,19 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
-import styles from '@/Styles/pantallaAdmin/modalesRegistros/visualizarPerfilMecanico';
+import styles from '@/Styles/pantallaAdmin/modalesRegistros/visualizarPerfilPersonal';
 
-interface PerfilMecanicoProps {
+interface PerfilPersonalProps {
   visible: boolean;
   mecanico: any | null;
   onClose: () => void;
 }
 
-export default function VisualizarPerfilMecanico({
+export default function VisualizarPerfilPersonal({
   visible,
   mecanico,
   onClose,
-}: PerfilMecanicoProps) {
+}: PerfilPersonalProps) {
   // Bloquear capturas de pantalla cuando el modal está visible
   useEffect(() => {
     if (visible) {
@@ -46,6 +46,16 @@ export default function VisualizarPerfilMecanico({
   ]
     .filter(Boolean)
     .join(' ');
+
+  // Determinar tipo de personal por el correo empresarial si no viene en los datos
+  let tipoPersonal = mecanico.tipoPersonal || 'Mecánico';
+  if (!mecanico.tipoPersonal && mecanico.correoEmpresarial) {
+    if (mecanico.correoEmpresarial.endsWith('@inventariomecanic.com')) {
+      tipoPersonal = 'Inventario';
+    } else if (mecanico.correoEmpresarial.endsWith('@finanzasmecanic.com')) {
+      tipoPersonal = 'Financiero';
+    }
+  }
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -75,7 +85,17 @@ export default function VisualizarPerfilMecanico({
             )}
 
             {/* Título */}
-            <Text style={styles.title}>Perfil de Mecánico</Text>
+            <Text style={styles.title}>Perfil del Personal</Text>
+
+            {/* Badge del Rol */}
+            <View style={[
+              styles.roleBadge,
+              tipoPersonal === 'Mecánico' && styles.roleBadgeMecanico,
+              tipoPersonal === 'Inventario' && styles.roleBadgeInventario,
+              tipoPersonal === 'Financiero' && styles.roleBadgeFinanciero,
+            ]}>
+              <Text style={styles.roleBadgeText}>{tipoPersonal}</Text>
+            </View>
 
             {/* Campos */}
             <View style={styles.field}>
@@ -103,17 +123,22 @@ export default function VisualizarPerfilMecanico({
               <Text style={styles.value}>{mecanico.correoEmpresarial}</Text>
             </View>
 
-            <View style={styles.field}>
-              <Text style={styles.label}>Especialidad:</Text>
-              <Text style={styles.value}>{mecanico.especialidad || mecanico.especialidadCatalogo}</Text>
-            </View>
+            {/* Solo mostrar estos campos si es Mecánico */}
+            {tipoPersonal === 'Mecánico' && (
+              <>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Especialidad:</Text>
+                  <Text style={styles.value}>{mecanico.especialidad || mecanico.especialidadCatalogo}</Text>
+                </View>
 
-            <View style={styles.field}>
-              <Text style={styles.label}>Años de Experiencia:</Text>
-              <Text style={styles.value}>
-                {mecanico.anosExperiencia || mecanico.añosExperiencia} años
-              </Text>
-            </View>
+                <View style={styles.field}>
+                  <Text style={styles.label}>Años de Experiencia:</Text>
+                  <Text style={styles.value}>
+                    {mecanico.anosExperiencia || mecanico.añosExperiencia} años
+                  </Text>
+                </View>
+              </>
+            )}
 
             <View style={styles.field}>
               <Text style={styles.label}>Estado de Conexión:</Text>

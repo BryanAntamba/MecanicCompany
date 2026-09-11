@@ -18,12 +18,20 @@ export async function listarMecanicos(_req: Request, res: Response): Promise<voi
                 estadoLaboral: true,
                 cuentaActiva: true,
                 fotoPerfil: true,
+                tipoPersonal: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' },
         });
 
-        res.json(mecanicos);
+        // Mapear estadoLaboral a estadoConexion para compatibilidad con el frontend
+        const mecanicosConEstado = mecanicos.map(m => ({
+            ...m,
+            estadoConexion: m.estadoLaboral === 'Disponible' ? 'DESCONECTADO' : 
+                           m.estadoLaboral === 'Ocupado' ? 'LÍNEA' : 'DESCONECTADO'
+        }));
+
+        res.json(mecanicosConEstado);
     } catch (err: any) {
         console.error('[listarMecanicos]', err?.message);
         res.status(500).json({ message: 'Error al obtener los mecánicos' });
@@ -35,7 +43,7 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
     try {
         const {
             nombres, apellidos, edad, correo, correoEmpresarial,
-            especialidad, anosExperiencia, contrasena,
+            especialidad, anosExperiencia, contrasena, tipoPersonal,
         } = req.body;
 
         // Validar si el correoEmpresarial ya existe
@@ -72,13 +80,19 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
         const mecanico = await prisma.mecanico.create({
             data: {
                 nombres,
+                segundoNombre: req.body.segundoNombre ?? null,
                 apellidos,
+                segundoApellido: req.body.segundoApellido ?? null,
+                telefono: req.body.telefono ?? null,
                 edad: Number(edad),
                 correo: correoNormalizado,
                 correoEmpresarial: correoEmpresarialNormalizado,
-                especialidad,
-                anosExperiencia: Number(anosExperiencia),
+                especialidad: especialidad || 'N/A',
+                anosExperiencia: Number(anosExperiencia) || 0,
                 contrasena: hash,
+                tipoPersonal: tipoPersonal || 'Mecánico',
+                cuentaActiva: req.body.cuentaActiva ?? true,
+                estadoLaboral: 'Disponible',
                 ...(fotoPerfil && { fotoPerfil }),
             },
         });
@@ -97,7 +111,7 @@ export async function actualizarMecanico(req: Request, res: Response): Promise<v
         const { id } = req.params;
         const {
             nombres, apellidos, edad, correo, correoEmpresarial,
-            especialidad, anosExperiencia, estadoLaboral, contrasena,
+            especialidad, anosExperiencia, estadoLaboral, contrasena, tipoPersonal,
         } = req.body;
 
         // Validar si el correoEmpresarial ya existe en otro mecánico
@@ -134,13 +148,17 @@ export async function actualizarMecanico(req: Request, res: Response): Promise<v
 
         const data: Record<string, unknown> = {
             nombres, 
-            apellidos, 
+            segundoNombre: req.body.segundoNombre ?? null,
+            apellidos,
+            segundoApellido: req.body.segundoApellido ?? null,
+            telefono: req.body.telefono ?? null,
             edad: Number(edad), 
             correo: correo?.trim().toLowerCase(), 
             correoEmpresarial: correoEmpresarial?.trim().toLowerCase(),
-            especialidad, 
-            anosExperiencia: Number(anosExperiencia), 
-            estadoLaboral,
+            especialidad: especialidad || 'N/A', 
+            anosExperiencia: Number(anosExperiencia) || 0, 
+            estadoLaboral: estadoLaboral || 'Disponible',
+            tipoPersonal: tipoPersonal || 'Mecánico',
         };
 
         if (contrasena) {

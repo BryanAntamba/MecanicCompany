@@ -95,6 +95,9 @@ export default function ReportesClientesScreen() {
   const [modalConfirmacionReporteVisible, setModalConfirmacionReporteVisible] = useState(false);
   const [modalEnvioExitosoVisible, setModalEnvioExitosoVisible] = useState(false);
   const [modalRegistroEnProcesoVisible, setModalRegistroEnProcesoVisible] = useState(false);
+  
+  // Estado para almacenar repuestos seleccionados
+  const [repuestosSeleccionados, setRepuestosSeleccionados] = useState<any[]>([]);
 
   // Cargar solicitudes simuladas
   useEffect(() => {
@@ -185,6 +188,8 @@ export default function ReportesClientesScreen() {
 
   const handleRegistroMantenimiento = (solicitud: SolicitudMantenimiento) => {
     setSolicitudSeleccionada(solicitud);
+    // Limpiar repuestos antes de abrir el modal
+    setRepuestosSeleccionados([]);
     setModalMantenimientoVisible(true);
   };
 
@@ -212,20 +217,26 @@ export default function ReportesClientesScreen() {
     );
   };
 
-  const handleSuccessMantenimiento = (solicitudActualizada: any) => {
+  const handleSuccessMantenimiento = (solicitudActualizada: any, repuestos: any[]) => {
     setSolicitudes((prev) =>
       prev.map((s) => (s.id === solicitudActualizada.id ? { ...s, ...solicitudActualizada } : s))
     );
+    // Guardar los repuestos para pasarlos al modal de confirmación
+    setRepuestosSeleccionados(repuestos);
   };
 
   const handleEnviarReporte = (solicitud: SolicitudMantenimiento) => {
     setSolicitudSeleccionada(solicitud);
+    // Actualizar los repuestos seleccionados con los de la solicitud
+    setRepuestosSeleccionados((solicitud as any).repuestosSeleccionados || []);
     setModalConfirmacionReporteVisible(true);
   };
 
   const handleConfirmarEnvioReporte = () => {
     setModalConfirmacionReporteVisible(false);
     setModalEnvioExitosoVisible(true);
+    // Limpiar repuestos después de enviar
+    setRepuestosSeleccionados([]);
   };
 
   // Verificar si el reporte está completo (solo verificar el estado)
@@ -481,7 +492,7 @@ export default function ReportesClientesScreen() {
                   )}
                 </Pressable>
 
-                {/* Botón ENVIAR FACTURA */}
+                {/* Botón ENVIAR REPORTE */}
                 <Pressable
                   onPress={() => handleEnviarReporte(solicitud)}
                   disabled={!reporteCompleto(solicitud)}
@@ -499,7 +510,7 @@ export default function ReportesClientesScreen() {
                         pressed && reporteCompleto(solicitud) && styles.btnEnviarReporteTextPressed,
                       ]}
                     >
-                      ENVIAR FACTURA
+                      ENVIAR REPORTE
                     </Text>
                   )}
                 </Pressable>
@@ -609,7 +620,10 @@ export default function ReportesClientesScreen() {
       <RegistroMantenimiento
         visible={modalMantenimientoVisible}
         solicitud={solicitudSeleccionada}
-        onClose={() => setModalMantenimientoVisible(false)}
+        onClose={() => {
+          setModalMantenimientoVisible(false);
+          // NO limpiar repuestos aquí porque se necesitan para el modal de confirmación
+        }}
         onSuccess={handleSuccessMantenimiento}
         onShowSuccessModal={() => setModalRegistroEnProcesoVisible(true)}
       />
@@ -630,7 +644,11 @@ export default function ReportesClientesScreen() {
       <ConfirmacionReporte
         visible={modalConfirmacionReporteVisible}
         solicitud={solicitudSeleccionada}
-        onCancelar={() => setModalConfirmacionReporteVisible(false)}
+        repuestosSeleccionados={repuestosSeleccionados}
+        onCancelar={() => {
+          setModalConfirmacionReporteVisible(false);
+          setRepuestosSeleccionados([]);
+        }}
         onConfirmar={handleConfirmarEnvioReporte}
       />
 
@@ -638,7 +656,11 @@ export default function ReportesClientesScreen() {
         visible={modalEnvioExitosoVisible}
         nombreCliente={solicitudSeleccionada?.nombreCliente || ''}
         correoCliente={solicitudSeleccionada?.correoCliente || ''}
-        onCerrar={() => setModalEnvioExitosoVisible(false)}
+        onCerrar={() => {
+          setModalEnvioExitosoVisible(false);
+          // Limpiar repuestos cuando se cierra el modal de éxito
+          setRepuestosSeleccionados([]);
+        }}
       />
 
       <RegistroEnProceso

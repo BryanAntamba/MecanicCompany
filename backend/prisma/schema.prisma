@@ -56,6 +56,7 @@ model Mecanico {
   cuentaActiva        Boolean       @default(true)
   contrasena          String        // Almacenada con bcrypt
   fotoPerfil          String?       // Ruta relativa al archivo subido (ej: /uploads/mecanicos/foto.jpg)
+  tipoPersonal        String        @default("Mecánico") // Tipo: Mecánico, Inventario o Financiero
 
   // Relaciones
   solicitudes         Solicitud[]   // Solicitudes asignadas a este mecánico

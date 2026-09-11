@@ -39,7 +39,7 @@ export default function ConfirmarReenvioReporte({
             {/* Cabecera con botón X */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderTextBlock}>
-                <Text style={styles.title}>¿Reenviar Factura?</Text>
+                <Text style={styles.title}>¿Reenviar Reporte?</Text>
               </View>
               <Pressable
                 onPress={onCancelar}
@@ -56,7 +56,7 @@ export default function ConfirmarReenvioReporte({
 
             {/* Mensaje */}
             <Text style={styles.message}>
-              ¿Está seguro de reenviar la factura al usuario?
+              ¿Está seguro de reenviar el reporte al usuario?
             </Text>
 
             <Text style={styles.nombreDestacado}>{nombreCliente}</Text>

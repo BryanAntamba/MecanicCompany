@@ -1,33 +1,36 @@
-// EliminarAdministrador.tsx
-// Modal de confirmación para eliminar un administrador
+// EliminarPersonal.tsx
+// Modal de confirmación para eliminar personal (Mecánico, Inventario, Financiero o Administrador)
 
 import { Modal, Pressable, Text, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import styles from '@/Styles/pantallaAdmin/ModalesDeEliminacionDeRoles/eliminacionAdministrador';
+import styles from '@/Styles/pantallaAdmin/ModalesDeEliminacionDeRoles/eliminacionMecanico';
 
-interface EliminarAdministradorProps {
+interface EliminarPersonalProps {
   visible: boolean;
-  administrador: any | null;
+  personal: any | null;
   onCancelar: () => void;
   onConfirmar: () => void;
 }
 
-export default function EliminarAdministrador({
+export default function EliminarPersonal({
   visible,
-  administrador,
+  personal,
   onCancelar,
   onConfirmar,
-}: EliminarAdministradorProps) {
-  if (!administrador) return null;
+}: EliminarPersonalProps) {
+  if (!personal) return null;
 
   const nombreCompleto = [
-    administrador.nombres,
-    administrador.segundoNombre,
-    administrador.apellidos,
-    administrador.segundoApellido,
+    personal.nombres,
+    personal.segundoNombre,
+    personal.apellidos,
+    personal.segundoApellido,
   ]
     .filter(Boolean)
     .join(' ');
+
+  // Determinar el tipo de personal a mostrar
+  const tipoPersonal = personal.tipoPersonal || personal.rol || 'Personal';
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancelar}>
@@ -43,8 +46,10 @@ export default function EliminarAdministrador({
 
           {/* Mensaje */}
           <Text style={styles.message}>
-            ¿Estás seguro de eliminar al Administrador{'\n'}
-            <Text style={styles.nombreDestacado}>{nombreCompleto}</Text>?
+            ¿Estás seguro de eliminar al{' '}
+            {tipoPersonal === 'Administrador' ? 'administrador' : 'personal'}{'\n'}
+            <Text style={styles.nombreDestacado}>{nombreCompleto}</Text>
+            {` (${tipoPersonal})`}?
           </Text>
 
           <Text style={styles.advertencia}>

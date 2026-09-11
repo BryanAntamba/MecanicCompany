@@ -6,6 +6,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -22,6 +23,7 @@ import FooterCliente from '@/components/footerCliente/footerCliente';
 import DetallesSolicitud from './ModalSeguimientoVehicular/detallesSolicitud';
 import FinalizacionSolicitud from './ModalSeguimientoVehicular/finalizacionSolicitud';
 import styles from '@/Styles/pantallaCliente/seguimientoVehiculo';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 // Tipo de solicitud
 interface Solicitud {
@@ -216,9 +218,11 @@ export default function SeguimientoVehiculoScreen() {
     }
   };
 
-  // Manejo del botón de retroceso del teléfono
+  // Manejo del botón de retroceso del teléfono (solo en móvil)
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') return;
+
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         router.push('/PantallaCliente' as any);
         return true;
@@ -228,9 +232,10 @@ export default function SeguimientoVehiculoScreen() {
   );
 
   return (
-    <View style={styles.page}>
-      <ScrollView
-        ref={scrollRef}
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <ScrollView
+          ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
@@ -648,6 +653,7 @@ export default function SeguimientoVehiculoScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

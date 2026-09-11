@@ -41,7 +41,7 @@ export default function EnvioExitoso({
           </View>
 
           {/* Título */}
-          <Text style={styles.title}>Factura Enviada</Text>
+          <Text style={styles.title}>Reporte Enviada</Text>
 
           {/* Mensaje */}
           <Text style={styles.message}>

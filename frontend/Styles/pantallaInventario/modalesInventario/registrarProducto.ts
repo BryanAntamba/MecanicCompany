@@ -1,5 +1,5 @@
-// registroMecanico.ts
-// Estilos para el modal de registro de mecánico
+// registrarProducto.ts
+// Estilos para el modal de registro de productos
 
 import { StyleSheet } from 'react-native';
 
@@ -12,8 +12,8 @@ export default StyleSheet.create({
   },
   modalCard: {
     width: '90%',
-    maxWidth: 500,
-    height: '85%',  // Cambiar de maxHeight a height fijo
+    maxWidth: 700,
+    height: '85%',
     backgroundColor: '#1E293B',
     borderRadius: 16,
     padding: 20,
@@ -30,25 +30,11 @@ export default StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#F1F5F9',
-    marginBottom: 8,
   },
   modalSubtitle: {
     fontSize: 14,
     color: '#94A3B8',
-    lineHeight: 20,
-    marginBottom: 12,
-  },
-  modalBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#3B82F6',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  modalBadgeText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    marginTop: 4,
   },
   closeBtn: {
     width: 36,
@@ -67,31 +53,13 @@ export default StyleSheet.create({
   modalScrollContent: {
     paddingBottom: 20,
   },
-  fotoContainer: {
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  foto: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#0F172A',
-  },
-  fotoPlaceholder: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#0F172A',
-    borderWidth: 2,
-    borderColor: '#334155',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fotoPlaceholderText: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 4,
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginBottom: 16,
+    marginTop: 8,
+    letterSpacing: 0.5,
   },
   label: {
     fontSize: 14,
@@ -99,6 +67,12 @@ export default StyleSheet.create({
     color: '#F1F5F9',
     marginBottom: 8,
     marginTop: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    lineHeight: 22,
+    marginBottom: 12,
   },
   input: {
     backgroundColor: '#0F172A',
@@ -112,11 +86,24 @@ export default StyleSheet.create({
   },
   inputError: {
     borderColor: '#EF4444',
+    borderWidth: 2,
+  },
+  textArea: {
+    height: 80,
+    textAlignVertical: 'top',
+    paddingTop: 12,
   },
   errorText: {
-    fontSize: 13,
     color: '#EF4444',
+    fontSize: 13,
     marginTop: 6,
+  },
+  errorGeneral: {
+    color: '#EF4444',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 16,
+    fontWeight: '600',
   },
   dropdown: {
     backgroundColor: '#0F172A',
@@ -129,13 +116,16 @@ export default StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  dropdownText: {
+  dropdownError: {
+    borderColor: '#EF4444',
+  },
+  dropdownTextPlaceholder: {
+    fontSize: 16,
+    color: '#64748B',
+  },
+  dropdownTextSelected: {
     fontSize: 16,
     color: '#F1F5F9',
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: '#64748B',
   },
   dropdownList: {
     backgroundColor: '#0F172A',
@@ -144,87 +134,119 @@ export default StyleSheet.create({
     borderRadius: 8,
     marginTop: 4,
     maxHeight: 200,
-    overflow: 'hidden',
   },
   dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#1E293B',
-    overflow: 'hidden',
   },
   dropdownItemActive: {
     backgroundColor: '#1E293B',
   },
-  dropdownItemCheck: {
-    fontSize: 14,
-    color: '#3B82F6',
-    marginRight: 8,
-  },
   dropdownItemText: {
-    flex: 1,
     fontSize: 16,
     color: '#F1F5F9',
-    flexWrap: 'wrap',
   },
-  passwordContainer: {
+  row: {
     flexDirection: 'row',
+    gap: 12,
+  },
+  half: {
+    flex: 1,
+  },
+  third: {
+    flex: 1,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#334155',
+    marginVertical: 20,
+  },
+  addButton: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
+  addButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.5,
+  },
+  compatibilidadesLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#F1F5F9',
+    marginTop: 20,
+    marginBottom: 12,
+  },
+  compatibilidadesList: {
+    gap: 12,
+  },
+  compatibilidadItem: {
     backgroundColor: '#0F172A',
     borderWidth: 1,
     borderColor: '#334155',
-    borderRadius: 8,
-  },
-  passwordInput: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#F1F5F9',
-  },
-  eyeBtn: {
-    paddingHorizontal: 12,
-  },
-  switchRow: {
+    borderRadius: 12,
+    padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 8,
   },
-  switchLabel: {
+  compatibilidadInfo: {
+    flex: 1,
+  },
+  compatibilidadMarca: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#F1F5F9',
   },
-  switch: {
-    width: 50,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#334155',
-    justifyContent: 'center',
-    paddingHorizontal: 2,
+  compatibilidadModelo: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginTop: 4,
   },
-  switchOn: {
-    backgroundColor: '#3B82F6',
+  compatibilidadAnos: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
   },
-  switchThumb: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#F1F5F9',
+  deleteButton: {
+    padding: 8,
   },
-  switchThumbOn: {
-    alignSelf: 'flex-end',
+  modalFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 20,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    backgroundColor: '#374151',
+    borderRadius: 8,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#F1F5F9',
+    letterSpacing: 1,
   },
   saveBtn: {
+    flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: 'center',
-    marginTop: 24,
   },
   saveBtnPressed: {
     backgroundColor: '#2563EB',

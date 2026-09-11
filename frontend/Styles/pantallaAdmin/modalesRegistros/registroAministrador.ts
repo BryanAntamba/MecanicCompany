@@ -67,6 +67,32 @@ export default StyleSheet.create({
   modalScrollContent: {
     paddingBottom: 20,
   },
+  fotoContainer: {
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  foto: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#0F172A',
+  },
+  fotoPlaceholder: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#0F172A',
+    borderWidth: 2,
+    borderColor: '#334155',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fotoPlaceholderText: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 8,
+  },
   label: {
     fontSize: 14,
     fontWeight: '600',

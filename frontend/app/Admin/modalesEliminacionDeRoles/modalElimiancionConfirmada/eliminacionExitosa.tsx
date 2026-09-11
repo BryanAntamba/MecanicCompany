@@ -8,7 +8,7 @@ import styles from '@/Styles/pantallaAdmin/ModalesDeEliminacionDeRoles/modalElim
 interface EliminacionExitosaProps {
   visible: boolean;
   nombreUsuario: string;
-  rolUsuario: 'Mecánico' | 'Administrador' | 'Usuario';
+  rolUsuario: 'Mecánico' | 'Inventario' | 'Financiero' | 'Administrador' | 'Usuario';
   onCerrar: () => void;
 }
 

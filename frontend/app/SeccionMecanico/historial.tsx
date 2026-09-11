@@ -80,6 +80,7 @@ type RegistroHistorial = {
   modelo: string;              // Modelo del vehículo
   placa: string;               // Placa del vehículo (campo de búsqueda)
   fechaMantenimiento: string;  // Fecha en que se completó el mantenimiento
+  fechaGeneracionReporte?: string;
   mecanicoNombre: string;      // Nombre del mecánico que realizó el trabajo
   mantenimiento: Mantenimiento;// Datos completos del reporte técnico
 };
@@ -161,7 +162,8 @@ export default function HistorialScreen() {
           marca: s.marca,
           modelo: s.modelo,
           placa: s.placa,
-          fechaMantenimiento: s.fechaFinalizacion || s.fechaCita,
+          fechaMantenimiento: s.fechaGeneracionReporte || s.fechaFinalizacion || s.fechaCita,
+          fechaGeneracionReporte: s.fechaGeneracionReporte,
           mecanicoNombre: s.mecanicoAsignado || 'No asignado',
           mantenimiento: {
             marca: s.marca,
@@ -175,12 +177,15 @@ export default function HistorialScreen() {
             trabajoRealizado: s.trabajoRealizado || '',
             otroTrabajo: s.otroTrabajo || '',
             repuestosUtilizados: s.repuestosUtilizados || '',
+            repuestosSeleccionados: s.repuestosSeleccionados || [],
             diagnosticoRealizado: s.diagnosticoRealizado || '',
             costoManoObra: s.costoManoObra || '0',
             costoRepuestos: s.costoRepuestos || '0',
+            costoTotal: s.costoTotal || '0',
             observaciones: s.observaciones || '',
             fechaInicio: s.fechaInicio || '',
             fechaFinalizacion: s.fechaFinalizacion || '',
+            fechaGeneracionReporte: s.fechaGeneracionReporte || '',
           },
         }));
       setLista(registros);
@@ -427,14 +432,14 @@ export default function HistorialScreen() {
                 )}
               </Pressable>
 
-              {/* Botón REENVIAR FACTURA */}
+              {/* Botón REENVIAR REPORTE */}
               <Pressable
                 onPress={() => { setSendTarget(r); setSendSuccess(false); setSendModal(true); }}
                 style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
               >
                 {({ pressed }) => (
                   <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                    REENVIAR FACTURA
+                    REENVIAR REPORTE
                   </Text>
                 )}
               </Pressable>

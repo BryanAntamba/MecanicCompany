@@ -20,7 +20,7 @@ import { Video, ResizeMode } from 'expo-av';
 import { FontAwesome } from '@expo/vector-icons';
 
 // Linking para abrir Google Maps externo
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 // Hooks de React:
 // - useEffect: ejecuta efectos secundarios (timers, animaciones) después del render
@@ -86,6 +86,9 @@ import NavbarCliente from '@/components/navbarCliente/navbarCliente';
 
 // Componente footer del cliente
 // import FooterCliente from '@/components/footerCliente/footerCliente'; // Ya no se necesita
+
+// ResponsiveContainer para diseño responsive
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 // Modales del flujo de solicitud
 import VerificacionFormulario from './ModalFormularioSolicitud/verificacionFormulario';
@@ -257,9 +260,11 @@ export default function HomeScreen() {
     return () => clearTimeout(t);
   }, []);
 
-  // Manejo del botón de retroceso: cierra la app y logout
+  // Manejo del botón de retroceso: cierra la app y logout (solo en móvil)
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') return;
+      
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         logout();
         BackHandler.exitApp();
@@ -627,8 +632,9 @@ export default function HomeScreen() {
 
   //Render de componente
   return (
-    // Contenedor raíz que ocupa toda la pantalla (style: flex:1, fondo negro)
-    <View style={styles.page}>
+    <ResponsiveContainer>
+      {/* Contenedor raíz que ocupa toda la pantalla (style: flex:1, fondo negro) */}
+      <View style={styles.page}>
 
       {/* ScrollView principal con navbar sticky en índice 0 */}
       <ScrollView
@@ -1579,6 +1585,7 @@ export default function HomeScreen() {
         onCerrar={onCerrarConfirmacion}
       />
 
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

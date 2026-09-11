@@ -9,6 +9,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import restablecerStyles from '@/Styles/auth/restablecimientoPassword';
 import { validarCorreoGmail } from '@/utils/validaciones';
 import { buscarUsuarioPorCorreo } from '@/utils/datosSimulados';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 export default function RestablecimientoPasswordScreen() {
   const router = useRouter();
@@ -30,6 +31,9 @@ export default function RestablecimientoPasswordScreen() {
 
   // BackHandler: va de regreso al login
   useEffect(() => {
+    // Solo usar BackHandler en plataformas móviles
+    if (Platform.OS === 'web') return;
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.back();
       return true;
@@ -38,7 +42,11 @@ export default function RestablecimientoPasswordScreen() {
   }, []);
 
   const handleSend = async () => {
+    const correoLower = email.trim().toLowerCase();
+    
+    // Solo permitir correos @gmail.com para recuperación de contraseña
     const eFormato = validarCorreoGmail(email);
+    
     if (eFormato) {
       setErrEmail(eFormato);
       return;
@@ -46,8 +54,8 @@ export default function RestablecimientoPasswordScreen() {
 
     setLoading(true);
     try {
-      // Verificar que el correo exista en los datos simulados
-      const usuario = buscarUsuarioPorCorreo(email.trim().toLowerCase());
+      // Verificar que el correo exista en datos simulados
+      const usuario = buscarUsuarioPorCorreo(correoLower);
       
       if (!usuario) {
         setErrEmail('El correo ingresado no está registrado en el sistema.');
@@ -55,11 +63,11 @@ export default function RestablecimientoPasswordScreen() {
         return;
       }
 
-      // Simular envío de código (en producción llamaría al API)
+      // Simular envío de código
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Pasa el correo a la siguiente pantalla como parámetro
-      router.push(`/(auth)/codigoVerificacion?correo=${encodeURIComponent(email.trim().toLowerCase())}` as any);
+      router.push(`/(auth)/codigoVerificacion?correo=${encodeURIComponent(correoLower)}` as any);
     } catch (err: any) {
       setErrEmail(err?.message ?? 'No se pudo enviar el código. Intenta de nuevo.');
     } finally {
@@ -68,17 +76,18 @@ export default function RestablecimientoPasswordScreen() {
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoRestablecer.png')}
-      style={restablecerStyles.background}
-      resizeMode="cover"
-    >
-      <View style={restablecerStyles.overlay} />
-      <KeyboardAvoidingView 
-        style={restablecerStyles.keyboardView} 
-        behavior='height'
-        keyboardVerticalOffset={0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoRestablecer.png')}
+        style={restablecerStyles.background}
+        resizeMode="cover"
       >
+        <View style={restablecerStyles.overlay} />
+        <KeyboardAvoidingView 
+          style={restablecerStyles.keyboardView} 
+          behavior='height'
+          keyboardVerticalOffset={0}
+        >
         <ScrollView 
           ref={scrollRef}
           contentContainerStyle={restablecerStyles.scrollContent} 
@@ -99,12 +108,12 @@ export default function RestablecimientoPasswordScreen() {
             <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={restablecerStyles.logo} />
             <Text style={restablecerStyles.title}>¿OLVIDASTE TU CONTRASEÑA?</Text>
             <Text style={restablecerStyles.subtitle}>
-              Ingresa tu correo personal (@gmail.com) con el que te registraste para restablecer tu contraseña.
+              Ingresa tu correo con el que te registraste para restablecer tu contraseña.
             </Text>
 
             <TextInput
               style={[restablecerStyles.input, errEmail ? restablecerStyles.inputError : null]}
-              placeholder="Ingrese su correo personal"
+              placeholder="ejemplo@gmail.com"
               placeholderTextColor="#94A3B8"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -130,5 +139,6 @@ export default function RestablecimientoPasswordScreen() {
         </ScrollView>
       </KeyboardAvoidingView>
     </ImageBackground>
+    </ResponsiveContainer>
   );
 }

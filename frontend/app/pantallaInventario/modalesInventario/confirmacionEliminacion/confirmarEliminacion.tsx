@@ -1,36 +1,32 @@
-// EliminarMecanico.tsx
-// Modal de confirmación para eliminar un mecánico
-
-import { Modal, Pressable, Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Modal, Platform, View, Text, Pressable } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import styles from '@/Styles/pantallaAdmin/ModalesDeEliminacionDeRoles/eliminacionMecanico';
+import * as ScreenCapture from 'expo-screen-capture';
+import styles from '@/Styles/pantallaInventario/modalesInventario/confirmacionEliminacion/confirmarEliminacion';
 
-interface EliminarMecanicoProps {
+interface Props {
   visible: boolean;
-  mecanico: any | null;
-  onCancelar: () => void;
+  onClose: () => void;
   onConfirmar: () => void;
+  producto: any | null;
 }
 
-export default function EliminarMecanico({
-  visible,
-  mecanico,
-  onCancelar,
-  onConfirmar,
-}: EliminarMecanicoProps) {
-  if (!mecanico) return null;
+function ConfirmarEliminacion({ visible, onClose, onConfirmar, producto }: Props) {
+  useEffect(() => {
+    if (visible && Platform.OS !== 'web') {
+      ScreenCapture.preventScreenCaptureAsync();
+    }
+  }, [visible]);
 
-  const nombreCompleto = [
-    mecanico.nombres,
-    mecanico.segundoNombre,
-    mecanico.apellidos,
-    mecanico.segundoApellido,
-  ]
-    .filter(Boolean)
-    .join(' ');
+  if (!producto) return null;
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancelar}>
+    <Modal
+      visible={visible}
+      animationType="fade"
+      transparent
+      onRequestClose={onClose}
+    >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           {/* Icono de advertencia */}
@@ -43,8 +39,8 @@ export default function EliminarMecanico({
 
           {/* Mensaje */}
           <Text style={styles.message}>
-            ¿Estás seguro de eliminar al Mecánico{'\n'}
-            <Text style={styles.nombreDestacado}>{nombreCompleto}</Text>?
+            ¿Estás seguro de eliminar el siguiente producto?{'\n'}
+            <Text style={styles.nombreDestacado}>{producto.nombre}</Text>
           </Text>
 
           <Text style={styles.advertencia}>
@@ -55,7 +51,7 @@ export default function EliminarMecanico({
           <View style={styles.botonesContainer}>
             {/* Botón Cancelar */}
             <Pressable
-              onPress={onCancelar}
+              onPress={onClose}
               style={({ pressed }) => [
                 styles.btnCancelar,
                 pressed && styles.btnCancelarPressed,
@@ -88,3 +84,5 @@ export default function EliminarMecanico({
     </Modal>
   );
 }
+
+export default ConfirmarEliminacion;

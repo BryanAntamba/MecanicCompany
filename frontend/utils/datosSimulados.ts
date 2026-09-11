@@ -15,6 +15,7 @@ export interface UsuarioRegistrado {
 
 // Lista de usuarios registrados (simulación de base de datos)
 const usuariosRegistrados: UsuarioRegistrado[] = [
+  // ─── CLIENTES (@gmail.com) ───
   {
     nombre: 'Juan',
     apellido: 'Pérez',
@@ -58,6 +59,24 @@ const usuariosRegistrados: UsuarioRegistrado[] = [
     telefono: '0954321098',
     correo: 'luis.torres@gmail.com',
     contrasena: 'luis12345',
+  },
+  // ─── PERSONAL DE INVENTARIO (@inventariomecanic.com) ───
+  {
+    nombre: 'Luis Fernando',
+    apellido: 'Castro Morales',
+    fechaNacimiento: new Date(1996, 3, 12),
+    telefono: '0987456123',
+    correo: 'inventario@inventariomecanic.com',
+    contrasena: 'Inventario123!',
+  },
+  // ─── PERSONAL FINANCIERO (@finanzasmecanic.com) ───
+  {
+    nombre: 'Patricia Isabel',
+    apellido: 'Mendoza Vargas',
+    fechaNacimiento: new Date(1992, 7, 24),
+    telefono: '0998567234',
+    correo: 'finanzas@finanzasmecanic.com',
+    contrasena: 'Finanzas123!',
   },
 ];
 
@@ -306,6 +325,7 @@ export interface SolicitudMantenimiento {
   observaciones?: string;
   fechaInicio?: string;
   fechaFinalizacion?: string;
+  fechaGeneracionReporte?: string;
   costoTotal?: string;
 }
 
@@ -666,4 +686,400 @@ export const eliminarSolicitud = (id: string): void => {
   if (index !== -1) {
     solicitudesSimuladas.splice(index, 1);
   }
+};
+
+// ============================================
+// DATOS SIMULADOS DE PRODUCTOS (INVENTARIO)
+// ============================================
+
+export interface Producto {
+  id: string;
+  nombre: string;
+  codigoSKU: string;
+  marcaComponente: string;
+  categoria: string;
+  numeroParteOEM?: string;
+  descripcion?: string;
+  stockActual: number;
+  stockMinimo: number;
+  stockCritico: number;
+  precioCompra: number;
+  precioVenta: number;
+  compatibilidades: Array<{
+    id: string;
+    marca: string;
+    modelo: string;
+    anoDesde: string;
+    anoHasta: string;
+  }>;
+  ubicacionInventario?: string;
+  unidadMedida: string;
+  activo: boolean;
+  createdAt: string;
+}
+
+const productosSimulados: Producto[] = [
+  {
+    id: 'prod-1',
+    nombre: 'FILTRO DE ACEITE',
+    codigoSKU: 'FIL001',
+    marcaComponente: 'Bosch',
+    categoria: 'Filtros',
+    numeroParteOEM: 'BO0451103033',
+    descripcion: 'Filtro de aceite de alta eficiencia para motores de gasolina',
+    stockActual: 24,
+    stockMinimo: 10,
+    stockCritico: 5,
+    precioCompra: 8.50,
+    precioVenta: 12.50,
+    compatibilidades: [
+      { id: 'c1', marca: 'Toyota', modelo: 'Toyota Corolla', anoDesde: '2018', anoHasta: '2023' },
+      { id: 'c2', marca: 'Honda', modelo: 'Honda Civic', anoDesde: '2019', anoHasta: '2024' },
+      { id: 'c3', marca: 'Mazda', modelo: 'Mazda Mazda3', anoDesde: '2020', anoHasta: '2024' }
+    ],
+    ubicacionInventario: 'Estante A3-B12',
+    unidadMedida: 'Unidad',
+    activo: true,
+    createdAt: new Date(2024, 0, 15).toISOString()
+  },
+  {
+    id: 'prod-2',
+    nombre: 'PASTILLAS DE FRENO DELANTERAS',
+    codigoSKU: 'BRE045',
+    marcaComponente: 'Brembo',
+    categoria: 'Frenos',
+    numeroParteOEM: 'BRE0986AB1234',
+    descripcion: 'Pastillas de freno cerámicas de alto rendimiento',
+    stockActual: 6,
+    stockMinimo: 8,
+    stockCritico: 3,
+    precioCompra: 35.00,
+    precioVenta: 55.00,
+    compatibilidades: [
+      { id: 'c4', marca: 'Chevrolet', modelo: 'Chevrolet Cruze', anoDesde: '2016', anoHasta: '2022' },
+      { id: 'c5', marca: 'Kia', modelo: 'Kia Rio', anoDesde: '2020', anoHasta: '2024' }
+    ],
+    ubicacionInventario: 'Estante B2-C05',
+    unidadMedida: 'Juego',
+    activo: true,
+    createdAt: new Date(2024, 1, 10).toISOString()
+  },
+  {
+    id: 'prod-3',
+    nombre: 'BUJÍAS DE ENCENDIDO',
+    codigoSKU: 'NGK567',
+    marcaComponente: 'NGK',
+    categoria: 'Encendido',
+    numeroParteOEM: 'NGK4644',
+    descripcion: 'Bujías de platino de larga duración',
+    stockActual: 2,
+    stockMinimo: 12,
+    stockCritico: 4,
+    precioCompra: 6.00,
+    precioVenta: 10.00,
+    compatibilidades: [
+      { id: 'c6', marca: 'Nissan', modelo: 'Nissan Versa', anoDesde: '2015', anoHasta: '2023' },
+      { id: 'c7', marca: 'Renault', modelo: 'Renault Logan', anoDesde: '2016', anoHasta: '2024' },
+      { id: 'c8', marca: 'Ford', modelo: 'Ford Fiesta', anoDesde: '2014', anoHasta: '2019' }
+    ],
+    ubicacionInventario: 'Estante C1-D07',
+    unidadMedida: 'Juego',
+    activo: true,
+    createdAt: new Date(2024, 2, 5).toISOString()
+  },
+  {
+    id: 'prod-4',
+    nombre: 'ACEITE MOTOR SINTÉTICO 5W-30',
+    codigoSKU: 'MOB789',
+    marcaComponente: 'Pennzoil',
+    categoria: 'Lubricantes',
+    numeroParteOEM: 'PZ550046126',
+    descripcion: 'Aceite sintético de alta calidad para todo tipo de motores',
+    stockActual: 45,
+    stockMinimo: 20,
+    stockCritico: 10,
+    precioCompra: 18.00,
+    precioVenta: 28.00,
+    compatibilidades: [
+      { id: 'c9', marca: 'Toyota', modelo: 'Toyota Hilux', anoDesde: '2010', anoHasta: '2024' },
+      { id: 'c10', marca: 'Ford', modelo: 'Ford Ranger', anoDesde: '2012', anoHasta: '2024' },
+      { id: 'c11', marca: 'Chevrolet', modelo: 'Chevrolet Colorado', anoDesde: '2015', anoHasta: '2024' },
+      { id: 'c12', marca: 'Nissan', modelo: 'Nissan Frontier', anoDesde: '2014', anoHasta: '2023' }
+    ],
+    ubicacionInventario: 'Bodega principal - Sección L',
+    unidadMedida: 'Galón',
+    activo: true,
+    createdAt: new Date(2024, 3, 20).toISOString()
+  },
+  {
+    id: 'prod-5',
+    nombre: 'AMORTIGUADORES TRASEROS',
+    codigoSKU: 'KYB234',
+    marcaComponente: 'KYB',
+    categoria: 'Suspensión',
+    numeroParteOEM: 'KYB343423',
+    descripcion: 'Amortiguadores de gas de alto rendimiento',
+    stockActual: 12,
+    stockMinimo: 6,
+    stockCritico: 2,
+    precioCompra: 45.00,
+    precioVenta: 75.00,
+    compatibilidades: [
+      { id: 'c13', marca: 'Hyundai', modelo: 'Hyundai Accent', anoDesde: '2017', anoHasta: '2023' },
+      { id: 'c14', marca: 'Kia', modelo: 'Kia Rio', anoDesde: '2018', anoHasta: '2023' }
+    ],
+    ubicacionInventario: 'Estante D3-E15',
+    unidadMedida: 'Par',
+    activo: true,
+    createdAt: new Date(2024, 4, 12).toISOString()
+  },
+  {
+    id: 'prod-6',
+    nombre: 'CORREA DE DISTRIBUCIÓN',
+    codigoSKU: 'GAT901',
+    marcaComponente: 'Gates',
+    categoria: 'Correas',
+    numeroParteOEM: 'GAT5670XS',
+    descripcion: 'Correa de distribución reforzada con fibra de vidrio',
+    stockActual: 8,
+    stockMinimo: 5,
+    stockCritico: 2,
+    precioCompra: 22.00,
+    precioVenta: 38.00,
+    compatibilidades: [
+      { id: 'c15', marca: 'Volkswagen', modelo: 'Volkswagen Jetta', anoDesde: '2015', anoHasta: '2022' }
+    ],
+    ubicacionInventario: 'Estante E1-F08',
+    unidadMedida: 'Kit',
+    activo: true,
+    createdAt: new Date(2024, 5, 8).toISOString()
+  }
+];
+
+export function obtenerProductos(): Producto[] {
+  return productosSimulados;
+}
+
+// Función para descontar stock de un producto específico
+export function descontarStockProducto(productoId: string, cantidad: number): boolean {
+  const producto = productosSimulados.find(p => p.id === productoId);
+  if (!producto) return false;
+  
+  if (producto.stockActual >= cantidad) {
+    producto.stockActual -= cantidad;
+    return true;
+  }
+  return false;
+}
+
+// Función para descontar múltiples repuestos
+export function descontarRepuestos(repuestos: Array<{ id: string; cantidad: number }>): boolean {
+  // Verificar que todos los productos tengan stock suficiente
+  for (const repuesto of repuestos) {
+    const producto = productosSimulados.find(p => p.id === repuesto.id);
+    if (!producto || producto.stockActual < repuesto.cantidad) {
+      return false;
+    }
+  }
+  
+  // Si todos tienen stock, descontar
+  for (const repuesto of repuestos) {
+    descontarStockProducto(repuesto.id, repuesto.cantidad);
+  }
+  
+  return true;
+}
+
+export function obtenerProductoPorId(id: string): Producto | undefined {
+  return productosSimulados.find(p => p.id === id);
+}
+
+// ============================================
+// DATOS SIMULADOS DE PAGOS (FINANCIERO)
+// ============================================
+
+export interface PagoServicio {
+  id: string;
+  fecha: string;
+  clienteNombre: string;
+  clienteTelefono: string;
+  clienteCorreo: string;
+  vehiculo: string;
+  marca: string;
+  modelo: string;
+  placa: string;
+  anio: string;
+  kilometraje: string;
+  servicio: string;
+  mecanico: string;
+  costoManoObra: number;
+  costoRepuestos: number;
+  total: number;
+  estado: 'PENDIENTE' | 'PAGADO';
+  metodoPago?: 'EFECTIVO' | 'TRANSFERENCIA';
+  fechaPago?: string;
+  observacion?: string;
+  solicitudId: string;
+}
+
+let pagosServicios: PagoServicio[] = [
+  // Pagos de ejemplo (iniciales para demostración)
+  {
+    id: '#001',
+    fecha: '15/05/2026',
+    clienteNombre: 'Juan Pérez',
+    clienteTelefono: '0987654321',
+    clienteCorreo: 'juan.perez@gmail.com',
+    vehiculo: 'Chevrolet Aveo 2018',
+    marca: 'Chevrolet',
+    modelo: 'Aveo',
+    placa: 'PBX-1234',
+    anio: '2018',
+    kilometraje: '85000',
+    servicio: 'Frenos',
+    mecanico: 'Carlos M.',
+    costoManoObra: 80,
+    costoRepuestos: 120,
+    total: 200,
+    estado: 'PENDIENTE',
+    solicitudId: 'SOL001',
+  },
+  {
+    id: '#002',
+    fecha: '16/05/2026',
+    clienteNombre: 'María López',
+    clienteTelefono: '0998765432',
+    clienteCorreo: 'maria.lopez@gmail.com',
+    vehiculo: 'Toyota Corolla 2020',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    placa: 'PCX-5678',
+    anio: '2020',
+    kilometraje: '45000',
+    servicio: 'Motor',
+    mecanico: 'Luis R.',
+    costoManoObra: 150,
+    costoRepuestos: 350,
+    total: 500,
+    estado: 'PENDIENTE',
+    solicitudId: 'SOL002',
+  },
+  {
+    id: '#003',
+    fecha: '17/05/2026',
+    clienteNombre: 'Pedro Gómez',
+    clienteTelefono: '0976543210',
+    clienteCorreo: 'pedro.gomez@gmail.com',
+    vehiculo: 'Honda Civic 2019',
+    marca: 'Honda',
+    modelo: 'Civic',
+    placa: 'PDX-9012',
+    anio: '2019',
+    kilometraje: '52000',
+    servicio: 'Suspensión',
+    mecanico: 'Carlos M.',
+    costoManoObra: 100,
+    costoRepuestos: 200,
+    total: 300,
+    estado: 'PENDIENTE',
+    solicitudId: 'SOL003',
+  },
+  {
+    id: '#004',
+    fecha: '10/05/2026',
+    clienteNombre: 'Ana Martínez',
+    clienteTelefono: '0965432109',
+    clienteCorreo: 'ana.martinez@gmail.com',
+    vehiculo: 'Ford Focus 2017',
+    marca: 'Ford',
+    modelo: 'Focus',
+    placa: 'PEX-3456',
+    anio: '2017',
+    kilometraje: '78000',
+    servicio: 'Cambio de Aceite',
+    mecanico: 'Luis R.',
+    costoManoObra: 30,
+    costoRepuestos: 45,
+    total: 75,
+    estado: 'PAGADO',
+    metodoPago: 'EFECTIVO',
+    fechaPago: '10/05/2026',
+    observacion: 'Pago realizado en efectivo',
+    solicitudId: 'SOL004',
+  },
+  {
+    id: '#005',
+    fecha: '12/05/2026',
+    clienteNombre: 'Carlos Ramírez',
+    clienteTelefono: '0954321098',
+    clienteCorreo: 'carlos.ramirez@gmail.com',
+    vehiculo: 'Nissan Sentra 2021',
+    marca: 'Nissan',
+    modelo: 'Sentra',
+    placa: 'PFX-7890',
+    anio: '2021',
+    kilometraje: '32000',
+    servicio: 'Sistema Eléctrico',
+    mecanico: 'Carlos M.',
+    costoManoObra: 120,
+    costoRepuestos: 180,
+    total: 300,
+    estado: 'PAGADO',
+    metodoPago: 'TRANSFERENCIA',
+    fechaPago: '13/05/2026',
+    observacion: 'Transferencia bancaria confirmada',
+    solicitudId: 'SOL005',
+  },
+];
+
+// Función para obtener todos los pagos
+export const obtenerPagos = (): PagoServicio[] => {
+  return pagosServicios;
+};
+
+// Función para agregar un nuevo pago (cuando se completa un mantenimiento)
+export const agregarPago = (pago: PagoServicio): void => {
+  pagosServicios.push(pago);
+};
+
+// Función para actualizar un pago (marcar como pagado)
+export const actualizarPago = (id: string, datos: Partial<PagoServicio>): void => {
+  const index = pagosServicios.findIndex((p) => p.id === id);
+  if (index !== -1) {
+    pagosServicios[index] = { ...pagosServicios[index], ...datos };
+  }
+};
+
+// Función para obtener un pago por ID
+export const obtenerPagoPorId = (id: string): PagoServicio | undefined => {
+  return pagosServicios.find((p) => p.id === id);
+};
+
+// Función para obtener estadísticas financieras
+export const obtenerEstadisticasFinancieras = () => {
+  const pagosPendientes = pagosServicios.filter(p => p.estado === 'PENDIENTE');
+  const pagosPagados = pagosServicios.filter(p => p.estado === 'PAGADO');
+  
+  // Ingresos del mes = Total cobrado de servicios pagados
+  const ingresosMes = pagosPagados.reduce((sum, p) => sum + p.total, 0);
+  
+  // Costo de repuestos = Suma de costos de repuestos de servicios PENDIENTES
+  // (Es el costo que se debe cubrir para los servicios que aún no se han pagado)
+  const costoRepuestosMes = pagosPendientes.reduce((sum, p) => sum + p.costoRepuestos, 0);
+  
+  // Utilidad neta = Ingresos totales - Costo de mano de obra de servicios pagados
+  // (La ganancia real después de descontar el costo operativo, sin contar repuestos porque ya están incluidos en el total)
+  const costoManoObraPagados = pagosPagados.reduce((sum, p) => sum + p.costoManoObra, 0);
+  const utilidadNeta = ingresosMes - costoManoObraPagados;
+  
+  const serviciosCompletados = pagosServicios.length;
+  
+  return {
+    ingresosMes,
+    costoRepuestosMes,
+    utilidadNeta,
+    serviciosCompletados,
+    pagosPendientes: pagosPendientes.length,
+    pagosPagados: pagosPagados.length,
+  };
 };

@@ -6,6 +6,7 @@ import {
   Alert,
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -20,23 +21,20 @@ import NavbarAdmin from '@/components/navbarAdmin/navbarAdmin';
 import styles from '@/Styles/pantallaAdmin/GestionUsuarios';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/utils/api';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
 
-// Importar los 6 modales
-import RegistroMecanico from './modalesRegistros/registroMecanico';
-import RegistroAdministrador from './modalesRegistros/regsitroAministrador';
-import EditarMecanico from './modalesRegistros/EditarMecanico';
-import EditarAdministrador from './modalesRegistros/EditarAdministrador';
-import VisualizarPerfilMecanico from './modalesRegistros/visualizarPerfilMecanico';
-import VisualizarPerfilAdministrador from './modalesRegistros/visualizarPerfilAdministrador';
+// Importar modales de gestión de personal
+import RegistroPersonal from './modalesRegistros/registroPersonal';
+import EditarPersonal from './modalesRegistros/EditarPersonal';
+import VisualizarPerfilPersonal from './modalesRegistros/visualizarPerfilPersonal';
 
 // Importar modales de eliminación
-import EliminarMecanico from './modalesEliminacionDeRoles/eliminarMecanico';
-import EliminarAdministrador from './modalesEliminacionDeRoles/eliminarAdministrador';
+import EliminarPersonal from './modalesEliminacionDeRoles/eliminarPersonal';
 import EliminacionExitosa from './modalesEliminacionDeRoles/modalElimiancionConfirmada/eliminacionExitosa';
 
 // Tipos
 type EstadoConexion = 'LÍNEA' | 'DESCONECTADO' | 'SUSPENDIDO';
-type Rol = 'Mecánico' | 'Administrador';
+type Rol = 'Mecánico' | 'Inventario' | 'Financiero' | 'Administrador';
 
 interface Usuario {
   id: string;
@@ -56,14 +54,17 @@ interface Usuario {
   especialidad?: string;
   anosExperiencia?: number;
   fotoPerfil?: string | null;
+  tipoPersonal?: string; // Mecánico, Inventario, Financiero, Administrador
 }
 
 export default function GestionUsuariosScreen() {
   const router = useRouter();
   const { token, logout } = useAuth();
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -71,8 +72,10 @@ export default function GestionUsuariosScreen() {
     // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
   }, []);
 
-  // BackHandler: cierra sesión y app
+  // BackHandler: cierra sesión y app (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       logout();
       BackHandler.exitApp();
@@ -107,18 +110,14 @@ export default function GestionUsuariosScreen() {
   });
 
   // Estados de modales de gestión
-  const [modalRegistroMecanicoVisible, setModalRegistroMecanicoVisible] = useState(false);
-  const [modalRegistroAdminVisible, setModalRegistroAdminVisible] = useState(false);
-  const [modalEditarMecanicoVisible, setModalEditarMecanicoVisible] = useState(false);
-  const [modalEditarAdminVisible, setModalEditarAdminVisible] = useState(false);
-  const [modalPerfilMecanicoVisible, setModalPerfilMecanicoVisible] = useState(false);
-  const [modalPerfilAdminVisible, setModalPerfilAdminVisible] = useState(false);
+  const [modalRegistroPersonalVisible, setModalRegistroPersonalVisible] = useState(false);
+  const [modalEditarPersonalVisible, setModalEditarPersonalVisible] = useState(false);
+  const [modalPerfilPersonalVisible, setModalPerfilPersonalVisible] = useState(false);
 
   // Estados de modales de eliminación
-  const [modalEliminarMecanicoVisible, setModalEliminarMecanicoVisible] = useState(false);
-  const [modalEliminarAdminVisible, setModalEliminarAdminVisible] = useState(false);
+  const [modalEliminarPersonalVisible, setModalEliminarPersonalVisible] = useState(false);
   const [modalEliminacionExitosaVisible, setModalEliminacionExitosaVisible] = useState(false);
-  const [usuarioEliminado, setUsuarioEliminado] = useState<{ nombre: string; rol: 'Mecánico' | 'Administrador' } | null>(null);
+  const [usuarioEliminado, setUsuarioEliminado] = useState<{ nombre: string; rol: Rol } | null>(null);
 
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null);
 
@@ -132,6 +131,11 @@ export default function GestionUsuariosScreen() {
         const respMecanicos = await fetch(`${BASE_URL}/mecanicos`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
+        if (!respMecanicos.ok) {
+          throw new Error(`HTTP error! status: ${respMecanicos.status}`);
+        }
+        
         const mecanicos = await respMecanicos.json();
 
         // Cargar administradores (cuando el endpoint esté listo)
@@ -141,30 +145,37 @@ export default function GestionUsuariosScreen() {
         // const admins = await respAdmins.json();
 
         // Convertir a formato Usuario
-        const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => ({
-          id: m.id,
-          nombres: m.nombres,
-          segundoNombre: m.segundoNombre,
-          apellidos: m.apellidos,
-          segundoApellido: m.segundoApellido,
-          edad: m.edad,
-          telefono: m.telefono,
-          correo: m.correo,
-          correoEmpresarial: m.correoEmpresarial,
-          estadoConexion: m.estadoConexion || 'DESCONECTADO',
-          cuentaActiva: m.cuentaActiva,
-          createdAt: m.createdAt,
-          rol: 'Mecánico' as Rol,
-          especialidad: m.especialidad,
-          anosExperiencia: m.anosExperiencia,
-          fotoPerfil: m.fotoPerfil,
-        }));
+        const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => {
+          // Determinar el tipoPersonal real
+          const tipoPersonal = m.tipoPersonal || 'Mecánico';
+          
+          return {
+            id: m.id,
+            nombres: m.nombres,
+            segundoNombre: m.segundoNombre || undefined,
+            apellidos: m.apellidos,
+            segundoApellido: m.segundoApellido || undefined,
+            edad: m.edad,
+            telefono: m.telefono || undefined,
+            correo: m.correo,
+            correoEmpresarial: m.correoEmpresarial,
+            estadoConexion: m.estadoConexion || 'DESCONECTADO',
+            cuentaActiva: m.cuentaActiva ?? true,
+            createdAt: m.createdAt,
+            rol: (tipoPersonal === 'Administrador' ? 'Administrador' : 'Mecánico') as Rol,
+            especialidad: tipoPersonal === 'Mecánico' ? m.especialidad : tipoPersonal,
+            anosExperiencia: m.anosExperiencia || 0,
+            fotoPerfil: m.fotoPerfil,
+            tipoPersonal: tipoPersonal, // Agregar tipoPersonal al objeto
+          };
+        });
 
         // const usuariosAdmins: Usuario[] = admins.map((a: any) => ({ ... }));
 
         setUsuarios([...usuariosMecanicos]); // Después: [...usuariosMecanicos, ...usuariosAdmins]
       } catch (error) {
-        Alert.alert('Error', 'No se pudieron cargar los usuarios.');
+        console.error('Error al cargar usuarios:', error);
+        Alert.alert('Error', 'Error al cargar los usuarios. Verifica que el backend esté activo.');
       } finally {
         setCargando(false);
       }
@@ -210,7 +221,7 @@ export default function GestionUsuariosScreen() {
       }
 
       // Filtro de rol
-      const coincideRol = filtroRol === 'TODOS' || u.rol === filtroRol;
+      const coincideRol = filtroRol === 'TODOS' || u.tipoPersonal === filtroRol;
 
       // Filtro de fechas
       let coincideFecha = true;
@@ -241,8 +252,10 @@ export default function GestionUsuariosScreen() {
 
   // Calcular totales de TODOS los usuarios (no solo filtrados)
   const totalUsuarios = usuarios.length;
-  const totalMecanicos = usuarios.filter((u) => u.rol === 'Mecánico').length;
-  const totalAdmins = usuarios.filter((u) => u.rol === 'Administrador').length;
+  const totalMecanicos = usuarios.filter((u) => u.tipoPersonal === 'Mecánico').length;
+  const totalInventario = usuarios.filter((u) => u.tipoPersonal === 'Inventario').length;
+  const totalFinanciero = usuarios.filter((u) => u.tipoPersonal === 'Financiero').length;
+  const totalAdmins = usuarios.filter((u) => u.tipoPersonal === 'Administrador').length;
   // En Línea: solo usuarios activos con estado LÍNEA
   const totalEnLinea = usuarios.filter((u) => u.estadoConexion === 'LÍNEA' && u.cuentaActiva).length;
   // Desconectados: solo usuarios activos con estado DESCONECTADO
@@ -253,29 +266,17 @@ export default function GestionUsuariosScreen() {
   // Handlers de modales
   const handleAbrirPerfil = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalPerfilMecanicoVisible(true);
-    } else {
-      setModalPerfilAdminVisible(true);
-    }
+    setModalPerfilPersonalVisible(true);
   };
 
   const handleAbrirEditar = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalEditarMecanicoVisible(true);
-    } else {
-      setModalEditarAdminVisible(true);
-    }
+    setModalEditarPersonalVisible(true);
   };
 
   const handleEliminar = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalEliminarMecanicoVisible(true);
-    } else {
-      setModalEliminarAdminVisible(true);
-    }
+    setModalEliminarPersonalVisible(true);
   };
 
   const handleConfirmarEliminacion = async () => {
@@ -299,8 +300,7 @@ export default function GestionUsuariosScreen() {
       setUsuarios((prev) => prev.filter((u) => u.id !== usuarioSeleccionado.id));
       
       // Cerrar modal de confirmación y abrir modal de éxito
-      setModalEliminarMecanicoVisible(false);
-      setModalEliminarAdminVisible(false);
+      setModalEliminarPersonalVisible(false);
       setModalEliminacionExitosaVisible(true);
     } catch {
       Alert.alert('Error', 'No se pudo eliminar el usuario.');
@@ -324,48 +324,44 @@ export default function GestionUsuariosScreen() {
     }
   };
 
-  const handleSuccessRegistroMecanico = (mecanico: any) => {
+  const handleSuccessRegistroPersonal = (personal: any) => {
+    // Determinar el rol basado en el tipoPersonal
+    const tipoPersonal = personal.tipoPersonal || 'Mecánico';
+    let rol: Rol = 'Mecánico';
+    if (tipoPersonal === 'Administrador') {
+      rol = 'Administrador';
+    }
+    
     const nuevoUsuario: Usuario = {
-      id: mecanico.id,
-      nombres: mecanico.nombres,
-      segundoNombre: mecanico.segundoNombre,
-      apellidos: mecanico.apellidos,
-      segundoApellido: mecanico.segundoApellido,
-      edad: mecanico.edad,
-      telefono: mecanico.telefono,
-      correo: mecanico.correo,
-      correoEmpresarial: mecanico.correoEmpresarial,
-      estadoConexion: mecanico.estadoConexion || 'DESCONECTADO',
-      cuentaActiva: mecanico.cuentaActiva,
-      createdAt: mecanico.createdAt,
-      rol: 'Mecánico',
-      especialidad: mecanico.especialidad,
-      anosExperiencia: mecanico.anosExperiencia,
-      fotoPerfil: mecanico.fotoPerfil,
-    };
-    setUsuarios((prev) => [nuevoUsuario, ...prev]);
-  };
-
-  const handleSuccessRegistroAdmin = (admin: any) => {
-    const nuevoUsuario: Usuario = {
-      id: admin.id,
-      nombres: admin.nombres,
-      segundoNombre: admin.segundoNombre,
-      apellidos: admin.apellidos,
-      segundoApellido: admin.segundoApellido,
-      edad: admin.edad,
-      telefono: admin.telefono,
-      correo: admin.correo,
-      correoEmpresarial: admin.correoEmpresarial,
-      estadoConexion: admin.estadoConexion || 'DESCONECTADO',
-      cuentaActiva: admin.cuentaActiva,
-      createdAt: admin.createdAt,
-      rol: 'Administrador',
+      id: personal.id,
+      nombres: personal.nombres,
+      segundoNombre: personal.segundoNombre,
+      apellidos: personal.apellidos,
+      segundoApellido: personal.segundoApellido,
+      edad: personal.edad,
+      telefono: personal.telefono,
+      correo: personal.correo,
+      correoEmpresarial: personal.correoEmpresarial,
+      estadoConexion: personal.estadoConexion || 'DESCONECTADO',
+      cuentaActiva: personal.cuentaActiva,
+      createdAt: personal.createdAt,
+      rol: rol,
+      especialidad: tipoPersonal === 'Mecánico' ? personal.especialidad : tipoPersonal,
+      anosExperiencia: personal.anosExperiencia || 0,
+      fotoPerfil: personal.fotoPerfil,
+      tipoPersonal: tipoPersonal,
     };
     setUsuarios((prev) => [nuevoUsuario, ...prev]);
   };
 
   const handleSuccessEditar = (usuarioActualizado: any) => {
+    // Determinar el rol basado en el tipoPersonal
+    const tipoPersonal = usuarioActualizado.tipoPersonal || 'Mecánico';
+    let rol: Rol = 'Mecánico';
+    if (tipoPersonal === 'Administrador') {
+      rol = 'Administrador';
+    }
+    
     setUsuarios((prev) =>
       prev.map((u) =>
         u.id === usuarioActualizado.id
@@ -380,9 +376,11 @@ export default function GestionUsuariosScreen() {
               correo: usuarioActualizado.correo,
               correoEmpresarial: usuarioActualizado.correoEmpresarial,
               cuentaActiva: usuarioActualizado.cuentaActiva,
-              especialidad: usuarioActualizado.especialidad,
-              anosExperiencia: usuarioActualizado.anosExperiencia,
+              rol: rol,
+              especialidad: tipoPersonal === 'Mecánico' ? usuarioActualizado.especialidad : tipoPersonal,
+              anosExperiencia: usuarioActualizado.anosExperiencia || 0,
               fotoPerfil: usuarioActualizado.fotoPerfil,
+              tipoPersonal: tipoPersonal,
             }
           : u
       )
@@ -395,36 +393,26 @@ export default function GestionUsuariosScreen() {
 
   // RENDER
   return (
-    <View style={styles.page}>
-      <NavbarAdmin onSignOut={handleSignOut} />
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <NavbarAdmin onSignOut={handleSignOut} />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* TÍTULO */}
-        <Text style={styles.screenTitle}>GESTIÓN DE ADMINISTRADORES Y MECÁNICOS</Text>
+        <Text style={styles.screenTitle}>GESTIÓN DE PERSONAL</Text>
         <Text style={styles.screenSubtitle}>
-          Administra mecánicos y administradores del sistema con filtros avanzados
+          Administra el personal del sistema con filtros avanzados
         </Text>
 
         {/* BOTONES DE REGISTRO */}
         <View style={styles.buttonsRow}>
           <Pressable
-            onPress={() => setModalRegistroMecanicoVisible(true)}
+            onPress={() => setModalRegistroPersonalVisible(true)}
             style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
           >
             {({ pressed }) => (
               <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-                REGISTRO DE MECÁNICO
-              </Text>
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={() => setModalRegistroAdminVisible(true)}
-            style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
-          >
-            {({ pressed }) => (
-              <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-                REGISTRO DE ADMINISTRADOR
+                REGISTRAR PERSONAL
               </Text>
             )}
           </Pressable>
@@ -507,7 +495,7 @@ export default function GestionUsuariosScreen() {
           )}
 
           {/* Rol - Ancho completo */}
-          <Text style={styles.filterLabel}>Rol</Text>
+          <Text style={styles.filterLabel}>Tipo de Personal</Text>
           <Pressable style={styles.filterDropdown} onPress={() => setRolDropdownOpen((v) => !v)}>
             <Text style={styles.filterDropdownText}>
               {filtroRol === 'TODOS' ? 'Todos' : filtroRol}
@@ -515,8 +503,12 @@ export default function GestionUsuariosScreen() {
             <Text style={styles.dropdownArrow}>{rolDropdownOpen ? '▲' : '▼'}</Text>
           </Pressable>
           {rolDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['TODOS', 'Mecánico', 'Administrador'] as const).map((option) => {
+            <ScrollView 
+              style={styles.dropdownList}
+              nestedScrollEnabled={true}
+              showsVerticalScrollIndicator={true}
+            >
+              {(['TODOS', 'Mecánico', 'Inventario', 'Financiero', 'Administrador'] as const).map((option) => {
                 const displayText = option === 'TODOS' ? 'Todos' : option;
                 return (
                   <Pressable
@@ -532,7 +524,7 @@ export default function GestionUsuariosScreen() {
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
           )}
 
           {/* Rango de fechas */}
@@ -574,6 +566,14 @@ export default function GestionUsuariosScreen() {
           <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>{totalMecanicos}</Text>
             <Text style={styles.summaryLabel}>Mecánicos</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalInventario}</Text>
+            <Text style={styles.summaryLabel}>Inventario</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalFinanciero}</Text>
+            <Text style={styles.summaryLabel}>Financiero</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>{totalAdmins}</Text>
@@ -637,7 +637,8 @@ export default function GestionUsuariosScreen() {
                   {usuario.rol === 'Administrador' ? usuario.correoEmpresarial : usuario.correo}
                 </Text>
                 
-                {usuario.rol === 'Mecánico' && usuario.especialidad && (
+                {/* Mostrar especialidad según el tipo de personal */}
+                {usuario.especialidad && (
                   <Text style={styles.userMeta} numberOfLines={1}>
                     {usuario.especialidad}
                   </Text>
@@ -657,14 +658,19 @@ export default function GestionUsuariosScreen() {
                     <Text style={styles.badgeText}>{usuario.estadoConexion}</Text>
                   </View>
 
-                  {/* Badge de Rol */}
+                  {/* Badge de Rol - Muestra el tipoPersonal real */}
                   <View
                     style={[
                       styles.badge,
-                      usuario.rol === 'Mecánico' ? styles.badgeRolMecanico : styles.badgeRolAdmin,
+                      usuario.tipoPersonal === 'Inventario' && styles.badgeRolInventario,
+                      usuario.tipoPersonal === 'Financiero' && styles.badgeRolFinanciero,
+                      usuario.tipoPersonal === 'Administrador' && styles.badgeRolAdmin,
+                      (!usuario.tipoPersonal || usuario.tipoPersonal === 'Mecánico') && styles.badgeRolMecanico,
                     ]}
                   >
-                    <Text style={styles.badgeText}>{usuario.rol.toUpperCase()}</Text>
+                    <Text style={styles.badgeText}>
+                      {(usuario.tipoPersonal || 'Mecánico').toUpperCase()}
+                    </Text>
                   </View>
                 </View>
 
@@ -758,60 +764,32 @@ export default function GestionUsuariosScreen() {
       </ScrollView>
 
       {/* MODALES DE GESTIÓN */}
-      <RegistroMecanico
-        visible={modalRegistroMecanicoVisible}
-        onClose={() => setModalRegistroMecanicoVisible(false)}
-        onSuccess={handleSuccessRegistroMecanico}
+      <RegistroPersonal
+        visible={modalRegistroPersonalVisible}
+        onClose={() => setModalRegistroPersonalVisible(false)}
+        onSuccess={handleSuccessRegistroPersonal}
         token={token || ''}
       />
 
-      <RegistroAdministrador
-        visible={modalRegistroAdminVisible}
-        onClose={() => setModalRegistroAdminVisible(false)}
-        onSuccess={handleSuccessRegistroAdmin}
-        token={token || ''}
-      />
-
-      <EditarMecanico
-        visible={modalEditarMecanicoVisible}
+      <EditarPersonal
+        visible={modalEditarPersonalVisible}
         mecanico={usuarioSeleccionado}
-        onClose={() => setModalEditarMecanicoVisible(false)}
+        onClose={() => setModalEditarPersonalVisible(false)}
         onSuccess={handleSuccessEditar}
         token={token || ''}
       />
 
-      <EditarAdministrador
-        visible={modalEditarAdminVisible}
-        admin={usuarioSeleccionado}
-        onClose={() => setModalEditarAdminVisible(false)}
-        onSuccess={handleSuccessEditar}
-        token={token || ''}
-      />
-
-      <VisualizarPerfilMecanico
-        visible={modalPerfilMecanicoVisible}
+      <VisualizarPerfilPersonal
+        visible={modalPerfilPersonalVisible}
         mecanico={usuarioSeleccionado}
-        onClose={() => setModalPerfilMecanicoVisible(false)}
-      />
-
-      <VisualizarPerfilAdministrador
-        visible={modalPerfilAdminVisible}
-        admin={usuarioSeleccionado}
-        onClose={() => setModalPerfilAdminVisible(false)}
+        onClose={() => setModalPerfilPersonalVisible(false)}
       />
 
       {/* MODALES DE ELIMINACIÓN */}
-      <EliminarMecanico
-        visible={modalEliminarMecanicoVisible}
-        mecanico={usuarioSeleccionado}
-        onCancelar={() => setModalEliminarMecanicoVisible(false)}
-        onConfirmar={handleConfirmarEliminacion}
-      />
-
-      <EliminarAdministrador
-        visible={modalEliminarAdminVisible}
-        administrador={usuarioSeleccionado}
-        onCancelar={() => setModalEliminarAdminVisible(false)}
+      <EliminarPersonal
+        visible={modalEliminarPersonalVisible}
+        personal={usuarioSeleccionado}
+        onCancelar={() => setModalEliminarPersonalVisible(false)}
         onConfirmar={handleConfirmarEliminacion}
       />
 
@@ -979,6 +957,7 @@ export default function GestionUsuariosScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }
