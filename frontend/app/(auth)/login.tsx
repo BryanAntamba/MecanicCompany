@@ -6,6 +6,7 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import loginStyles from '@/Styles/auth/login';
 import { validarContrasena, validarCredencial } from '@/utils/validaciones';
 import { useAuth } from '@/context/AuthContext';
@@ -104,6 +105,17 @@ export default function LoginScreen() {
         const usuario = verificarUsuario(correoLower, password);
         
         if (usuario) {
+          // Guardar datos del usuario de inventario en AsyncStorage
+          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+          const userData = {
+            correo: correoLower,
+            nombreCompleto,
+            tipoPersonal: 'Inventario',
+            esAdmin: false
+          };
+          
+          await AsyncStorage.setItem('inventario_user', JSON.stringify(userData));
+          
           // Redirigir a sistema de inventario
           router.replace('/pantallaInventario/sistemaInventario' as any);
         } else {
@@ -114,6 +126,17 @@ export default function LoginScreen() {
         const usuario = verificarUsuario(correoLower, password);
         
         if (usuario) {
+          // Guardar datos del usuario financiero en AsyncStorage
+          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+          const userData = {
+            correo: correoLower,
+            nombreCompleto,
+            tipoPersonal: 'Financiero',
+            esAdmin: false
+          };
+          
+          await AsyncStorage.setItem('financiero_user', JSON.stringify(userData));
+          
           // Redirigir a sistema financiero
           router.replace('/SeccionFinanciero/financiero' as any);
         } else {

@@ -90,6 +90,12 @@ model Solicitud {
   fechaCita           String
   horaCita            String
 
+  // Ubicación de la mecánica seleccionada
+  provincia                  String  @default("")
+  ubicacionMecanicaId        String  @default("")
+  ubicacionMecanicaNombre    String  @default("")
+  ubicacionMecanicaDireccion String  @default("")
+
   // Estado de la solicitud
   estado              EstadoSolicitud @default(Pendiente)
 

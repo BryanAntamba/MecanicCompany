@@ -136,8 +136,10 @@ export default function EditarPersonal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fotoUri, setFotoUri] = useState<string | null>(null);
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();

@@ -36,7 +36,7 @@ const tiposAsunto = [
   'Problema técnico',
   'Sugerencia',
   'Reclamo',
-  'Facturación',
+  'Comprobante',
   'Otro',
 ];
 

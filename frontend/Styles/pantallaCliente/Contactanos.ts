@@ -3,7 +3,7 @@
 // Estilos de la pantalla Contactanos.tsx (sección de soporte del cliente).
 // Incluye estilos para: logotipo animado, tarjetas de contacto, dropdown de ubicaciones
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
@@ -37,6 +37,14 @@ export default StyleSheet.create({
     marginTop: 8,
     paddingHorizontal: 16,       // Margen lateral de 16px
     marginBottom: 16,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Título de sección centrado (ej: "CONTACTANOS", "Ubicación Mecánica")
@@ -126,6 +134,14 @@ export default StyleSheet.create({
     borderWidth: 1,
     borderColor: '#334155',
     marginBottom: 12,
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Botón "Abrir Google Maps" — blanco en reposo
@@ -135,6 +151,14 @@ export default StyleSheet.create({
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 8,
+    width: '100%',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Estado presionado del botón — azul
@@ -186,6 +210,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
   },
   dropdownSelected: {
     fontSize: 14,
@@ -257,11 +282,18 @@ export default StyleSheet.create({
   // Botón "Regresar Arriba" — blanco en reposo
   scrollTopButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 6,
+    borderRadius: 8,
     paddingVertical: 14,
-    alignItems: 'center',
+    paddingHorizontal: 24,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 280,
+      cursor: 'pointer',
+    }),
   },
 
   // Estado presionado del botón — azul

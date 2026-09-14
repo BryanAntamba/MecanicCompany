@@ -1,7 +1,7 @@
 // verificacionFormulario.ts
 // Estilos para el modal de verificación de formulario
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
   overlay: {
@@ -10,6 +10,11 @@ export default StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      position: 'fixed' as any,
+      zIndex: 9998,
+      pointerEvents: 'auto' as any,
+    }),
   },
   modal: {
     backgroundColor: '#1E293B',
@@ -17,6 +22,12 @@ export default StyleSheet.create({
     width: '100%',
     maxWidth: 500,
     maxHeight: '90%',
+    pointerEvents: 'auto',
+    ...(Platform.OS === 'web' && {
+      '@media (max-width: 640px)': {
+        maxWidth: 400,
+      },
+    }),
   },
   header: {
     alignItems: 'center',
@@ -73,12 +84,14 @@ export default StyleSheet.create({
     gap: 12,
     borderTopWidth: 1,
     borderTopColor: '#334155',
+    zIndex: 1,
   },
   confirmButton: {
     backgroundColor: '#FFFFFF',
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: 'center',
+    zIndex: 2,
   },
   confirmButtonPressed: {
     backgroundColor: '#2563EB',

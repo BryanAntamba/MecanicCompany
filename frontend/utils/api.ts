@@ -1,35 +1,10 @@
 // api.ts
 // Utilidades para comunicarse con el backend de MecanicCompany.
-//
-// ⚠️  URL base - AUTOMÁTICAMENTE DETECTA EL ENTORNO:
-//   - Android Studio Emulator → http://10.0.2.2:3000/api
-//   - iOS simulator             → http://localhost:3000/api
-//   - Dispositivo físico / Expo Go → http://TU_IP:3000/api
 
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { API_URL } from '@/config';
 
-// Función para obtener la URL base según el entorno
-function getBaseUrl(): string {
-  // Si estás en desarrollo y tienes debuggerHost (dispositivo físico con Expo)
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  
-  if (debuggerHost) {
-    // Extraer solo la IP (sin el puerto de Metro)
-    const ip = debuggerHost.split(':')[0];
-    return `http://${ip}:3000/api`;
-  }
-  
-  // Para emulador de Android Studio
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:3000/api';
-  }
-  
-  // Para simulador de iOS
-  return 'http://localhost:3000/api';
-}
-
-export const BASE_URL = getBaseUrl();
+// URL base del backend (importada desde config.ts)
+export const BASE_URL = API_URL;
 
 // ─── Tipo de error de API ─────────────────────────────────────────────────────
 export interface ApiError {
@@ -92,6 +67,7 @@ export interface LoginResponse {
         especialidad: string;
         estadoLaboral: string;
         esAdmin: boolean;
+        tipoPersonal?: string; // Mecánico, Inventario, Financiero, Administrador
     };
 }
 

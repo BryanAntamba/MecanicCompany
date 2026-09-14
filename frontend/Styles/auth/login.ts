@@ -6,13 +6,18 @@
 // Actualizado: agregados backButton y fieldLabel
 
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
   // Imagen de fondo fondoLogin.png que ocupa toda la pantalla
   background: {
     flex: 1, // Ocupa todo el espacio disponible del dispositivo
+    ...(Platform.OS === 'web' && {
+      width: '100vw',
+      height: '100vh',
+      minHeight: '100vh',
+    }),
   },
 
   // Capa oscura semitransparente encima del fondo para mejorar legibilidad del texto
@@ -54,6 +59,14 @@ export default StyleSheet.create({
     padding: 28,                                // Relleno interno generoso
     borderWidth: 1,
     borderColor: 'rgba(43, 54, 70, 0.6)',       // Borde sutil semitransparente
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Logo de la empresa (iconoTransparente.png) centrado en la parte superior de la tarjeta

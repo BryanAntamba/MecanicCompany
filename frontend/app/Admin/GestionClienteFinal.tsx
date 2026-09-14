@@ -6,19 +6,24 @@ import {
   Alert,
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import NavbarAdmin from '@/components/navbarAdmin/navbarAdmin';
-import styles from '@/Styles/pantallaAdmin/GestionClienteFinal';
+import stylesBase from '@/Styles/pantallaAdmin/GestionClienteFinal';
+import stylesWeb from '@/Styles/pantallaAdmin/GestionClienteFinal.web';
 import { useAuth } from '@/context/AuthContext';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { BASE_URL } from '@/utils/api';
 import { obtenerUsuarios, UsuarioRegistrado } from '@/utils/datosSimulados';
 
@@ -48,9 +53,15 @@ interface Cliente {
 export default function GestionClienteFinalScreen() {
   const router = useRouter();
   const { token, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -58,8 +69,10 @@ export default function GestionClienteFinalScreen() {
     // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
   }, []);
 
-  // BackHandler: navega a GestionUsuarios al presionar back
+  // BackHandler: navega a GestionUsuarios al presionar back (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.push('/Admin/GestionUsuarios' as any);
       return true;
@@ -326,66 +339,85 @@ export default function GestionClienteFinalScreen() {
             />
           </View>
 
-          {/* Orden A-Z / Z-A */}
-          <Text style={styles.filterLabel}>Orden</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {ordenDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['A-Z', 'Z-A'] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
-                  onPress={() => {
-                    setOrdenAZ(option);
-                    setOrdenDropdownOpen(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
-                  <Text style={styles.dropdownItemText}>{option}</Text>
-                </Pressable>
-              ))}
+          {/* Fila de filtros: Orden y Estado */}
+          <View style={[
+            Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+          ]}>
+            {/* Filtro Orden */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Orden</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setOrdenDropdownOpen((v) => !v);
+                setEstadoDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {ordenDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['A-Z', 'Z-A'] as const).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setOrdenAZ(option);
+                        setOrdenDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{option}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
-          )}
 
-          {/* Estado de conexión */}
-          <Text style={styles.filterLabel}>Estado</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setEstadoDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroEstado === 'TODOS' ? 'Todos' : 
-               filtroEstado === 'LÍNEA' ? 'En línea' :
-               filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {estadoDropdownOpen && (
-            <ScrollView 
-              style={styles.dropdownList}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={true}
-            >
-              {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : 
-                                   option === 'LÍNEA' ? 'En línea' :
-                                   option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroEstado(option);
-                      setEstadoDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+            {/* Filtro Estado */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Estado</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setEstadoDropdownOpen((v) => !v);
+                setOrdenDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>
+                  {filtroEstado === 'TODOS' ? 'Todos' : 
+                   filtroEstado === 'LÍNEA' ? 'En línea' :
+                   filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
+                </Text>
+                <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {estadoDropdownOpen && (
+                <ScrollView 
+                  style={styles.dropdownList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
+                    const displayText = option === 'TODOS' ? 'Todos' : 
+                                       option === 'LÍNEA' ? 'En línea' :
+                                       option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
+                    return (
+                      <Pressable
+                        key={option}
+                        style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setFiltroEstado(option);
+                          setEstadoDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
+                        <Text style={styles.dropdownItemText}>{displayText}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </View>
+          </View>
 
           {/* Rango de fechas */}
           <Text style={styles.filterLabel}>Rango de Fechas de Registro</Text>
@@ -454,9 +486,26 @@ export default function GestionClienteFinalScreen() {
         )}
 
         {/* LISTA DE CLIENTES */}
-        <View style={styles.usuariosContainer}>
+        <View style={[
+          styles.usuariosContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
           {clientesFiltrados.map((cliente) => (
-            <View key={cliente.id} style={styles.userCard}>
+            <View 
+              key={cliente.id} 
+              style={[
+                styles.userCard,
+                Platform.OS === 'web' && !isSmallScreen && { 
+                  flex: 1, 
+                  minWidth: 300, 
+                  maxWidth: 'calc(50% - 8px)' 
+                },
+                Platform.OS === 'web' && isSmallScreen && { 
+                  width: '100%',
+                  maxWidth: '100%'
+                }
+              ]}
+            >
               {/* Contenido de la cartilla - Sin foto de perfil */}
               <View style={styles.userContent}>
                 {/* Nombre y datos básicos */}

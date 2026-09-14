@@ -12,12 +12,13 @@ import {
   BackHandler,          // Intercepta el botón físico de atrás en Android
   KeyboardAvoidingView, // Evita que el teclado tape los inputs en iOS
   Modal,                // Superposición de contenido sobre la pantalla principal
-  Platform,             // Detecta el sistema operativo (iOS / Android)
+  Platform,             // Detecta el sistema operativo (iOS / Android / Web)
   Pressable,            // Área táctil con feedback de presión
   ScrollView,           // Vista con scroll vertical
   Text,                 // Renderiza texto en pantalla
   TextInput,            // Campo de entrada de texto (usado en modo solo lectura en detalles)
   View,                 // Contenedor genérico
+  useWindowDimensions,  // Hook para obtener dimensiones de pantalla
 } from 'react-native';
 
 // Íconos vectoriales de FontAwesome (search, car, calendar, user, file-text, send, check-circle)
@@ -32,7 +33,10 @@ import NavbarMecanico from '@/components/navbarMecanico/navbarMecanico';
 import { useFocusEffect, useRouter } from 'expo-router';
 
 // Estilos compartidos con ReportesClientes (tarjetas, modales, botones)
-import styles from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesBase from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesWeb from '@/Styles/pantallaMecanico/historial.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 
 // Estilos exclusivos del historial (buscador, texto vacío, valores de detalle)
 import histStyles from '@/Styles/pantallaMecanico/historial';
@@ -98,9 +102,15 @@ const MOCK_HISTORIAL: RegistroHistorial[] = [];
 export default function HistorialScreen() {
   const router = useRouter();
   const { token, user, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -109,9 +119,8 @@ export default function HistorialScreen() {
   }, []);
 
   // Función para cerrar sesión y limpiar historial
-  const handleSignOut = async () => {
-    await logout();
-    // Navegar al login con parámetro que indica cierre de sesión
+  const handleSignOut = () => {
+    logout();
     router.replace('/(auth)/login?fromLogout=true' as any);
   };
 
@@ -389,11 +398,28 @@ export default function HistorialScreen() {
         )}
 
         {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
-        <View style={styles.solicitudesContainer}>
+        <View style={[
+          styles.solicitudesContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
 
         {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
         {listaFiltrada.map((r) => (
-          <View key={r.id} style={styles.card}>
+          <View 
+            key={r.id} 
+            style={[
+              styles.card,
+              Platform.OS === 'web' && !isSmallScreen && { 
+                flex: 1, 
+                minWidth: 300, 
+                maxWidth: 'calc(50% - 8px)' 
+              },
+              Platform.OS === 'web' && isSmallScreen && { 
+                width: '100%',
+                maxWidth: '100%'
+              }
+            ]}
+          >
 
             {/* Nombre completo del cliente */}
             <Text style={styles.cardName}>{r.clienteNombre}</Text>

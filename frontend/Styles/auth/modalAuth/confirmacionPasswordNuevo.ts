@@ -1,7 +1,7 @@
 // confirmacionPasswordNuevo.ts
 // Estilos del modal de confirmación de cambio de contraseña
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
   overlay: {
@@ -20,6 +20,12 @@ export default StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#334155',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 420,
+      '@media (max-width: 640px)': {
+        maxWidth: 400,
+      },
+    }),
   },
   iconContainer: {
     marginBottom: 20,

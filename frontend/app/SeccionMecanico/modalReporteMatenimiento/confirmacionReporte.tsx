@@ -2,7 +2,7 @@
 // Modal de confirmación para enviar reporte de mantenimiento al cliente
 
 import { useEffect } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import styles from '../../../Styles/pantallaMecanico/modalReporteMantenimiento/confirmacionReporte';
@@ -41,8 +41,10 @@ export default function ConfirmacionReporte({
   const costoManoObra = parseFloat(solicitud?.costoManoObra || '0');
   const costoTotal = costoManoObra + costoTotalRepuestos;
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();

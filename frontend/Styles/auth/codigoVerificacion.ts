@@ -1,10 +1,15 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
   // Imagen de fondo que ocupa toda la pantalla
   background: {
     flex: 1,
+    ...(Platform.OS === 'web' && {
+      width: '100vw',
+      height: '100vh',
+      minHeight: '100vh',
+    }),
   },
 
   // Capa oscura semitransparente sobre el fondo para mejorar la legibilidad
@@ -45,6 +50,14 @@ export default StyleSheet.create({
     padding: 28,
     borderWidth: 1,
     borderColor: 'rgba(51, 65, 85, 0.6)',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Logo de la empresa centrado en la tarjeta

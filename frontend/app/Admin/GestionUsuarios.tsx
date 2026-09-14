@@ -1,7 +1,7 @@
 // GestionUsuarios.tsx
 // Pantalla de gestión de usuarios y mecánicos con filtros avanzados
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   BackHandler,
@@ -12,16 +12,20 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import NavbarAdmin from '@/components/navbarAdmin/navbarAdmin';
-import styles from '@/Styles/pantallaAdmin/GestionUsuarios';
+import stylesBase from '@/Styles/pantallaAdmin/GestionUsuarios';
+import stylesWeb from '@/Styles/pantallaAdmin/GestionUsuarios.web';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/utils/api';
 import ResponsiveContainer from '@/components/ResponsiveContainer';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 
 // Importar modales de gestión de personal
 import RegistroPersonal from './modalesRegistros/registroPersonal';
@@ -60,6 +64,10 @@ interface Usuario {
 export default function GestionUsuariosScreen() {
   const router = useRouter();
   const { token, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
   // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
@@ -122,67 +130,63 @@ export default function GestionUsuariosScreen() {
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null);
 
   // Cargar usuarios desde el backend
-  useEffect(() => {
+  const cargarUsuarios = useCallback(async () => {
     if (!token) return;
     
-    const cargarUsuarios = async () => {
-      try {
-        // Cargar mecánicos
-        const respMecanicos = await fetch(`${BASE_URL}/mecanicos`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (!respMecanicos.ok) {
-          throw new Error(`HTTP error! status: ${respMecanicos.status}`);
-        }
-        
-        const mecanicos = await respMecanicos.json();
-
-        // Cargar administradores (cuando el endpoint esté listo)
-        // const respAdmins = await fetch(`${BASE_URL}/admin`, {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-        // const admins = await respAdmins.json();
-
-        // Convertir a formato Usuario
-        const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => {
-          // Determinar el tipoPersonal real
-          const tipoPersonal = m.tipoPersonal || 'Mecánico';
-          
-          return {
-            id: m.id,
-            nombres: m.nombres,
-            segundoNombre: m.segundoNombre || undefined,
-            apellidos: m.apellidos,
-            segundoApellido: m.segundoApellido || undefined,
-            edad: m.edad,
-            telefono: m.telefono || undefined,
-            correo: m.correo,
-            correoEmpresarial: m.correoEmpresarial,
-            estadoConexion: m.estadoConexion || 'DESCONECTADO',
-            cuentaActiva: m.cuentaActiva ?? true,
-            createdAt: m.createdAt,
-            rol: (tipoPersonal === 'Administrador' ? 'Administrador' : 'Mecánico') as Rol,
-            especialidad: tipoPersonal === 'Mecánico' ? m.especialidad : tipoPersonal,
-            anosExperiencia: m.anosExperiencia || 0,
-            fotoPerfil: m.fotoPerfil,
-            tipoPersonal: tipoPersonal, // Agregar tipoPersonal al objeto
-          };
-        });
-
-        // const usuariosAdmins: Usuario[] = admins.map((a: any) => ({ ... }));
-
-        setUsuarios([...usuariosMecanicos]); // Después: [...usuariosMecanicos, ...usuariosAdmins]
-      } catch (error) {
-        console.error('Error al cargar usuarios:', error);
-        Alert.alert('Error', 'Error al cargar los usuarios. Verifica que el backend esté activo.');
-      } finally {
-        setCargando(false);
+    setCargando(true);
+    try {
+      // Cargar mecánicos
+      const respMecanicos = await fetch(`${BASE_URL}/mecanicos`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      
+      if (!respMecanicos.ok) {
+        throw new Error(`HTTP error! status: ${respMecanicos.status}`);
       }
-    };
+      
+      const mecanicos = await respMecanicos.json();
 
-    cargarUsuarios();
+      // Convertir a formato Usuario
+      const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => {
+        // Determinar el tipoPersonal real
+        const tipoPersonal = m.tipoPersonal || 'Mecánico';
+        
+        return {
+          id: m.id,
+          nombres: m.nombres,
+          segundoNombre: m.segundoNombre || undefined,
+          apellidos: m.apellidos,
+          segundoApellido: m.segundoApellido || undefined,
+          edad: m.edad,
+          telefono: m.telefono || undefined,
+          correo: m.correo,
+          correoEmpresarial: m.correoEmpresarial,
+          estadoConexion: m.estadoConexion || 'DESCONECTADO',
+          cuentaActiva: m.cuentaActiva ?? true,
+          createdAt: m.createdAt,
+          rol: (tipoPersonal === 'Administrador' ? 'Administrador' : 'Mecánico') as Rol,
+          especialidad: tipoPersonal === 'Mecánico' ? m.especialidad : tipoPersonal,
+          anosExperiencia: m.anosExperiencia || 0,
+          fotoPerfil: m.fotoPerfil,
+          tipoPersonal: tipoPersonal,
+        };
+      });
+
+      setUsuarios([...usuariosMecanicos]);
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+      Alert.alert('Error', 'Error al cargar los usuarios. Verifica que el backend esté activo.');
+    } finally {
+      setCargando(false);
+    }
   }, [token]);
+
+  // Recargar usuarios cuando la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      cargarUsuarios();
+    }, [cargarUsuarios])
+  );
 
   // Funciones auxiliares
   const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
@@ -388,6 +392,7 @@ export default function GestionUsuariosScreen() {
   };
 
   const handleSignOut = () => {
+    logout();
     router.replace('/(auth)/login?fromLogout=true' as any);
   };
 
@@ -433,99 +438,127 @@ export default function GestionUsuariosScreen() {
             />
           </View>
 
-          {/* Orden A-Z / Z-A - Ancho completo */}
-          <Text style={styles.filterLabel}>Orden</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {ordenDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['A-Z', 'Z-A'] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
-                  onPress={() => {
-                    setOrdenAZ(option);
-                    setOrdenDropdownOpen(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
-                  <Text style={styles.dropdownItemText}>{option}</Text>
-                </Pressable>
-              ))}
+          {/* Fila de filtros: Orden, Estado y Tipo de Personal */}
+          {/* Fila 1: Orden y Estado lado a lado */}
+          <View style={[
+            Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+          ]}>
+            {/* Filtro Orden */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Orden</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setOrdenDropdownOpen((v) => !v);
+                setEstadoDropdownOpen(false);
+                setRolDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {ordenDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['A-Z', 'Z-A'] as const).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setOrdenAZ(option);
+                        setOrdenDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{option}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
-          )}
 
-          {/* Estado de conexión - Ancho completo */}
-          <Text style={styles.filterLabel}>Estado</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setEstadoDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroEstado === 'TODOS' ? 'Todos' : 
-               filtroEstado === 'LÍNEA' ? 'En línea' :
-               filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {estadoDropdownOpen && (
-            <ScrollView 
-              style={styles.dropdownList}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={true}
-            >
-              {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : 
-                                   option === 'LÍNEA' ? 'En línea' :
-                                   option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroEstado(option);
-                      setEstadoDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+            {/* Filtro Estado */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Estado</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setEstadoDropdownOpen((v) => !v);
+                setOrdenDropdownOpen(false);
+                setRolDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>
+                  {filtroEstado === 'TODOS' ? 'Todos' : 
+                   filtroEstado === 'LÍNEA' ? 'En línea' :
+                   filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
+                </Text>
+                <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {estadoDropdownOpen && (
+                <ScrollView 
+                  style={styles.dropdownList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
+                    const displayText = option === 'TODOS' ? 'Todos' : 
+                                       option === 'LÍNEA' ? 'En línea' :
+                                       option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
+                    return (
+                      <Pressable
+                        key={option}
+                        style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setFiltroEstado(option);
+                          setEstadoDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
+                        <Text style={styles.dropdownItemText}>{displayText}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </View>
+          </View>
 
-          {/* Rol - Ancho completo */}
-          <Text style={styles.filterLabel}>Tipo de Personal</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setRolDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroRol === 'TODOS' ? 'Todos' : filtroRol}
-            </Text>
-            <Text style={styles.dropdownArrow}>{rolDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {rolDropdownOpen && (
-            <ScrollView 
-              style={styles.dropdownList}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={true}
-            >
-              {(['TODOS', 'Mecánico', 'Inventario', 'Financiero', 'Administrador'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : option;
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroRol === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroRol(option);
-                      setRolDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroRol === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+          {/* Filtro Tipo de Personal (fila separada) */}
+          <View>
+            <Text style={styles.filterLabel}>Tipo de Personal</Text>
+            <Pressable style={styles.filterDropdown} onPress={() => {
+              setRolDropdownOpen((v) => !v);
+              setOrdenDropdownOpen(false);
+              setEstadoDropdownOpen(false);
+            }}>
+              <Text style={styles.filterDropdownText}>
+                {filtroRol === 'TODOS' ? 'Todos' : filtroRol}
+              </Text>
+              <Text style={styles.dropdownArrow}>{rolDropdownOpen ? '▲' : '▼'}</Text>
+            </Pressable>
+            {rolDropdownOpen && (
+              <ScrollView 
+                style={styles.dropdownList}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {(['TODOS', 'Mecánico', 'Inventario', 'Financiero', 'Administrador'] as const).map((option) => {
+                  const displayText = option === 'TODOS' ? 'Todos' : option;
+                  return (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, filtroRol === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setFiltroRol(option);
+                        setRolDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{filtroRol === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{displayText}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
 
           {/* Rango de fechas */}
           <Text style={styles.filterLabel}>Rango de Fechas de Registro</Text>
@@ -606,9 +639,26 @@ export default function GestionUsuariosScreen() {
         )}
 
         {/* LISTA DE USUARIOS */}
-        <View style={styles.usuariosContainer}>
+        <View style={[
+          styles.usuariosContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
           {usuariosFiltrados.map((usuario) => (
-            <View key={usuario.id} style={styles.userCard}>
+            <View 
+              key={usuario.id} 
+              style={[
+                styles.userCard,
+                Platform.OS === 'web' && !isSmallScreen && { 
+                  flex: 1, 
+                  minWidth: 300, 
+                  maxWidth: 'calc(50% - 8px)' 
+                },
+                Platform.OS === 'web' && isSmallScreen && { 
+                  width: '100%',
+                  maxWidth: '100%'
+                }
+              ]}
+            >
               {/* Foto de perfil o placeholder */}
               {usuario.fotoPerfil ? (
                 <Image source={{ uri: usuario.fotoPerfil }} style={styles.userFoto} contentFit="cover" />

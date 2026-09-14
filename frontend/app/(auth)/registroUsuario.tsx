@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   ImageBackground, KeyboardAvoidingView, Platform, Pressable,
   ScrollView, Text, TextInput, View, Image, Modal, BackHandler
@@ -24,6 +24,24 @@ import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 export default function RegistroUsuarioScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  
+  // Manejar botón atrás del navegador en web (volver a login)
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
+
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      router.replace('/(auth)/login');
+      window.history.pushState(null, '', window.location.href);
+    };
+
+    window.history.pushState(null, '', window.location.href);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [router]);
 
   // Estados del formulario
   const [nombre, setNombre] = useState('');

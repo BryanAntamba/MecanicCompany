@@ -165,14 +165,16 @@ export const validarCredencial = (valor: string): string | null => {
 
 
 // ─── validarAño ──────────────────────────────────────────────────────────────
-// Exactamente 4 dígitos, entre 1900 y año actual + 1.
+// Exactamente 4 dígitos, desde 1900 hasta el año actual
+// Se ajusta dinámicamente al año en que se ejecuta la app
 export const validarAño = (valor: string): string | null => {
   if (!valor.trim()) return 'El año es obligatorio.';
   if (!/^\d{4}$/.test(valor.trim())) return 'Ingrese el año del vehiculo de manera correcta.';
   const num = parseInt(valor.trim(), 10);
   const actual = new Date().getFullYear();
-  if (num < 1900 || num > actual + 1)
-    return `El año debe estar entre 1900 y ${actual + 1}.`;
+  // Permite desde 1900 hasta el año actual
+  if (num < 1900 || num > actual)
+    return 'Ingrese un año valido.';
   return null;
 };
 

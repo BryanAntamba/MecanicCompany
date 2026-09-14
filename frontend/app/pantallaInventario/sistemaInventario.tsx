@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { BackHandler, Platform, Pressable, ScrollView, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import NavbarInventario from '@/components/navbarInventario/navbarInventario';
-import styles from '@/Styles/pantallaInventario/sistemaInventario';
+import stylesBase from '@/Styles/pantallaInventario/sistemaInventario';
+import stylesWeb from '@/Styles/pantallaInventario/sistemaInventario.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { useAuth } from '@/context/AuthContext';
 import ResponsiveContainer from '@/components/ResponsiveContainer';
 import RegistrarProducto from './modalesInventario/registrarProducto';
@@ -63,6 +66,10 @@ const TODOS_LOS_MODELOS = Object.values(MODELOS_POR_MARCA)
 export default function SistemaInventarioScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -452,82 +459,93 @@ export default function SistemaInventarioScreen() {
               </>
             )}
             
-            <Text style={styles.filterLabel}>Marca de Vehículo</Text>
-            <Pressable 
-              style={styles.filterDropdown}
-              onPress={() => {
-                cerrarTodosLosDropdowns();
-                setShowMarcaVehiculoDropdown(!showMarcaVehiculoDropdown);
-              }}
-            >
-              <Text style={styles.filterDropdownText}>
-                {marcaVehiculo || 'Todas las marcas'}
-              </Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
-            </Pressable>
-            {showMarcaVehiculoDropdown && (
-              <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-                <Pressable
-                  style={[styles.dropdownItem, !marcaVehiculo && styles.dropdownItemActive]}
+            {/* Fila responsive: Marca de Vehículo y Modelo de Vehículo */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+            ]}>
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Marca de Vehículo</Text>
+                <Pressable 
+                  style={styles.filterDropdown}
                   onPress={() => {
-                    setMarcaVehiculo('');
-                    setMarcaVehiculoOtra('');
-                    setShowMarcaVehiculoDropdown(false);
+                    cerrarTodosLosDropdowns();
+                    setShowMarcaVehiculoDropdown(!showMarcaVehiculoDropdown);
                   }}
                 >
-                  <Text style={styles.dropdownItemCheck}>{!marcaVehiculo ? '✓' : ' '}</Text>
-                  <Text style={styles.dropdownItemText}>Todas las marcas</Text>
+                  <Text style={styles.filterDropdownText}>
+                    {marcaVehiculo || 'Todas las marcas'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
                 </Pressable>
-                {MARCAS_VEHICULOS.map((marca) => (
-                  <Pressable
-                    key={marca}
-                    style={[styles.dropdownItem, marcaVehiculo === marca && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setMarcaVehiculo(marca);
-                      if (marca !== 'Otro') {
+                {showMarcaVehiculoDropdown && (
+                  <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                    <Pressable
+                      style={[styles.dropdownItem, !marcaVehiculo && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setMarcaVehiculo('');
                         setMarcaVehiculoOtra('');
-                      }
-                      setShowMarcaVehiculoDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{marcaVehiculo === marca ? '✓' : ' '}</Text>
-                    <Text style={styles.dropdownItemText}>{marca}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-            )}
+                        setShowMarcaVehiculoDropdown(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{!marcaVehiculo ? '✓' : ' '}</Text>
+                      <Text style={styles.dropdownItemText}>Todas las marcas</Text>
+                    </Pressable>
+                    {MARCAS_VEHICULOS.map((marca) => (
+                      <Pressable
+                        key={marca}
+                        style={[styles.dropdownItem, marcaVehiculo === marca && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setMarcaVehiculo(marca);
+                          if (marca !== 'Otro') {
+                            setMarcaVehiculoOtra('');
+                          }
+                          setShowMarcaVehiculoDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{marcaVehiculo === marca ? '✓' : ' '}</Text>
+                        <Text style={styles.dropdownItemText}>{marca}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
 
-            {marcaVehiculo === 'Otro' && (
-              <>
-                <Text style={styles.filterLabel}>Especifica la marca del vehículo</Text>
-                <TextInput
-                  placeholder="Escribe la marca del vehículo..."
-                  placeholderTextColor="#64748B"
-                  value={marcaVehiculoOtra}
-                  onChangeText={(text) => {
-                    const textoLimpio = text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
-                    setMarcaVehiculoOtra(textoLimpio);
+                {marcaVehiculo === 'Otro' && (
+                  <>
+                    <Text style={styles.filterLabel}>Especifica la marca del vehículo</Text>
+                    <TextInput
+                      placeholder="Escribe la marca del vehículo..."
+                      placeholderTextColor="#64748B"
+                      value={marcaVehiculoOtra}
+                      onChangeText={(text) => {
+                        const textoLimpio = text.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]/g, '');
+                        setMarcaVehiculoOtra(textoLimpio);
+                      }}
+                      style={styles.textInput}
+                    />
+                  </>
+                )}
+              </View>
+              
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Modelo de Vehículo</Text>
+                <Pressable 
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    cerrarTodosLosDropdowns();
+                    setShowModeloVehiculoDropdown(!showModeloVehiculoDropdown);
                   }}
-                  style={styles.textInput}
-                />
-              </>
-            )}
-            
-            <Text style={styles.filterLabel}>Modelo de Vehículo</Text>
-            <Pressable 
-              style={styles.filterDropdown}
-              onPress={() => {
-                cerrarTodosLosDropdowns();
-                setShowModeloVehiculoDropdown(!showModeloVehiculoDropdown);
-              }}
-            >
-              <Text style={styles.filterDropdownText}>
-                {modeloVehiculo || 'Todos los modelos'}
-              </Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
-            </Pressable>
-            {showModeloVehiculoDropdown && (
-              <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                >
+                  <Text style={styles.filterDropdownText}>
+                    {modeloVehiculo || 'Todos los modelos'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </Pressable>
+                {showModeloVehiculoDropdown && (
+                  <ScrollView style={styles.dropdownList} nestedScrollEnabled>
                 <Pressable
                   style={[styles.dropdownItem, !modeloVehiculo && styles.dropdownItemActive]}
                   onPress={() => {
@@ -573,6 +591,8 @@ export default function SistemaInventarioScreen() {
                 />
               </>
             )}
+              </View>
+            </View>
             
             <Text style={styles.filterLabel}>Año del Vehículo</Text>
             <View style={styles.filterRow}>
@@ -600,83 +620,109 @@ export default function SistemaInventarioScreen() {
               </View>
             </View>
             
-            <Text style={styles.filterLabel}>Estado de Stock</Text>
-            <Pressable 
-              style={styles.filterDropdown}
-              onPress={() => {
-                cerrarTodosLosDropdowns();
-                setShowEstadoStockDropdown(!showEstadoStockDropdown);
-              }}
-            >
-              <Text style={styles.filterDropdownText}>{estadoStock}</Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
-            </Pressable>
-            {showEstadoStockDropdown && (
-              <View style={styles.dropdownList}>
-                {['Todos', 'Disponible', 'Bajo', 'Crítico'].map((estado) => (
-                  <Pressable
-                    key={estado}
-                    style={[styles.dropdownItem, estadoStock === estado && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setEstadoStock(estado);
-                      setShowEstadoStockDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{estadoStock === estado ? '✓' : ' '}</Text>
-                    <Text style={styles.dropdownItemText}>{estado}</Text>
-                  </Pressable>
-                ))}
+            {/* Fila responsive: Estado de Stock y Estado del Producto */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+            ]}>
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Estado de Stock</Text>
+                <Pressable 
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    cerrarTodosLosDropdowns();
+                    setShowEstadoStockDropdown(!showEstadoStockDropdown);
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>{estadoStock}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </Pressable>
+                {showEstadoStockDropdown && (
+                  <View style={styles.dropdownList}>
+                    {['Todos', 'Disponible', 'Bajo', 'Crítico'].map((estado) => (
+                      <Pressable
+                        key={estado}
+                        style={[styles.dropdownItem, estadoStock === estado && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setEstadoStock(estado);
+                          setShowEstadoStockDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{estadoStock === estado ? '✓' : ' '}</Text>
+                        <Text style={styles.dropdownItemText}>{estado}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
 
-            <Text style={styles.filterLabel}>Estado del Producto</Text>
-            <Pressable
-              style={styles.filterDropdown}
-              onPress={() => {
-                cerrarTodosLosDropdowns();
-                setShowEstadoProductoDropdown(!showEstadoProductoDropdown);
-              }}
-            >
-              <Text style={styles.filterDropdownText}>{estadoProducto}</Text>
-              <Text style={styles.dropdownArrow}>▼</Text>
-            </Pressable>
-            {showEstadoProductoDropdown && (
-              <View style={styles.dropdownList}>
-                {['Todos', 'Producto activo', 'Producto inactivo'].map((estado) => (
-                  <Pressable
-                    key={estado}
-                    style={[styles.dropdownItem, estadoProducto === estado && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setEstadoProducto(estado);
-                      setShowEstadoProductoDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{estadoProducto === estado ? '✓' : ' '}</Text>
-                    <Text style={styles.dropdownItemText}>{estado}</Text>
-                  </Pressable>
-                ))}
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Estado del Producto</Text>
+                <Pressable
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    cerrarTodosLosDropdowns();
+                    setShowEstadoProductoDropdown(!showEstadoProductoDropdown);
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>{estadoProducto}</Text>
+                  <Text style={styles.dropdownArrow}>▼</Text>
+                </Pressable>
+                {showEstadoProductoDropdown && (
+                  <View style={styles.dropdownList}>
+                    {['Todos', 'Producto activo', 'Producto inactivo'].map((estado) => (
+                      <Pressable
+                        key={estado}
+                        style={[styles.dropdownItem, estadoProducto === estado && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setEstadoProducto(estado);
+                          setShowEstadoProductoDropdown(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{estadoProducto === estado ? '✓' : ' '}</Text>
+                        <Text style={styles.dropdownItemText}>{estado}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
+            </View>
             
-            <Text style={styles.filterLabel}>Precio Mínimo</Text>
-            <TextInput
-              placeholder="Ej: 10.50"
-              placeholderTextColor="#64748B"
-              value={precioMinDisplay !== '' ? precioMinDisplay : (precioMin ? precioMin : '')}
-              onChangeText={handlePrecioMin}
-              keyboardType="decimal-pad"
-              style={styles.textInput}
-            />
+            {/* Fila responsive: Precio Mínimo y Precio Máximo */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+            ]}>
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Precio Mínimo</Text>
+                <TextInput
+                  placeholder="Ej: 10.50"
+                  placeholderTextColor="#64748B"
+                  value={precioMinDisplay !== '' ? precioMinDisplay : (precioMin ? precioMin : '')}
+                  onChangeText={handlePrecioMin}
+                  keyboardType="decimal-pad"
+                  style={styles.textInput}
+                />
+              </View>
             
-            <Text style={styles.filterLabel}>Precio Máximo</Text>
-            <TextInput
-              placeholder="Ej: 100.00"
-              placeholderTextColor="#64748B"
-              value={precioMaxDisplay !== '' ? precioMaxDisplay : (precioMax ? precioMax : '')}
-              onChangeText={handlePrecioMax}
-              keyboardType="decimal-pad"
-              style={styles.textInput}
-            />
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+              ]}>
+                <Text style={styles.filterLabel}>Precio Máximo</Text>
+                <TextInput
+                  placeholder="Ej: 100.00"
+                  placeholderTextColor="#64748B"
+                  value={precioMaxDisplay !== '' ? precioMaxDisplay : (precioMax ? precioMax : '')}
+                  onChangeText={handlePrecioMax}
+                  keyboardType="decimal-pad"
+                  style={styles.textInput}
+                />
+              </View>
+            </View>
           </View>
 
           <View style={styles.summaryContainer}>
@@ -709,7 +755,10 @@ export default function SistemaInventarioScreen() {
           {productosFiltrados.length === 0 ? (
             <Text style={styles.emptyText}>No se encontraron productos</Text>
           ) : (
-            <View style={styles.productosContainer}>
+            <View style={[
+              styles.productosContainer,
+              Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+            ]}>
               {productosFiltrados.map((producto) => {
                 const estadoStock = getEstadoStock(producto);
                 const compatibilidadesExtra = producto.compatibilidades.length > 1 
@@ -717,7 +766,21 @@ export default function SistemaInventarioScreen() {
                   : 0;
                 
                 return (
-                  <View key={producto.id} style={styles.productCard}>
+                  <View 
+                    key={producto.id} 
+                    style={[
+                      styles.productCard,
+                      Platform.OS === 'web' && !isSmallScreen && { 
+                        flex: 1, 
+                        minWidth: 300, 
+                        maxWidth: 'calc(50% - 8px)' 
+                      },
+                      Platform.OS === 'web' && isSmallScreen && { 
+                        width: '100%',
+                        maxWidth: '100%'
+                      }
+                    ]}
+                  >
                     <View style={styles.productContent}>
                       {/* Nombre del producto */}
                       <Text style={styles.productName} numberOfLines={2}>

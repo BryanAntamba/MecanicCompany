@@ -182,4 +182,27 @@ export default StyleSheet.create({
   btnReenviarTextPressed: {
     color: '#F1F5F9',
   },
+
+  // Botón para descargar comprobante
+  downloadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#2563EB',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginTop: 12,
+    marginBottom: 8,
+    gap: 10,
+    justifyContent: 'center',
+  },
+  downloadButtonPressed: {
+    backgroundColor: '#1D4ED8',
+  },
+  downloadButtonText: {
+    fontSize: 14,
+    color: '#FFFFFF',
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
 });

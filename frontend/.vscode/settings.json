@@ -3,5 +3,15 @@
     "source.fixAll": "explicit",
     "source.organizeImports": "explicit",
     "source.sortMembers": "explicit"
-  }
+  },
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "typescript.validate.enable": true,
+  "typescript.suggest.enabled": true,
+  // Suprimir warnings de propiedades desconocidas en estilos
+  "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+  "typescript.surveys.enabled": false,
+  // Ignorar errores específicos de media queries
+  "javascript.validate.enable": false,
+  "files.exclude": {},
+  "search.exclude": {}
 }

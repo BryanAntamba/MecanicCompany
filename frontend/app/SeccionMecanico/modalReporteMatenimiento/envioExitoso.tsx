@@ -2,7 +2,7 @@
 // Modal de éxito tras enviar el reporte y factura al cliente
 
 import { useEffect } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import styles from '../../../Styles/pantallaMecanico/modalReporteMantenimiento/envioExitoso';
@@ -20,8 +20,10 @@ export default function EnvioExitoso({
   correoCliente,
   onCerrar,
 }: EnvioExitosoProps) {
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();

@@ -11,12 +11,16 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import NavbarFinanciero from '@/components/navbarFinanciero/navbarFinanciero';
-import styles from '@/Styles/pantallaFinanciero/financiero';
+import stylesBase from '@/Styles/pantallaFinanciero/financiero';
+import stylesWeb from '@/Styles/pantallaFinanciero/financiero.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { useAuth } from '@/context/AuthContext';
 import ResponsiveContainer from '@/components/ResponsiveContainer';
 import {
@@ -34,6 +38,10 @@ import PagoAprobado from './modalesPago/pagoAprobado';
 export default function FinancieroScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -80,6 +88,7 @@ export default function FinancieroScreen() {
     metodoPago: string;
     fechaPago: string;
     observacion: string;
+    comprobanteUri?: string;
   } | null>(null);
 
   // Estados de dropdowns
@@ -160,8 +169,8 @@ export default function FinancieroScreen() {
     setModalRegistrarVisible(true);
   };
 
-  const handleConfirmarRegistro = (metodoPago: string, fechaPago: string, observacion: string) => {
-    setDatosPagoTemp({ metodoPago, fechaPago, observacion });
+  const handleConfirmarRegistro = (metodoPago: string, fechaPago: string, observacion: string, comprobanteUri?: string) => {
+    setDatosPagoTemp({ metodoPago, fechaPago, observacion, comprobanteUri });
     setModalRegistrarVisible(false);
     setModalConfirmarVisible(true);
   };
@@ -174,6 +183,7 @@ export default function FinancieroScreen() {
       metodoPago: datosPagoTemp.metodoPago as 'EFECTIVO' | 'TRANSFERENCIA',
       fechaPago: datosPagoTemp.fechaPago,
       observacion: datosPagoTemp.observacion,
+      comprobanteUri: datosPagoTemp.comprobanteUri,
     });
 
     setModalConfirmarVisible(false);
@@ -339,9 +349,26 @@ export default function FinancieroScreen() {
               No hay pagos pendientes
             </Text>
           ) : (
-            <View style={styles.pagosContainer}>
+            <View style={[
+              styles.pagosContainer,
+              Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+            ]}>
               {pagosFiltrados.map((pago) => (
-                <View key={pago.id} style={styles.pagoCard}>
+                <View 
+                  key={pago.id} 
+                  style={[
+                    styles.pagoCard,
+                    Platform.OS === 'web' && !isSmallScreen && { 
+                      flex: 1, 
+                      minWidth: 300, 
+                      maxWidth: 'calc(50% - 8px)' 
+                    },
+                    Platform.OS === 'web' && isSmallScreen && { 
+                      width: '100%',
+                      maxWidth: '100%'
+                    }
+                  ]}
+                >
                   <View style={styles.pagoContent}>
                     {/* ID y Estado */}
                     <View style={styles.pagoHeader}>

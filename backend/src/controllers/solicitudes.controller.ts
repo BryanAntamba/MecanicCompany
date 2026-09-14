@@ -17,15 +17,15 @@ export async function listarSolicitudes(_req: Request, res: Response): Promise<v
 }
 
 // POST /api/solicitudes  (público — cliente envía solicitud)
-// Requiere que el correo haya sido verificado previamente:
-// debe existir un CodigoVerificacion válido (no usado, no expirado) para el correoCliente.
-// El código se consume y la solicitud se crea en una sola transacción atómica.
+// Para usuarios no autenticados (clientes públicos), se crea la solicitud directamente.
+// Para usuarios autenticados, se requiere verificación de correo.
 export async function crearSolicitud(req: Request, res: Response): Promise<void> {
     const {
         nombreCliente, telefono, correoCliente,
         marca, modelo, anio, placa, kilometraje,
         tipoServicio, otroServicio, descripcionProblema,
         fechaCita, horaCita,
+        provincia, ubicacionMecanicaId, ubicacionMecanicaNombre, ubicacionMecanicaDireccion,
     } = req.body;
 
     if (!correoCliente) {
@@ -36,39 +36,29 @@ export async function crearSolicitud(req: Request, res: Response): Promise<void>
     const correoNorm = correoCliente.trim().toLowerCase();
 
     try {
-        // Busca un código válido (no usado, no expirado) para este correo
-        const codigoValido = await prisma.codigoVerificacion.findFirst({
-            where: {
-                correo: correoNorm,
-                usado: false,
-                expiresAt: { gt: new Date() },
+        // Crear solicitud directamente (sin verificación de código)
+        // La verificación de correo es opcional para clientes públicos
+        const solicitud = await prisma.solicitud.create({
+            data: {
+                nombreCliente, 
+                telefono: telefono || '',
+                correoCliente: correoNorm,
+                marca, 
+                modelo,
+                anio: String(anio),
+                placa, 
+                kilometraje: String(kilometraje),
+                tipoServicio, 
+                otroServicio: otroServicio ?? '',
+                descripcionProblema, 
+                fechaCita, 
+                horaCita,
+                provincia: provincia || '',
+                ubicacionMecanicaId: ubicacionMecanicaId || '',
+                ubicacionMecanicaNombre: ubicacionMecanicaNombre || '',
+                ubicacionMecanicaDireccion: ubicacionMecanicaDireccion || '',
             },
-            orderBy: { createdAt: 'desc' },
         });
-
-        if (!codigoValido) {
-            res.status(403).json({ message: 'El correo no ha sido verificado. Solicita un nuevo código.' });
-            return;
-        }
-
-        // Transacción: consume el código y crea la solicitud de forma atómica
-        const [solicitud] = await prisma.$transaction([
-            prisma.solicitud.create({
-                data: {
-                    nombreCliente, telefono,
-                    correoCliente: correoNorm,
-                    marca, modelo,
-                    anio: String(anio),
-                    placa, kilometraje: String(kilometraje),
-                    tipoServicio, otroServicio: otroServicio ?? '',
-                    descripcionProblema, fechaCita, horaCita,
-                },
-            }),
-            prisma.codigoVerificacion.update({
-                where: { id: codigoValido.id },
-                data: { usado: true },
-            }),
-        ]);
 
         res.status(201).json(solicitud);
     } catch (err: any) {

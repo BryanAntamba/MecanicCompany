@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps'; // Mapa nativo embebido
+import MapView, { Marker } from '@/components/MapView'; // Mapa compatible con web y móvil
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';

@@ -12,6 +12,7 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
@@ -100,17 +101,22 @@ export default function SeguimientoVehiculoScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const { estaLogueado } = useCliente();
+  const { width } = useWindowDimensions();
   
-  // Protección: redirigir si no hay sesión AL MONTAR el componente
-  // (no reaccionar a cambios posteriores para evitar conflictos con logout)
-  const sesionInicialRef = useRef(estaLogueado);
+  // Determinar si estamos en pantalla pequeña
+  const isSmallScreen = width < 640;
+  const isMediumScreen = width < 768;
   
+  // Protección: redirigir si no hay sesión
   useEffect(() => {
-    if (!sesionInicialRef.current) {
-      // Si no había sesión al montar, redirigir al index
-      router.replace('/PantallaCliente' as any);
+    if (!estaLogueado) {
+      // Usar setTimeout para asegurar que el router esté listo
+      const timer = setTimeout(() => {
+        router.replace('/PantallaCliente' as any);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [router]);
+  }, [estaLogueado, router]);
 
   // Estados de filtros
   const [busqueda, setBusqueda] = useState('');
@@ -257,7 +263,7 @@ export default function SeguimientoVehiculoScreen() {
             <View style={styles.searchBox}>
               <FontAwesome name="search" size={16} color="#64748B" style={styles.searchIcon} />
               <TextInput
-                placeholder="Buscar por marca, modelo o placa"
+                placeholder="Busca tu vehiculo"
                 placeholderTextColor="#94A3B8"
                 value={busqueda}
                 onChangeText={setBusqueda}
@@ -265,82 +271,93 @@ export default function SeguimientoVehiculoScreen() {
               />
             </View>
 
-            {/* Selector de orden A-Z / Z-A */}
-            <Text style={styles.filterLabel}>Orden</Text>
-            <Pressable
-              style={styles.filterDropdown}
-              onPress={() => setOrdenDropdownOpen((v) => !v)}
-            >
-              <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-              <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-            </Pressable>
-            {ordenDropdownOpen && (
-              <View style={styles.dropdownList}>
-                {(['A-Z', 'Z-A'] as const).map((option) => (
-                  <Pressable
-                    key={option}
-                    style={[
-                      styles.dropdownItem,
-                      ordenAZ === option && styles.dropdownItemActive,
-                    ]}
-                    onPress={() => {
-                      setOrdenAZ(option);
-                      setOrdenDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>
-                      {ordenAZ === option ? '✓ ' : '    '}
-                    </Text>
-                    <Text style={styles.dropdownItemText}>{option}</Text>
-                  </Pressable>
-                ))}
+            {/* Fila de filtros: Orden y Estado */}
+            <View style={styles.filterRowContainer}>
+              <View style={styles.filterColumn}>
+                <Text style={styles.filterLabel}>Orden</Text>
+                <Pressable
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    setOrdenDropdownOpen((v) => !v);
+                    setEstadoDropdownOpen(false); // Cierra el otro dropdown
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                  <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+                </Pressable>
+                {ordenDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    {(['A-Z', 'Z-A'] as const).map((option) => (
+                      <Pressable
+                        key={option}
+                        style={[
+                          styles.dropdownItem,
+                          ordenAZ === option && styles.dropdownItemActive,
+                        ]}
+                        onPress={() => {
+                          setOrdenAZ(option);
+                          setOrdenDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>
+                          {ordenAZ === option ? '✓ ' : '    '}
+                        </Text>
+                        <Text style={styles.dropdownItemText}>{option}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
 
-            {/* Selector de estado */}
-            <Text style={styles.filterLabel}>Estado</Text>
-            <Pressable
-              style={styles.filterDropdown}
-              onPress={() => setEstadoDropdownOpen((v) => !v)}
-            >
-              <Text style={styles.filterDropdownText}>
-                {filtroEstado === 'TODOS' ? 'Todos' : 
-                 filtroEstado === 'PENDIENTE' ? 'Pendiente' :
-                 filtroEstado === 'EN PROCESO' ? 'En proceso' : 'Completado'}
-              </Text>
-              <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-            </Pressable>
-            {estadoDropdownOpen && (
-              <ScrollView 
-                style={styles.dropdownList}
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={true}
-              >
-                {(['TODOS', 'PENDIENTE', 'EN PROCESO', 'COMPLETADO'] as const).map((option) => {
-                  const displayText = option === 'TODOS' ? 'Todos' : 
-                                     option === 'PENDIENTE' ? 'Pendiente' :
-                                     option === 'EN PROCESO' ? 'En proceso' : 'Completado';
-                  return (
-                    <Pressable
-                      key={option}
-                      style={[
-                        styles.dropdownItem,
-                        filtroEstado === option && styles.dropdownItemActive,
-                      ]}
-                      onPress={() => {
-                        setFiltroEstado(option);
-                        setEstadoDropdownOpen(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemCheck}>
-                        {filtroEstado === option ? '✓ ' : '    '}
-                      </Text>
-                      <Text style={styles.dropdownItemText}>{displayText}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            )}
+              <View style={styles.filterColumn}>
+                <Text style={styles.filterLabel}>Estado</Text>
+                <Pressable
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    setEstadoDropdownOpen((v) => !v);
+                    setOrdenDropdownOpen(false); // Cierra el otro dropdown
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>
+                    {filtroEstado === 'TODOS' ? 'Todos' : 
+                     filtroEstado === 'PENDIENTE' ? 'Pendiente' :
+                     filtroEstado === 'EN PROCESO' ? 'En proceso' : 'Completado'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+                </Pressable>
+                {estadoDropdownOpen && (
+                  <ScrollView 
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {(['TODOS', 'PENDIENTE', 'EN PROCESO', 'COMPLETADO'] as const).map((option) => {
+                      const displayText = option === 'TODOS' ? 'Todos' : 
+                                         option === 'PENDIENTE' ? 'Pendiente' :
+                                         option === 'EN PROCESO' ? 'En proceso' : 'Completado';
+                      return (
+                        <Pressable
+                          key={option}
+                          style={[
+                            styles.dropdownItem,
+                            filtroEstado === option && styles.dropdownItemActive,
+                          ]}
+                          onPress={() => {
+                            setFiltroEstado(option);
+                            setEstadoDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemCheck}>
+                            {filtroEstado === option ? '✓ ' : '    '}
+                          </Text>
+                          <Text style={styles.dropdownItemText}>{displayText}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+            </View>
 
             {/* Filtro de rango de fechas */}
             <Text style={styles.filterLabel}>Rango de Fechas</Text>
@@ -401,8 +418,15 @@ export default function SeguimientoVehiculoScreen() {
             {solicitudesFiltradas.length === 0 ? (
               <Text style={styles.emptyText}>No se encontraron solicitudes</Text>
             ) : (
-              solicitudesFiltradas.map((solicitud) => (
-                <View key={solicitud.id} style={styles.solicitudCard}>
+              <View style={[
+                styles.cardsGrid,
+                isMediumScreen && { flexDirection: 'column' }
+              ]}>
+                {solicitudesFiltradas.map((solicitud) => (
+                  <View key={solicitud.id} style={[
+                    styles.solicitudCard,
+                    isMediumScreen && { maxWidth: 'none', minWidth: 'auto', flex: 'none' as any, width: '100%' }
+                  ]}>
                   <Text style={styles.solicitudTitulo}>{solicitud.marca}</Text>
                   <Text style={styles.solicitudSubtitulo}>{solicitud.modelo}</Text>
 
@@ -462,7 +486,8 @@ export default function SeguimientoVehiculoScreen() {
                     )}
                   </Pressable>
                 </View>
-              ))
+              ))}
+            </View>
             )}
           </View>
         </View>

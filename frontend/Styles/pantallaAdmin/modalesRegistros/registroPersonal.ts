@@ -177,6 +177,10 @@ export default StyleSheet.create({
     borderColor: '#334155',
     borderRadius: 8,
   },
+  passwordContainerError: {
+    borderColor: '#EF4444',
+    borderWidth: 2,
+  },
   passwordInput: {
     flex: 1,
     paddingHorizontal: 16,

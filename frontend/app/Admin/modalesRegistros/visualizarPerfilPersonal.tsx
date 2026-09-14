@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -25,8 +26,10 @@ export default function VisualizarPerfilPersonal({
   mecanico,
   onClose,
 }: PerfilPersonalProps) {
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();

@@ -133,8 +133,10 @@ export default function RegistroPersonal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [fotoUri, setFotoUri] = useState<string | null>(null);
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -636,7 +638,7 @@ export default function RegistroPersonal({
 
             {/* Contraseña */}
             <Text style={styles.label}>Contraseña</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, errors.contraseña && styles.passwordContainerError]}>
               <TextInput
                 placeholder="Ingrese la contraseña"
                 placeholderTextColor="#64748B"
@@ -646,7 +648,7 @@ export default function RegistroPersonal({
                   setForm({ ...form, contraseña: v });
                   setErrors({ ...errors, contraseña: '' });
                 }}
-                style={[styles.passwordInput, errors.contraseña && styles.inputError]}
+                style={styles.passwordInput}
               />
               <Pressable onPress={() => setShowPassword((v) => !v)} style={styles.eyeBtn}>
                 <FontAwesome name={showPassword ? 'eye' : 'eye-slash'} size={18} color="#64748B" />
@@ -656,7 +658,7 @@ export default function RegistroPersonal({
 
             {/* Confirmar Contraseña */}
             <Text style={styles.label}>Confirmar Contraseña</Text>
-            <View style={styles.passwordContainer}>
+            <View style={[styles.passwordContainer, errors.confirmarContraseña && styles.passwordContainerError]}>
               <TextInput
                 placeholder="Confirme la contraseña"
                 placeholderTextColor="#64748B"
@@ -666,7 +668,7 @@ export default function RegistroPersonal({
                   setForm({ ...form, confirmarContraseña: v });
                   setErrors({ ...errors, confirmarContraseña: '' });
                 }}
-                style={[styles.passwordInput, errors.confirmarContraseña && styles.inputError]}
+                style={styles.passwordInput}
               />
               <Pressable onPress={() => setShowConfirmPassword((v) => !v)} style={styles.eyeBtn}>
                 <FontAwesome name={showConfirmPassword ? 'eye' : 'eye-slash'} size={18} color="#64748B" />

@@ -39,12 +39,12 @@ export const useResponsive = () => {
     // En móvil: sin límite (usa todo el ancho)
     // En pantallas grandes: limita el ancho para mantener legibilidad
     maxWidth: width < BREAKPOINTS.mobile 
-      ? '100%' 
+      ? width 
       : width < BREAKPOINTS.desktop 
-        ? 700 
+        ? 900 
         : width < BREAKPOINTS.wide 
-          ? 900 
-          : 1200,
+          ? 1200 
+          : 1400,
     
     // Helper para aplicar estilos condicionales
     responsive: <T,>(mobile: T, tablet?: T, desktop?: T, wide?: T): T => {

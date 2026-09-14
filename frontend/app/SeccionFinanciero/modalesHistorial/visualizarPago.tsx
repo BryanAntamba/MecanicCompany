@@ -2,9 +2,11 @@
 // Modal para visualizar detalles de un pago registrado (basado en registrarPago.tsx)
 
 import { useEffect } from 'react';
-import { Modal, Platform, Pressable, ScrollView, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, ScrollView, Text, View, Alert, Linking } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
+import * as FileSystem from '@/utils/fileSystem';
+import * as Sharing from '@/utils/sharing';
 import styles from '@/Styles/pantallaFinanciero/modalesHistorial/visualizarPago';
 
 interface VisualizarPagoProps {
@@ -25,6 +27,43 @@ export default function VisualizarPago({
   }, [visible]);
 
   if (!pago) return null;
+
+  const handleDescargarComprobante = async () => {
+    if (!pago.comprobanteUri) {
+      Alert.alert('Error', 'No hay comprobante disponible');
+      return;
+    }
+
+    try {
+      if (Platform.OS === 'web') {
+        // En web, crear un enlace de descarga
+        const link = document.createElement('a');
+        link.href = pago.comprobanteUri;
+        link.download = `comprobante_${pago.id || 'pago'}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // En móvil, si el URI es local (file://), solo compartirlo
+        // Si es remoto (http/https), descargarlo primero
+        if (pago.comprobanteUri.startsWith('file://') || pago.comprobanteUri.startsWith('content://')) {
+          // URI local, compartir directamente
+          await Sharing.shareAsync(pago.comprobanteUri);
+        } else {
+          // URI remoto, descargar primero
+          const fileUri = FileSystem.documentDirectory + `comprobante_${pago.id}.${pago.comprobanteUri.split('.').pop()}`;
+          const downloadResult = await FileSystem.downloadAsync(pago.comprobanteUri, fileUri);
+          
+          if (downloadResult.uri) {
+            await Sharing.shareAsync(downloadResult.uri);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error al descargar comprobante:', error);
+      Alert.alert('Error', 'No se pudo descargar el comprobante');
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="fade" transparent onRequestClose={onClose}>
@@ -95,6 +134,20 @@ export default function VisualizarPago({
               <Text style={styles.infoLabel}>Método de pago:</Text>
               <Text style={styles.infoValue}>{pago.metodoPago}</Text>
             </View>
+
+            {/* Botón para descargar comprobante (solo si es TRANSFERENCIA y tiene comprobante) */}
+            {pago.metodoPago === 'TRANSFERENCIA' && pago.comprobanteUri && (
+              <Pressable
+                style={({ pressed }) => [
+                  styles.downloadButton,
+                  pressed && styles.downloadButtonPressed
+                ]}
+                onPress={handleDescargarComprobante}
+              >
+                <FontAwesome name="download" size={16} color="#FFFFFF" />
+                <Text style={styles.downloadButtonText}>Descargar Comprobante</Text>
+              </Pressable>
+            )}
 
             <View style={styles.infoField}>
               <Text style={styles.infoLabel}>Fecha de pago:</Text>

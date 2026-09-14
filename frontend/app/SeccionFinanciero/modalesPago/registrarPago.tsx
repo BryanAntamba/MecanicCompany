@@ -11,16 +11,18 @@ import {
   Text,
   TextInput,
   View,
+  Alert,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
+import * as ImagePicker from '@/utils/imagePicker';
 import styles from '../../../Styles/pantallaFinanciero/modalesPago/registrarPago';
 
 interface RegistrarPagoProps {
   visible: boolean;
   pago: any | null;
   onClose: () => void;
-  onConfirmar: (metodoPago: string, fechaPago: string, observacion: string) => void;
+  onConfirmar: (metodoPago: string, fechaPago: string, observacion: string, comprobanteUri?: string) => void;
 }
 
 export default function RegistrarPago({
@@ -43,10 +45,13 @@ export default function RegistrarPago({
     const d = new Date();
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
+  const [comprobanteUri, setComprobanteUri] = useState<string | null>(null);
+  const [comprobanteNombre, setComprobanteNombre] = useState<string | null>(null);
 
   // Errores
   const [errMetodoPago, setErrMetodoPago] = useState('');
   const [errFechaPago, setErrFechaPago] = useState('');
+  const [errComprobante, setErrComprobante] = useState('');
 
   // Limpiar formulario cuando se abre el modal
   useEffect(() => {
@@ -54,8 +59,11 @@ export default function RegistrarPago({
       setMetodoPago('EFECTIVO');
       setFechaPago(null);
       setObservacion('');
+      setComprobanteUri(null);
+      setComprobanteNombre(null);
       setErrMetodoPago('');
       setErrFechaPago('');
+      setErrComprobante('');
     }
   }, [visible]);
 
@@ -69,11 +77,49 @@ export default function RegistrarPago({
     return [...blanks, ...days];
   };
 
+  const isDateDisabled = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentYear = today.getFullYear();
+    const dateYear = date.getFullYear();
+    
+    // Bloquear fechas anteriores a hoy
+    if (date < today) return true;
+    
+    // Bloquear fechas de años futuros (solo permitir año actual)
+    if (dateYear > currentYear) return true;
+    
+    return false;
+  };
+
   const formatDate = (date: Date) => {
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}/${month}/${year}`;
+  };
+
+  const handleSeleccionarComprobante = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: false,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset = result.assets[0];
+        setComprobanteUri(asset.uri);
+        // Extraer nombre del archivo de la URI
+        const fileName = asset.uri.split('/').pop() || 'comprobante.jpg';
+        setComprobanteNombre(fileName);
+        setErrComprobante('');
+      }
+    } catch (error) {
+      console.error('Error al seleccionar comprobante:', error);
+      Alert.alert('Error', 'No se pudo seleccionar el archivo');
+    }
   };
 
   const handleConfirmar = () => {
@@ -94,10 +140,18 @@ export default function RegistrarPago({
       setErrFechaPago('');
     }
 
+    // Validar comprobante si es transferencia
+    if (metodoPago === 'TRANSFERENCIA' && !comprobanteUri) {
+      setErrComprobante('Debe cargar el comprobante de transferencia');
+      valid = false;
+    } else {
+      setErrComprobante('');
+    }
+
     if (!valid) return;
 
     // Llamar a la función de confirmación
-    onConfirmar(metodoPago, formatDate(fechaPago as Date), observacion.trim());
+    onConfirmar(metodoPago, formatDate(fechaPago as Date), observacion.trim(), comprobanteUri || undefined);
   };
 
   if (!pago) return null;
@@ -232,6 +286,36 @@ export default function RegistrarPago({
             </View>
             {errMetodoPago ? <Text style={styles.errorText}>{errMetodoPago}</Text> : null}
 
+            {/* BOTÓN PARA CARGAR COMPROBANTE (solo si es TRANSFERENCIA) */}
+            {metodoPago === 'TRANSFERENCIA' && (
+              <>
+                <Text style={[styles.label, { marginTop: 16 }]}>Comprobante de Transferencia *</Text>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.uploadButton,
+                    pressed && styles.uploadButtonPressed,
+                    errComprobante && styles.uploadButtonError
+                  ]}
+                  onPress={handleSeleccionarComprobante}
+                >
+                  <FontAwesome
+                    name={comprobanteUri ? "check-circle" : "upload"}
+                    size={20}
+                    color={comprobanteUri ? "#10B981" : "#64748B"}
+                  />
+                  <Text style={[
+                    styles.uploadButtonText,
+                    comprobanteUri && styles.uploadButtonTextSuccess
+                  ]}>
+                    {comprobanteUri
+                      ? `✓ ${comprobanteNombre || 'Archivo cargado'}`
+                      : 'Cargar comprobante'}
+                  </Text>
+                </Pressable>
+                {errComprobante ? <Text style={styles.errorText}>{errComprobante}</Text> : null}
+              </>
+            )}
+
             {/* FECHA DE PAGO */}
             <Text style={styles.label}>Fecha de Pago</Text>
             <Pressable
@@ -311,9 +395,30 @@ export default function RegistrarPago({
                 {buildCalendarDays(calendarMonth).map((day, i) => {
                   if (!day) return <View key={i} style={styles.calendarCell} />;
                   const isSelected = fechaPago?.toDateString() === day.toDateString();
+                  const isDisabled = isDateDisabled(day);
                   return (
-                    <Pressable key={i} style={[styles.calendarCell, isSelected && styles.calendarCellSelected]} onPress={() => { setFechaPago(day); setCalendarVisible(false); }}>
-                      <Text style={[styles.calendarCellText, isSelected && styles.calendarCellSelectedText]}>{day.getDate()}</Text>
+                    <Pressable 
+                      key={i} 
+                      style={[
+                        styles.calendarCell, 
+                        isSelected && styles.calendarCellSelected,
+                        isDisabled && styles.calendarCellDisabled
+                      ]} 
+                      onPress={() => { 
+                        if (!isDisabled) {
+                          setFechaPago(day); 
+                          setCalendarVisible(false);
+                        }
+                      }}
+                      disabled={isDisabled}
+                    >
+                      <Text style={[
+                        styles.calendarCellText, 
+                        isSelected && styles.calendarCellSelectedText,
+                        isDisabled && styles.calendarCellDisabledText
+                      ]}>
+                        {day.getDate()}
+                      </Text>
                     </Pressable>
                   );
                 })}

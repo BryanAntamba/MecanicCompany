@@ -27,6 +27,7 @@ import {
   validarSoloNumeros,
 } from '@/utils/validaciones';
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
+import { obtenerSolicitudesSimuladas } from '@/utils/datosSimulados';
 
 const ESTADOS = ['Pendiente', 'En_proceso', 'Completado'] as const;
 
@@ -65,9 +66,13 @@ export default function EditarSolicitud({
   // Campos de solicitud
   const [estado, setEstado] = useState<EstadoSolicitud>('Pendiente');
   const [descripcionProblema, setDescripcionProblema] = useState('');
-  const [fechaCita, setFechaCita] = useState('');
+  const [fechaCita, setFechaCita] = useState<Date | null>(null);
   const [horaCita, setHoraCita] = useState('');
   const [estadoDropdown, setEstadoDropdown] = useState(false);
+
+  // Estados del calendario
+  const [calendarVisible, setCalendarVisible] = useState(false);
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
 
   // Campos de provincia y ubicación
   const [provincia, setProvincia] = useState<ProvinciaEcuador | ''>('');
@@ -93,8 +98,10 @@ export default function EditarSolicitud({
   const [errProvincia, setErrProvincia] = useState('');
   const [errUbicacion, setErrUbicacion] = useState('');
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -124,7 +131,15 @@ export default function EditarSolicitud({
       setKilometraje(solicitud.kilometraje || '');
       setEstado(solicitud.estado || 'Pendiente');
       setDescripcionProblema(solicitud.descripcionProblema || '');
-      setFechaCita(solicitud.fechaCita || '');
+      
+      // Convertir fechaCita string a Date
+      if (solicitud.fechaCita) {
+        const [dia, mes, anio] = solicitud.fechaCita.split('/').map(Number);
+        setFechaCita(new Date(anio, mes - 1, dia));
+      } else {
+        setFechaCita(null);
+      }
+      
       setHoraCita(solicitud.horaCita || '');
       setProvincia(solicitud.provincia || '');
       setUbicacionMecanica(solicitud.ubicacionMecanicaId || '');
@@ -169,7 +184,7 @@ export default function EditarSolicitud({
 
     // Validaciones de solicitud
     const eDescripcion = validarTextoYNumeros(descripcionProblema, 'La descripción del problema');
-    const eFechaCita = !fechaCita.trim() ? 'La fecha de cita es obligatoria.' : null;
+    const eFechaCita = !fechaCita ? 'La fecha de cita es obligatoria.' : null;
     const eHoraCita = !horaCita.trim() ? 'La hora de cita es obligatoria.' : null;
     const eProvincia = !provincia ? 'La provincia es obligatoria.' : null;
     const eUbicacion = !ubicacionMecanica ? 'La ubicación de la mecánica es obligatoria.' : null;
@@ -209,6 +224,14 @@ export default function EditarSolicitud({
       const mecanicasDisponibles = provincia ? obtenerMecanicasPorProvincia(provincia) : [];
       const mecanicaSeleccionada = mecanicasDisponibles.find(m => m.id === ubicacionMecanica);
 
+      // Formatear fecha a DD/MM/YYYY
+      const formatearFecha = (date: Date) => {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+      };
+
       // Usar datosSimulados en lugar de API
       const { actualizarSolicitud } = require('@/utils/datosSimulados');
       
@@ -223,7 +246,7 @@ export default function EditarSolicitud({
         kilometraje: kilometraje.trim(),
         estado,
         descripcionProblema: descripcionProblema.trim(),
-        fechaCita: fechaCita.trim(),
+        fechaCita: fechaCita ? formatearFecha(fechaCita) : '',
         horaCita: horaCita.trim(),
         provincia,
         ubicacionMecanicaId: ubicacionMecanica,
@@ -243,6 +266,65 @@ export default function EditarSolicitud({
   };
 
   if (!solicitud) return null;
+
+  // Funciones del calendario
+  const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
+    const year = monthStart.getFullYear();
+    const month = monthStart.getMonth();
+    const firstWeekday = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const blanks: null[] = Array(firstWeekday).fill(null);
+    const days: Date[] = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+    return [...blanks, ...days];
+  };
+
+  const isDateDisabled = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentYear = today.getFullYear();
+    const dateYear = date.getFullYear();
+    
+    // Bloquear fechas anteriores a hoy
+    if (date < today) return true;
+    
+    // Bloquear fechas de años futuros (solo permitir año actual)
+    if (dateYear > currentYear) return true;
+    
+    return false;
+  };
+
+  const isDateReserved = (date: Date): boolean => {
+    // Obtener todas las solicitudes
+    const todasSolicitudes = obtenerSolicitudesSimuladas();
+    
+    // Filtrar solicitudes que tienen fecha de cita asignada
+    // Excluir la solicitud actual que se está editando
+    const solicitudesConFecha = todasSolicitudes.filter(
+      (sol) => sol.fechaCita && sol.id !== solicitud?.id
+    );
+    
+    // Verificar si la fecha está reservada
+    const dateStr = date.toDateString();
+    return solicitudesConFecha.some((sol) => {
+      if (!sol.fechaCita) return false;
+      try {
+        const [dia, mes, anio] = sol.fechaCita.split('/').map(Number);
+        const fechaSolicitud = new Date(anio, mes - 1, dia);
+        return fechaSolicitud.toDateString() === dateStr;
+      } catch (error) {
+        return false;
+      }
+    });
+  };
+
+  const formatDate = (date: Date | null) => {
+    if (!date) return 'Seleccionar fecha';
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
 
   // Obtener mecánicas disponibles según la provincia seleccionada
   const mecanicasDisponibles = provincia ? obtenerMecanicasPorProvincia(provincia) : [];
@@ -505,16 +587,18 @@ export default function EditarSolicitud({
 
             {/* Fecha de cita */}
             <Text style={styles.label}>Fecha de Cita</Text>
-            <TextInput
-              placeholder="DD/MM/AAAA"
-              placeholderTextColor="#64748B"
-              value={fechaCita}
-              onChangeText={(val) => {
-                setFechaCita(val);
-                setErrFechaCita('');
+            <Pressable
+              style={[styles.dateButton, errFechaCita && styles.inputError]}
+              onPress={() => {
+                setCalendarMonth(fechaCita || new Date());
+                setCalendarVisible(true);
               }}
-              style={[styles.input, errFechaCita && styles.inputError]}
-            />
+            >
+              <Text style={styles.dateButtonText}>
+                {formatDate(fechaCita)}
+              </Text>
+              <FontAwesome name="calendar" size={16} color="#64748B" />
+            </Pressable>
             {errFechaCita ? <Text style={styles.errorText}>{errFechaCita}</Text> : null}
 
             {/* Hora de cita */}
@@ -625,6 +709,88 @@ export default function EditarSolicitud({
             </Pressable>
           </ScrollView>
         </View>
+
+        {/* MODAL CALENDARIO */}
+        <Modal visible={calendarVisible} transparent animationType="fade" onRequestClose={() => setCalendarVisible(false)}>
+          <Pressable style={styles.calendarOverlay} onPress={() => setCalendarVisible(false)}>
+            <Pressable style={styles.calendarModal} onPress={(e) => e.stopPropagation()}>
+              <View style={styles.calendarHeader}>
+                <Pressable 
+                  onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))} 
+                  style={styles.calendarNavBtn}
+                >
+                  <Text style={styles.calendarNavText}>‹</Text>
+                </Pressable>
+                <Text style={styles.calendarMonthLabel}>
+                  {calendarMonth.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' }).toUpperCase()}
+                </Text>
+                <Pressable 
+                  onPress={() => setCalendarMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1))} 
+                  style={styles.calendarNavBtn}
+                >
+                  <Text style={styles.calendarNavText}>›</Text>
+                </Pressable>
+              </View>
+              <View style={styles.calendarWeekRow}>
+                {['D', 'L', 'M', 'M', 'J', 'V', 'S'].map((day, i) => (
+                  <Text key={i} style={styles.calendarWeekLabel}>{day}</Text>
+                ))}
+              </View>
+              <View style={styles.calendarGrid}>
+                {buildCalendarDays(calendarMonth).map((day, i) => {
+                  if (!day) return <View key={i} style={styles.calendarCell} />;
+                  const isSelected = fechaCita?.toDateString() === day.toDateString();
+                  const isDisabled = isDateDisabled(day);
+                  const isReserved = isDateReserved(day);
+                  return (
+                    <Pressable 
+                      key={i} 
+                      style={[
+                        styles.calendarCell, 
+                        isSelected && styles.calendarCellSelected,
+                        isDisabled && styles.calendarCellDisabled,
+                        isReserved && !isSelected && styles.calendarCellReserved
+                      ]} 
+                      onPress={() => { 
+                        if (!isDisabled && !isReserved) {
+                          setFechaCita(day); 
+                          setCalendarVisible(false);
+                          setErrFechaCita('');
+                        }
+                      }}
+                      disabled={isDisabled || isReserved}
+                    >
+                      <Text style={[
+                        styles.calendarCellText, 
+                        isSelected && styles.calendarCellSelectedText,
+                        isDisabled && styles.calendarCellDisabledText,
+                        isReserved && !isSelected && styles.calendarCellReservedText
+                      ]}>
+                        {day.getDate()}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              <Pressable 
+                onPress={() => setCalendarVisible(false)} 
+                style={({ pressed }) => [
+                  styles.calendarCloseBtn, 
+                  pressed && styles.calendarCloseBtnPressed
+                ]}
+              >
+                {({ pressed }) => (
+                  <Text style={[
+                    styles.calendarCloseBtnText, 
+                    pressed && styles.calendarCloseBtnTextPressed
+                  ]}>
+                    ACEPTAR
+                  </Text>
+                )}
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
       </KeyboardAvoidingView>
     </Modal>
   );

@@ -919,6 +919,7 @@ export interface PagoServicio {
   metodoPago?: 'EFECTIVO' | 'TRANSFERENCIA';
   fechaPago?: string;
   observacion?: string;
+  comprobanteUri?: string;
   solicitudId: string;
 }
 
@@ -1060,8 +1061,27 @@ export const obtenerEstadisticasFinancieras = () => {
   const pagosPendientes = pagosServicios.filter(p => p.estado === 'PENDIENTE');
   const pagosPagados = pagosServicios.filter(p => p.estado === 'PAGADO');
   
-  // Ingresos del mes = Total cobrado de servicios pagados
-  const ingresosMes = pagosPagados.reduce((sum, p) => sum + p.total, 0);
+  // Obtener mes y año actual
+  const ahora = new Date();
+  const mesActual = ahora.getMonth(); // 0-11
+  const anioActual = ahora.getFullYear();
+  
+  // Filtrar pagos pagados del mes actual basado en fechaPago
+  const pagosMesActual = pagosPagados.filter(p => {
+    if (!p.fechaPago) return false;
+    
+    // Convertir fechaPago (formato DD/MM/YYYY) a Date
+    const [dia, mes, anio] = p.fechaPago.split('/').map(Number);
+    const fechaPagoDate = new Date(anio, mes - 1, dia); // mes - 1 porque Date usa 0-11
+    
+    return (
+      fechaPagoDate.getMonth() === mesActual &&
+      fechaPagoDate.getFullYear() === anioActual
+    );
+  });
+  
+  // Ingresos del mes = Total cobrado de servicios pagados EN EL MES ACTUAL
+  const ingresosMes = pagosMesActual.reduce((sum, p) => sum + p.total, 0);
   
   // Costo de repuestos = Suma de costos de repuestos de servicios PENDIENTES
   // (Es el costo que se debe cubrir para los servicios que aún no se han pagado)

@@ -277,6 +277,12 @@ export default StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
+  calendarCellDisabled: {
+    opacity: 0.3,
+  },
+  calendarCellDisabledText: {
+    color: '#64748B',
+  },
   calendarCloseBtn: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
@@ -295,5 +301,36 @@ export default StyleSheet.create({
   },
   calendarCloseBtnTextPressed: {
     color: '#FFFFFF',
+  },
+
+  // Botón para cargar comprobante
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    borderWidth: 2,
+    borderColor: '#334155',
+    borderRadius: 8,
+    borderStyle: 'dashed',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginBottom: 4,
+    gap: 12,
+    justifyContent: 'center',
+  },
+  uploadButtonPressed: {
+    backgroundColor: '#1E293B',
+    borderColor: '#475569',
+  },
+  uploadButtonError: {
+    borderColor: '#EF4444',
+  },
+  uploadButtonText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '600',
+  },
+  uploadButtonTextSuccess: {
+    color: '#10B981',
   },
 });

@@ -11,12 +11,16 @@ import {
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import * as ScreenCapture from 'expo-screen-capture';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import NavbarFinanciero from '@/components/navbarFinanciero/navbarFinanciero';
-import styles from '@/Styles/pantallaFinanciero/historial';
+import stylesBase from '@/Styles/pantallaFinanciero/historial';
+import stylesWeb from '@/Styles/pantallaFinanciero/historial.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { useAuth } from '@/context/AuthContext';
 import ResponsiveContainer from '@/components/ResponsiveContainer';
 import {
@@ -32,6 +36,10 @@ import ReenvioExitoso from './modalesHistorial/reenvioExitoso';
 export default function HistorialFinancieroScreen() {
   const router = useRouter();
   const { logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
   useEffect(() => {
     if (Platform.OS === 'web') return;
@@ -251,96 +259,113 @@ export default function HistorialFinancieroScreen() {
                 />
               </View>
 
-              {/* Mecánico */}
-              <Text style={styles.filterLabel}>Mecánico</Text>
-              <Pressable
-                style={styles.dropdown}
-                onPress={() => {
-                  cerrarTodosLosDropdowns();
-                  setMecanicoDropdownOpen(!mecanicoDropdownOpen);
-                }}
-              >
-                <Text style={styles.dropdownText}>{mecanicoSeleccionado}</Text>
-                <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
-              </Pressable>
-              {mecanicoDropdownOpen && (
-                <View style={styles.dropdownMenu}>
-                  {obtenerMecanicosUnicos().map((mec) => (
-                    <Pressable
-                      key={mec}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setMecanicoSeleccionado(mec);
-                        setMecanicoDropdownOpen(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{mec}</Text>
-                    </Pressable>
-                  ))}
+              {/* Fila de filtros: Mecánico, Método de Pago y Servicio juntos */}
+              <View style={[
+                Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+              ]}>
+                {/* Mecánico */}
+                <View style={[
+                  Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+                ]}>
+                  <Text style={styles.filterLabel}>Mecánico</Text>
+                  <Pressable
+                    style={styles.dropdown}
+                    onPress={() => {
+                      cerrarTodosLosDropdowns();
+                      setMecanicoDropdownOpen(!mecanicoDropdownOpen);
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>{mecanicoSeleccionado}</Text>
+                    <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
+                  </Pressable>
+                  {mecanicoDropdownOpen && (
+                    <View style={styles.dropdownMenu}>
+                      {obtenerMecanicosUnicos().map((mec) => (
+                        <Pressable
+                          key={mec}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setMecanicoSeleccionado(mec);
+                            setMecanicoDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{mec}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
-              )}
 
-              {/* Método de pago */}
-              <Text style={styles.filterLabel}>Método de pago</Text>
-              <Pressable
-                style={styles.dropdown}
-                onPress={() => {
-                  cerrarTodosLosDropdowns();
-                  setMetodoPagoDropdownOpen(!metodoPagoDropdownOpen);
-                }}
-              >
-                <Text style={styles.dropdownText}>{metodoPagoSeleccionado}</Text>
-                <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
-              </Pressable>
-              {metodoPagoDropdownOpen && (
-                <View style={styles.dropdownMenu}>
-                  {['Todos', 'EFECTIVO', 'TRANSFERENCIA'].map((metodo) => (
-                    <Pressable
-                      key={metodo}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setMetodoPagoSeleccionado(metodo);
-                        setMetodoPagoDropdownOpen(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{metodo}</Text>
-                    </Pressable>
-                  ))}
+                {/* Método de pago */}
+                <View style={[
+                  Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+                ]}>
+                  <Text style={styles.filterLabel}>Método de pago</Text>
+                  <Pressable
+                    style={styles.dropdown}
+                    onPress={() => {
+                      cerrarTodosLosDropdowns();
+                      setMetodoPagoDropdownOpen(!metodoPagoDropdownOpen);
+                    }}
+                  >
+                    <Text style={styles.dropdownText}>{metodoPagoSeleccionado}</Text>
+                    <FontAwesome name="chevron-down" size={12} color="#94A3B8" />
+                  </Pressable>
+                  {metodoPagoDropdownOpen && (
+                    <View style={styles.dropdownMenu}>
+                      {['Todos', 'EFECTIVO', 'TRANSFERENCIA'].map((metodo) => (
+                        <Pressable
+                          key={metodo}
+                          style={styles.dropdownItem}
+                          onPress={() => {
+                            setMetodoPagoSeleccionado(metodo);
+                            setMetodoPagoDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemText}>{metodo}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                  )}
                 </View>
-              )}
 
-              {/* Servicio */}
-              <Text style={styles.filterLabel}>Servicio</Text>
-              <Pressable
-                style={styles.filterDropdown}
-                onPress={() => {
-                  cerrarTodosLosDropdowns();
-                  setServicioDropdownOpen(!servicioDropdownOpen);
-                }}
-              >
-                <Text style={styles.filterDropdownText}>{servicioSeleccionado}</Text>
-                <Text style={styles.dropdownArrow}>{servicioDropdownOpen ? '▲' : '▼'}</Text>
-              </Pressable>
-              {servicioDropdownOpen && (
-                <ScrollView style={styles.dropdownList} nestedScrollEnabled>
-                  {obtenerServiciosUnicos().map((servicio) => (
-                    <Pressable
-                      key={servicio}
-                      style={[styles.dropdownItem, servicioSeleccionado === servicio && styles.dropdownItemActive]}
-                      onPress={() => {
-                        setServicioSeleccionado(servicio);
-                        setServicioDropdownOpen(false);
-                        if (servicio !== 'Otro') {
-                          setServicioOtro(''); // Limpiar campo "Otro" si selecciona otra opción
-                        }
-                      }}
-                    >
-                      <Text style={styles.dropdownItemCheck}>{servicioSeleccionado === servicio ? '✓ ' : '    '}</Text>
-                      <Text style={styles.dropdownItemText}>{servicio}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              )}
+                {/* Servicio */}
+                <View style={[
+                  Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+                ]}>
+                  <Text style={styles.filterLabel}>Servicio</Text>
+                  <Pressable
+                    style={styles.filterDropdown}
+                    onPress={() => {
+                      cerrarTodosLosDropdowns();
+                      setServicioDropdownOpen(!servicioDropdownOpen);
+                    }}
+                  >
+                    <Text style={styles.filterDropdownText}>{servicioSeleccionado}</Text>
+                    <Text style={styles.dropdownArrow}>{servicioDropdownOpen ? '▲' : '▼'}</Text>
+                  </Pressable>
+                  {servicioDropdownOpen && (
+                    <ScrollView style={styles.dropdownList} nestedScrollEnabled>
+                      {obtenerServiciosUnicos().map((servicio) => (
+                        <Pressable
+                          key={servicio}
+                          style={[styles.dropdownItem, servicioSeleccionado === servicio && styles.dropdownItemActive]}
+                          onPress={() => {
+                            setServicioSeleccionado(servicio);
+                            setServicioDropdownOpen(false);
+                            if (servicio !== 'Otro') {
+                              setServicioOtro(''); // Limpiar campo "Otro" si selecciona otra opción
+                            }
+                          }}
+                        >
+                          <Text style={styles.dropdownItemCheck}>{servicioSeleccionado === servicio ? '✓ ' : '    '}</Text>
+                          <Text style={styles.dropdownItemText}>{servicio}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  )}
+                </View>
+              </View>
 
               {/* Campo "Otro" - solo visible cuando se selecciona "Otro" */}
               {servicioSeleccionado === 'Otro' && (
@@ -420,9 +445,26 @@ export default function HistorialFinancieroScreen() {
               No hay pagos registrados en el historial
             </Text>
           ) : (
-            <View style={styles.pagosContainer}>
+            <View style={[
+              styles.pagosContainer,
+              Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+            ]}>
               {pagosFiltrados.map((pago) => (
-                <View key={pago.id} style={styles.pagoCard}>
+                <View 
+                  key={pago.id} 
+                  style={[
+                    styles.pagoCard,
+                    Platform.OS === 'web' && !isSmallScreen && { 
+                      flex: 1, 
+                      minWidth: 300, 
+                      maxWidth: 'calc(50% - 8px)' 
+                    },
+                    Platform.OS === 'web' && isSmallScreen && { 
+                      width: '100%',
+                      maxWidth: '100%'
+                    }
+                  ]}
+                >
                   <View style={styles.pagoContent}>
                     {/* ID y Estado */}
                     <View style={styles.pagoHeader}>

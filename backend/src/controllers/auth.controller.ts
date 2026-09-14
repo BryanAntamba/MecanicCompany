@@ -43,6 +43,7 @@ export async function login(req: Request, res: Response): Promise<void> {
                 especialidad: 'Administración',
                 estadoLaboral: 'Disponible',
                 esAdmin: true,
+                tipoPersonal: 'Administrador',
             },
         });
         return;
@@ -80,6 +81,7 @@ export async function login(req: Request, res: Response): Promise<void> {
             especialidad: mecanico.especialidad,
             estadoLaboral: mecanico.estadoLaboral,
             esAdmin: false,
+            tipoPersonal: mecanico.tipoPersonal, // Mecánico, Inventario, Financiero
         },
     });
 }

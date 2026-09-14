@@ -299,6 +299,12 @@ export default StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
+  calendarCellDisabled: {
+    opacity: 0.3,
+  },
+  calendarCellDisabledText: {
+    color: '#64748B',
+  },
   calendarCloseBtn: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,

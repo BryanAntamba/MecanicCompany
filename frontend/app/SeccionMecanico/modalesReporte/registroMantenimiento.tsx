@@ -315,8 +315,10 @@ export default function RegistroMantenimiento({
     return manoObra + repuestos;
   };
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -411,6 +413,22 @@ export default function RegistroMantenimiento({
     return [...blanks, ...days];
   };
 
+  const isDateDisabled = (date: Date): boolean => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const currentYear = today.getFullYear();
+    const dateYear = date.getFullYear();
+    
+    // Bloquear fechas anteriores a hoy
+    if (date < today) return true;
+    
+    // Bloquear fechas de años futuros (solo permitir año actual)
+    if (dateYear > currentYear) return true;
+    
+    return false;
+  };
+
   const formatDate = (date: Date | null) =>
     date ? date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Seleccionar';
 
@@ -490,6 +508,25 @@ export default function RegistroMantenimiento({
       
       const eObservaciones = validarTextoNumerosCaracteresEspeciales(observaciones, 'Las observaciones');
       const eFechaInicio = !fechaInicio ? 'La fecha de inicio es obligatoria.' : null;
+      
+      // Validar que fecha de inicio no sea anterior a la fecha de cita
+      let eFechaInicioVsCita = null;
+      if (fechaInicio && solicitud?.fechaCita) {
+        try {
+          const [dia, mes, anio] = solicitud.fechaCita.split('/').map(Number);
+          const fechaCitaDate = new Date(anio, mes - 1, dia);
+          fechaCitaDate.setHours(0, 0, 0, 0);
+          const fechaInicioDate = new Date(fechaInicio);
+          fechaInicioDate.setHours(0, 0, 0, 0);
+          
+          if (fechaInicioDate < fechaCitaDate) {
+            eFechaInicioVsCita = `La fecha de inicio no puede ser anterior a la fecha de cita (${solicitud.fechaCita}).`;
+          }
+        } catch (error) {
+          console.error('Error al comparar fechas:', error);
+        }
+      }
+
       const eFechaFinalizacion = !fechaFinalizacion 
         ? 'La fecha de finalización es obligatoria.' 
         : (fechaInicio && fechaFinalizacion < fechaInicio)
@@ -503,18 +540,36 @@ export default function RegistroMantenimiento({
       setErrDiagnosticoRealizado(eDiagnosticoRealizado ?? '');
       setErrCostoManoObra(eCostoManoObra ?? '');
       setErrObservaciones(eObservaciones ?? '');
-      setErrFechaInicio(eFechaInicio ?? '');
+      setErrFechaInicio((eFechaInicio || eFechaInicioVsCita) ?? '');
       setErrFechaFinalizacion(eFechaFinalizacion ?? '');
       setErrRepuestos(eRepuestos ?? '');
 
       // Si hay errores, no continuar
       if ([eDiagnostico, eOtroTrabajo, eDiagnosticoRealizado, 
         eCostoManoObra, eObservaciones, 
-        eFechaInicio, eFechaFinalizacion, eRepuestos].some(Boolean)) {
+        eFechaInicio, eFechaInicioVsCita, eFechaFinalizacion, eRepuestos].some(Boolean)) {
         return;
       }
     } else if (hayDatos) {
       nuevoEstado = 'En_proceso';
+      
+      // Validar fecha de inicio vs fecha de cita también en guardado parcial
+      if (fechaInicio && solicitud?.fechaCita) {
+        try {
+          const [dia, mes, anio] = solicitud.fechaCita.split('/').map(Number);
+          const fechaCitaDate = new Date(anio, mes - 1, dia);
+          fechaCitaDate.setHours(0, 0, 0, 0);
+          const fechaInicioDate = new Date(fechaInicio);
+          fechaInicioDate.setHours(0, 0, 0, 0);
+          
+          if (fechaInicioDate < fechaCitaDate) {
+            setErrFechaInicio(`La fecha de inicio no puede ser anterior a la fecha de cita (${solicitud.fechaCita}).`);
+            return; // No permitir guardar
+          }
+        } catch (error) {
+          console.error('Error al comparar fechas:', error);
+        }
+      }
     } else {
       nuevoEstado = 'Pendiente';
     }
@@ -1273,9 +1328,30 @@ export default function RegistroMantenimiento({
               {buildCalendarDays(calendarMonth).map((day, i) => {
                 if (!day) return <View key={i} style={styles.calendarCell} />;
                 const isSelected = fechaInicio?.toDateString() === day.toDateString();
+                const isDisabled = isDateDisabled(day);
                 return (
-                  <Pressable key={i} style={[styles.calendarCell, isSelected && styles.calendarCellSelected]} onPress={() => { setFechaInicio(day); setCalendarInicioVisible(false); }}>
-                    <Text style={[styles.calendarCellText, isSelected && styles.calendarCellSelectedText]}>{day.getDate()}</Text>
+                  <Pressable 
+                    key={i} 
+                    style={[
+                      styles.calendarCell, 
+                      isSelected && styles.calendarCellSelected,
+                      isDisabled && styles.calendarCellDisabled
+                    ]} 
+                    onPress={() => { 
+                      if (!isDisabled) {
+                        setFechaInicio(day); 
+                        setCalendarInicioVisible(false); 
+                      }
+                    }}
+                    disabled={isDisabled}
+                  >
+                    <Text style={[
+                      styles.calendarCellText, 
+                      isSelected && styles.calendarCellSelectedText,
+                      isDisabled && styles.calendarCellDisabledText
+                    ]}>
+                      {day.getDate()}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -1314,9 +1390,30 @@ export default function RegistroMantenimiento({
               {buildCalendarDays(calendarMonth).map((day, i) => {
                 if (!day) return <View key={i} style={styles.calendarCell} />;
                 const isSelected = fechaFinalizacion?.toDateString() === day.toDateString();
+                const isDisabled = isDateDisabled(day);
                 return (
-                  <Pressable key={i} style={[styles.calendarCell, isSelected && styles.calendarCellSelected]} onPress={() => { setFechaFinalizacion(day); setCalendarFinalizacionVisible(false); }}>
-                    <Text style={[styles.calendarCellText, isSelected && styles.calendarCellSelectedText]}>{day.getDate()}</Text>
+                  <Pressable 
+                    key={i} 
+                    style={[
+                      styles.calendarCell, 
+                      isSelected && styles.calendarCellSelected,
+                      isDisabled && styles.calendarCellDisabled
+                    ]} 
+                    onPress={() => { 
+                      if (!isDisabled) {
+                        setFechaFinalizacion(day); 
+                        setCalendarFinalizacionVisible(false); 
+                      }
+                    }}
+                    disabled={isDisabled}
+                  >
+                    <Text style={[
+                      styles.calendarCellText, 
+                      isSelected && styles.calendarCellSelectedText,
+                      isDisabled && styles.calendarCellDisabledText
+                    ]}>
+                      {day.getDate()}
+                    </Text>
                   </Pressable>
                 );
               })}

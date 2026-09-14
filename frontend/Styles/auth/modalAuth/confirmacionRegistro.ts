@@ -2,7 +2,7 @@
 // Estilos del modal de confirmación de registro exitoso
 // Estilo similar al contenedor del login con fondo azul oscuro semitransparente
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
@@ -25,6 +25,12 @@ export default StyleSheet.create({
     borderColor: 'rgba(43, 54, 70, 0.6)', // Mismo borde que login
     minWidth: 300,
     maxWidth: 340,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 500,
+      '@media (max-width: 640px)': {
+        maxWidth: 340,
+      },
+    }),
   },
 
   // Contenedor del ícono de check con fondo verde circular

@@ -127,12 +127,22 @@ export default function VerificacionFormulario({
 
           {/* Botones */}
           <View style={styles.buttonContainer}>
+            {/* Botón de prueba simple */}
             <Pressable
               style={({ pressed }) => [
                 styles.confirmButton,
                 pressed && styles.confirmButtonPressed,
               ]}
-              onPress={onConfirmar}
+              onPress={() => {
+                console.log('🟢 Botón CONFIRMAR SOLICITUD presionado');
+                console.log('🟢 onConfirmar es:', typeof onConfirmar);
+                try {
+                  onConfirmar();
+                  console.log('✅ onConfirmar ejecutado sin errores');
+                } catch (error) {
+                  console.error('❌ Error al ejecutar onConfirmar:', error);
+                }
+              }}
             >
               {({ pressed }) => (
                 <Text
@@ -148,7 +158,10 @@ export default function VerificacionFormulario({
 
             <Pressable
               style={styles.cancelButton}
-              onPress={onCancelar}
+              onPress={() => {
+                console.log('🟡 Botón CANCELAR presionado');
+                onCancelar();
+              }}
             >
               <Text style={styles.cancelButtonText}>CANCELAR</Text>
             </Pressable>

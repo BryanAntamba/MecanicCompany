@@ -182,4 +182,128 @@ export default StyleSheet.create({
   saveBtnTextPressed: {
     color: '#FFFFFF',
   },
+
+  // Botón de fecha (calendario)
+  dateButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#0F172A',
+    borderWidth: 2,
+    borderColor: '#334155',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  dateButtonText: {
+    fontSize: 14,
+    color: '#F1F5F9',
+  },
+
+  // Estilos del calendario
+  calendarOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calendarModal: {
+    width: '85%',
+    maxWidth: 400,
+    backgroundColor: '#1E293B',
+    borderRadius: 16,
+    padding: 20,
+  },
+  calendarHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  calendarNavBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#334155',
+    borderRadius: 8,
+  },
+  calendarNavText: {
+    fontSize: 24,
+    color: '#F1F5F9',
+    fontWeight: 'bold',
+  },
+  calendarMonthLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#F1F5F9',
+    textAlign: 'center',
+  },
+  calendarWeekRow: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  calendarWeekLabel: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#94A3B8',
+  },
+  calendarGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  calendarCell: {
+    width: '14.28%',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  calendarCellSelected: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+  },
+  calendarCellText: {
+    fontSize: 14,
+    color: '#F1F5F9',
+  },
+  calendarCellSelectedText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  calendarCellDisabled: {
+    opacity: 0.3,
+  },
+  calendarCellDisabledText: {
+    color: '#64748B',
+  },
+  calendarCellReserved: {
+    backgroundColor: '#DC2626',
+    borderRadius: 8,
+  },
+  calendarCellReservedText: {
+    color: '#FFFFFF',
+    fontWeight: 'bold',
+  },
+  calendarCloseBtn: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  calendarCloseBtnPressed: {
+    backgroundColor: '#3B82F6',
+  },
+  calendarCloseBtnText: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+  calendarCloseBtnTextPressed: {
+    color: '#FFFFFF',
+  },
 });
