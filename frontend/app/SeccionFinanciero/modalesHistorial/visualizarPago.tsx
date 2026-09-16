@@ -7,6 +7,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import * as FileSystem from '@/utils/fileSystem';
 import * as Sharing from '@/utils/sharing';
+import * as Print from 'expo-print';
 import styles from '@/Styles/pantallaFinanciero/modalesHistorial/visualizarPago';
 
 interface VisualizarPagoProps {
@@ -36,28 +37,71 @@ export default function VisualizarPago({
 
     try {
       if (Platform.OS === 'web') {
-        // En web, crear un enlace de descarga
-        const link = document.createElement('a');
-        link.href = pago.comprobanteUri;
-        link.download = `comprobante_${pago.id || 'pago'}.jpg`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      } else {
-        // En móvil, si el URI es local (file://), solo compartirlo
-        // Si es remoto (http/https), descargarlo primero
-        if (pago.comprobanteUri.startsWith('file://') || pago.comprobanteUri.startsWith('content://')) {
-          // URI local, compartir directamente
-          await Sharing.shareAsync(pago.comprobanteUri);
-        } else {
-          // URI remoto, descargar primero
-          const fileUri = FileSystem.documentDirectory + `comprobante_${pago.id}.${pago.comprobanteUri.split('.').pop()}`;
-          const downloadResult = await FileSystem.downloadAsync(pago.comprobanteUri, fileUri);
-          
-          if (downloadResult.uri) {
-            await Sharing.shareAsync(downloadResult.uri);
+        // En web, convertir la imagen a PDF antes de descargar
+        if (pago.comprobanteUri.startsWith('data:image')) {
+          // Cargar jsPDF dinámicamente desde CDN solo cuando se necesita
+          if (!(window as any).jspdf) {
+            // Cargar jsPDF desde CDN
+            await new Promise<void>((resolve, reject) => {
+              const script = document.createElement('script');
+              script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+              script.onload = () => resolve();
+              script.onerror = () => reject(new Error('No se pudo cargar jsPDF'));
+              document.head.appendChild(script);
+            });
           }
+          
+          const { jsPDF } = (window as any).jspdf;
+          
+          // Cargar la imagen para obtener dimensiones
+          const img = new Image();
+          img.src = pago.comprobanteUri;
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+          });
+
+          // Crear PDF con orientación automática
+          const orientation = img.width > img.height ? 'landscape' : 'portrait';
+          const pdf = new jsPDF({
+            orientation,
+            unit: 'px',
+            format: [img.width, img.height]
+          });
+
+          // Agregar la imagen al PDF
+          pdf.addImage(
+            pago.comprobanteUri,
+            'JPEG',
+            0,
+            0,
+            img.width,
+            img.height
+          );
+
+          // Descargar el PDF
+          pdf.save(`Comprobante_${pago.clienteNombre.replace(/\s+/g, '_')}_${pago.id || 'pago'}.pdf`);
+          
+          Alert.alert('Éxito', 'Comprobante descargado correctamente');
+        } else {
+          // Es un PDF existente, descargar directamente
+          const link = document.createElement('a');
+          link.href = pago.comprobanteUri;
+          link.download = `Comprobante_${pago.clienteNombre.replace(/\s+/g, '_')}_${pago.id || 'pago'}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          Alert.alert('Éxito', 'Comprobante descargado correctamente');
         }
+      } else {
+        // En móvil, compartir el comprobante (PDF o imagen)
+        await Sharing.shareAsync(pago.comprobanteUri, {
+          mimeType: pago.comprobanteUri.startsWith('data:image') ? 'image/jpeg' : 'application/pdf',
+          dialogTitle: 'Compartir Comprobante de Pago',
+          UTI: pago.comprobanteUri.startsWith('data:image') ? 'public.jpeg' : 'com.adobe.pdf'
+        });
       }
     } catch (error) {
       console.error('Error al descargar comprobante:', error);
@@ -167,9 +211,12 @@ export default function VisualizarPago({
               style={({ pressed }) => [styles.closeBtnBottom, pressed && styles.closeBtnBottomPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.closeBtnBottomText, pressed && styles.closeBtnBottomTextPressed]}>
-                  CERRAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="times-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                  <Text style={[styles.closeBtnBottomText, pressed && styles.closeBtnBottomTextPressed]}>
+                    CERRAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

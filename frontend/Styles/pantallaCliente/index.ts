@@ -725,6 +725,32 @@ export default StyleSheet.create({
     opacity: 0.25,
   },
 
+  // Estilos de disponibilidad de citas
+  calendarCellDisponible: {
+    backgroundColor: 'rgba(34, 197, 94, 0.2)', // Verde suave
+    borderWidth: 1,
+    borderColor: '#22C55E',
+  },
+
+  calendarCellMedio: {
+    backgroundColor: 'rgba(251, 146, 60, 0.2)', // Naranja suave
+    borderWidth: 1,
+    borderColor: '#FB923C',
+  },
+
+  calendarCellBajo: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)', // Rojo suave
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+
+  calendarCellLleno: {
+    backgroundColor: 'rgba(100, 116, 139, 0.3)', // Gris
+    borderWidth: 1,
+    borderColor: '#64748B',
+    opacity: 0.5,
+  },
+
   // Texto de cada celda de día
   calendarCellText: {
     color: '#F8FAFC',
@@ -884,6 +910,16 @@ export default StyleSheet.create({
     color: '#FFFFFF',
   },
 
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 10,
+  },
+
   // --- SECCIÓN GOOGLE MAPS ---
   mapSection: {
     marginTop: 40,         // Separación del formulario
@@ -946,6 +982,14 @@ export default StyleSheet.create({
     fontWeight: '600',
     marginBottom: 4,
     marginLeft: 2,
+  },
+
+  fieldDescription: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 8,
+    marginLeft: 2,
+    lineHeight: 18,
   },
 
   fieldHelp: {
@@ -1013,6 +1057,6 @@ export default StyleSheet.create({
 
   // Ícono del botón
   scrollTopIcon: {
-    marginLeft: 4,
+    marginLeft: 8,
   },
 });

@@ -235,6 +235,14 @@ export default StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
   btnPrimaryPressed: {
     backgroundColor: '#2563EB',
   },
@@ -312,6 +320,27 @@ export default StyleSheet.create({
     color: '#64748B',
   },
   btnEnviarReporteTextPressed: {
+    color: '#F1F5F9',
+  },
+
+  // Botón Generar Autorización
+  btnGenerarAutorizacion: {
+    backgroundColor: '#3B82F6',
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  btnGenerarAutorizacionPressed: {
+    backgroundColor: '#2563EB',
+  },
+  btnGenerarAutorizacionText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  btnGenerarAutorizacionTextPressed: {
     color: '#F1F5F9',
   },
 

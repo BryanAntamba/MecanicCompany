@@ -67,9 +67,17 @@ export default function EliminarPersonal({
               ]}
             >
               {({ pressed }) => (
-                <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
-                  CANCELAR
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={16} 
+                    color={pressed ? '#1E293B' : '#000000'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
               )}
             </Pressable>
 
@@ -82,9 +90,17 @@ export default function EliminarPersonal({
               ]}
             >
               {({ pressed }) => (
-                <Text style={[styles.btnEliminarText, pressed && styles.btnEliminarTextPressed]}>
-                  ELIMINAR
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="trash" 
+                    size={16} 
+                    color={pressed ? '#FCA5A5' : '#FFFFFF'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[styles.btnEliminarText, pressed && styles.btnEliminarTextPressed]}>
+                    ELIMINAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

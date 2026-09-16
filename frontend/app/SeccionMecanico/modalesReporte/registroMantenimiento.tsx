@@ -613,7 +613,7 @@ export default function RegistroMantenimiento({
   // Determinar el texto del botón
   const getTextoBoton = () => {
     if (todosLosCamposLlenos()) {
-      return 'ENVIAR REPORTE';
+      return 'GUARDAR REPORTE';
     }
     if (tieneDatos()) {
       return 'GUARDAR REPORTE';
@@ -1295,9 +1295,12 @@ export default function RegistroMantenimiento({
               style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  {getTextoBoton()}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="check-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    {getTextoBoton()}
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

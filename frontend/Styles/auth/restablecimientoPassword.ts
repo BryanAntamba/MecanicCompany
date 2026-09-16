@@ -147,6 +147,16 @@ export default StyleSheet.create({
     color: '#FFFFFF',
   },
 
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+
   // Fila del enlace "← Volver al inicio de sesión" centrado
   backRow: {
     alignItems: 'center',        // Centra el enlace horizontalmente

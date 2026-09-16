@@ -69,6 +69,16 @@ export default StyleSheet.create({
   closeButtonPressed: {
     backgroundColor: '#2563EB',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+    width: 18,
+    textAlign: 'center',
+  },
   closeButtonText: {
     fontSize: 15,
     fontWeight: '800',

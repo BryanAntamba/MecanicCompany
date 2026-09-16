@@ -139,4 +139,14 @@ export default StyleSheet.create({
     color: '#F1F5F9',
     textTransform: 'uppercase',
   },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 });

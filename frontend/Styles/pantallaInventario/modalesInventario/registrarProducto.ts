@@ -235,11 +235,17 @@ export default StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
   },
+  cancelButtonPressed: {
+    backgroundColor: '#1F2937',
+  },
   cancelButtonText: {
     fontSize: 15,
     fontWeight: '800',
     color: '#F1F5F9',
     letterSpacing: 1,
+  },
+  cancelButtonTextPressed: {
+    color: '#1E293B',
   },
   saveBtn: {
     flex: 1,

@@ -268,4 +268,14 @@ export default StyleSheet.create({
   roleButtonTextActive: {
     color: '#3B82F6',
   },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 });

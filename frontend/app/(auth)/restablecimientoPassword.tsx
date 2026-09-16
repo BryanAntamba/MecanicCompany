@@ -129,9 +129,17 @@ export default function RestablecimientoPasswordScreen() {
               disabled={loading}
             >
               {({ pressed }) => (
-                <Text style={[restablecerStyles.buttonText, pressed && restablecerStyles.buttonTextPressed]}>
-                  {loading ? 'Cargando...' : 'Restablecer contraseña'}
-                </Text>
+                <View style={restablecerStyles.buttonContent}>
+                  <FontAwesome 
+                    name="key" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={restablecerStyles.buttonIcon}
+                  />
+                  <Text style={[restablecerStyles.buttonText, pressed && restablecerStyles.buttonTextPressed]}>
+                    {loading ? 'Cargando...' : 'Restablecer contraseña'}
+                  </Text>
+                </View>
               )}
             </Pressable>
 

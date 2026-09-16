@@ -53,9 +53,12 @@ export default function ConfirmacionSolicitud({
               ]}
             >
               {({ pressed }) => (
-                <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
-                  CANCELAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="times" size={16} color={pressed ? '#1E293B' : '#000000'} />
+                  <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
               )}
             </Pressable>
 
@@ -68,9 +71,12 @@ export default function ConfirmacionSolicitud({
               ]}
             >
               {({ pressed }) => (
-                <Text style={[styles.btnEliminarText, pressed && styles.btnEliminarTextPressed]}>
-                  ELIMINAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="trash" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                  <Text style={[styles.btnEliminarText, pressed && styles.btnEliminarTextPressed]}>
+                    ELIMINAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

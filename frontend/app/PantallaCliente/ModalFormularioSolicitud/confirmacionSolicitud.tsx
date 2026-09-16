@@ -71,14 +71,22 @@ export default function ConfirmacionSolicitud({
             onPress={onCerrar}
           >
             {({ pressed }) => (
-              <Text
-                style={[
-                  styles.closeButtonText,
-                  pressed && styles.closeButtonTextPressed,
-                ]}
-              >
-                CERRAR
-              </Text>
+              <View style={styles.buttonContent}>
+                <FontAwesome 
+                  name="check-circle" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'} 
+                  style={styles.buttonIcon}
+                />
+                <Text
+                  style={[
+                    styles.closeButtonText,
+                    pressed && styles.closeButtonTextPressed,
+                  ]}
+                >
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

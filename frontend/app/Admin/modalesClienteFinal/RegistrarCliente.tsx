@@ -441,9 +441,17 @@ export default function RegistrarCliente({
               style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  GUARDAR USUARIO
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="user-plus" 
+                    size={18} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 10 }} />
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    GUARDAR USUARIO
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

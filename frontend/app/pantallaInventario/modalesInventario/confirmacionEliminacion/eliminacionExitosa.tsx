@@ -50,9 +50,17 @@ function EliminacionExitosa({ visible, onClose, nombreProducto }: Props) {
             onPress={onClose}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <FontAwesome 
+                  name="times-circle" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'}
+                />
+                <View style={{ width: 8 }} />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

@@ -16,6 +16,8 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import * as ImagePicker from '@/utils/imagePicker';
+import * as Print from 'expo-print';
+import * as FileSystem from '@/utils/fileSystem';
 import styles from '../../../Styles/pantallaFinanciero/modalesPago/registrarPago';
 
 interface RegistrarPagoProps {
@@ -110,15 +112,75 @@ export default function RegistrarPago({
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset = result.assets[0];
-        setComprobanteUri(asset.uri);
-        // Extraer nombre del archivo de la URI
-        const fileName = asset.uri.split('/').pop() || 'comprobante.jpg';
-        setComprobanteNombre(fileName);
-        setErrComprobante('');
+        
+        // Convertir la imagen a base64 para incluirla en el PDF
+        let imageBase64 = asset.uri;
+        
+        if (Platform.OS === 'web') {
+          // En web, la URI ya es compatible o es blob
+          imageBase64 = asset.uri;
+        } else {
+          // En móvil, leer el archivo como base64
+          const base64 = await FileSystem.readAsStringAsync(asset.uri, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+          imageBase64 = `data:image/jpeg;base64,${base64}`;
+        }
+        
+        // Convertir la imagen a PDF - solo la imagen, sin texto
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+              }
+              body {
+                width: 100%;
+                height: 100vh;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background-color: #ffffff;
+              }
+              img {
+                max-width: 100%;
+                max-height: 100vh;
+                width: auto;
+                height: auto;
+                object-fit: contain;
+              }
+            </style>
+          </head>
+          <body>
+            <img src="${imageBase64}" alt="Comprobante" />
+          </body>
+          </html>
+        `;
+
+        // Generar PDF
+        if (Platform.OS === 'web') {
+          // En web, guardar la imagen directamente como data URL en lugar de PDF
+          // para evitar el diálogo de impresión
+          setComprobanteUri(imageBase64);
+          setComprobanteNombre('comprobante.jpg');
+          setErrComprobante('');
+        } else {
+          // En móvil, convertir a PDF usando expo-print
+          const { uri: pdfUri } = await Print.printToFileAsync({ html });
+          setComprobanteUri(pdfUri);
+          setComprobanteNombre('comprobante.pdf');
+          setErrComprobante('');
+        }
       }
     } catch (error) {
       console.error('Error al seleccionar comprobante:', error);
-      Alert.alert('Error', 'No se pudo seleccionar el archivo');
+      Alert.alert('Error', 'No se pudo procesar el comprobante');
     }
   };
 
@@ -351,9 +413,12 @@ export default function RegistrarPago({
                 style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                    CONFIRMAR PAGO
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="check-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                    <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                      CONFIRMAR PAGO
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 
@@ -362,9 +427,12 @@ export default function RegistrarPago({
                 style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                    CANCELAR
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="times" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                    <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                      CANCELAR
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>

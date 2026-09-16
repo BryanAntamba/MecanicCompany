@@ -42,9 +42,17 @@ export default function PagoAprobado({ visible, onClose }: PagoAprobadoProps) {
             style={({ pressed }) => [styles.closeButton, pressed && styles.closeButtonPressed]}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <FontAwesome 
+                  name="times-circle" 
+                  size={16} 
+                  color={pressed ? '#1E293B' : '#000000'} 
+                />
+                <View style={{ width: 8 }} />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

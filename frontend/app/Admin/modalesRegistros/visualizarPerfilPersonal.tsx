@@ -179,9 +179,17 @@ export default function VisualizarPerfilPersonal({
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
-                  CERRAR
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
+                    CERRAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

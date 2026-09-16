@@ -452,9 +452,12 @@ export default function HistorialScreen() {
                 style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
-                    VISUALIZAR REPORTE
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="eye" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                    <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
+                      VISUALIZAR REPORTE
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 
@@ -464,9 +467,12 @@ export default function HistorialScreen() {
                 style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                    REENVIAR REPORTE
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="send" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                      REENVIAR REPORTE
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>

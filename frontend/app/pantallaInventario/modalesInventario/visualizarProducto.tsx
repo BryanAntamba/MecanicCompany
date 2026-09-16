@@ -168,9 +168,17 @@ function VisualizarProducto({ visible, onClose, producto }: Props) {
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
-                  CERRAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
+                    CERRAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

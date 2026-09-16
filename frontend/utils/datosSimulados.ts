@@ -78,6 +78,15 @@ const usuariosRegistrados: UsuarioRegistrado[] = [
     correo: 'finanzas@finanzasmecanic.com',
     contrasena: 'Finanzas123!',
   },
+  // ─── MECÁNICO (@mecanic.com) ───
+  {
+    nombre: 'Carlos Alberto',
+    apellido: 'Rodríguez López',
+    fechaNacimiento: new Date(1988, 2, 10),
+    telefono: '0987654890',
+    correo: 'mecanico@mecanic.com',
+    contrasena: 'Mecanico123!',
+  },
 ];
 
 // Función para agregar un nuevo usuario
@@ -312,6 +321,8 @@ export interface SolicitudMantenimiento {
   ubicacionMecanicaId?: string;
   ubicacionMecanicaNombre?: string;
   ubicacionMecanicaDireccion?: string;
+  // Campo de emergencia (solo para domingos)
+  motivoEmergencia?: string;
   // Campos del reporte de mantenimiento completo
   fechaServicio?: string;
   mecanicoAsignado?: string;
@@ -665,7 +676,103 @@ export const solicitudesSimuladas: SolicitudMantenimiento[] = [
     fechaFinalizacion: '18/01/2027',
     costoTotal: '40.00',
   },
+  {
+    id: '14',
+    nombreCliente: 'Gabriela Estefanía Cordero Ruiz',
+    telefono: '0923456789',
+    correoCliente: 'gabriela.cordero@gmail.com',
+    marca: 'Honda',
+    modelo: 'CR-V',
+    anio: '2021',
+    placa: 'POX-1122',
+    kilometraje: '35000',
+    tipoServicio: 'Emergencia',
+    descripcionProblema: 'Vehículo no enciende, necesito viajar urgentemente',
+    fechaCita: '19/01/2027', // Domingo
+    horaCita: '10:00',
+    estado: 'Pendiente',
+    createdAt: '2027-01-18T22:30:00Z',
+    provincia: 'Pichincha',
+    ubicacionMecanicaId: 'pichincha-1',
+    ubicacionMecanicaNombre: 'Mecanic Company Quito Norte',
+    ubicacionMecanicaDireccion: 'Av. Río Coca E10-100 y Isla Pinzón, Quito',
+    motivoEmergencia: 'Mi vehículo no enciende desde ayer en la noche y necesito viajar urgentemente mañana domingo a las 14:00 a Guayaquil por una emergencia familiar. He intentado encenderlo varias veces pero solo hace un clic y no arranca. Estoy consciente de que los domingos no son días laborables pero es una situación de extrema urgencia.',
+  },
 ];
+
+// Función para contar cuántas citas hay en una fecha específica
+export function contarCitasPorFecha(fecha: Date): number {
+  const fechaStr = formatearFechaParaComparacion(fecha);
+  
+  // Contar solo las solicitudes que NO están completadas
+  return solicitudesSimuladas.filter(solicitud => {
+    if (solicitud.estado === 'Completado') return false;
+    
+    // Convertir la fecha de la cita a formato comparable
+    const [dia, mes, anio] = solicitud.fechaCita.split('/');
+    const fechaCitaStr = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    
+    return fechaCitaStr === fechaStr;
+  }).length;
+}
+
+// Función para formatear fecha para comparación (YYYY-MM-DD)
+function formatearFechaParaComparacion(fecha: Date): string {
+  const anio = fecha.getFullYear();
+  const mes = (fecha.getMonth() + 1).toString().padStart(2, '0');
+  const dia = fecha.getDate().toString().padStart(2, '0');
+  return `${anio}-${mes}-${dia}`;
+}
+
+// Función para obtener el nivel de disponibilidad de un día
+// Retorna: 'disponible' | 'medio' | 'bajo' | 'lleno'
+export function obtenerDisponibilidadDia(fecha: Date): 'disponible' | 'medio' | 'bajo' | 'lleno' {
+  const citasEnDia = contarCitasPorFecha(fecha);
+  const diaSemana = fecha.getDay(); // 0 = Domingo, 6 = Sábado
+  
+  // Calcular total de horas disponibles según el día
+  let totalHorasDisponibles: number;
+  
+  if (diaSemana === 0 || diaSemana === 6) {
+    // Fin de semana: 7:00 - 12:00 = 11 slots de 30 minutos = 11 horas
+    totalHorasDisponibles = 11;
+  } else {
+    // Entre semana: 7:00 - 20:00 = 27 slots de 30 minutos = 27 horas
+    totalHorasDisponibles = 27;
+  }
+  
+  const horasOcupadas = citasEnDia;
+  const horasDisponibles = totalHorasDisponibles - horasOcupadas;
+  
+  // Determinar el nivel de disponibilidad
+  if (horasDisponibles === 0) return 'lleno';
+  if (horasDisponibles <= 3) return 'bajo';
+  if (horasDisponibles <= 10) return 'medio';
+  return 'disponible';
+}
+
+// Función para obtener las horas ocupadas en una fecha específica
+// Retorna un array de strings con las horas ocupadas (formato "HH:MM")
+export function obtenerHorasOcupadasPorFecha(fecha: Date, solicitudIdExcluida?: string): string[] {
+  const fechaStr = formatearFechaParaComparacion(fecha);
+  
+  // Obtener todas las solicitudes que NO están completadas en esa fecha
+  const solicitudesEnFecha = solicitudesSimuladas.filter(solicitud => {
+    // Excluir la solicitud que se está editando
+    if (solicitudIdExcluida && solicitud.id === solicitudIdExcluida) return false;
+    
+    if (solicitud.estado === 'Completado') return false;
+    
+    // Convertir la fecha de la cita a formato comparable
+    const [dia, mes, anio] = solicitud.fechaCita.split('/');
+    const fechaCitaStr = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    
+    return fechaCitaStr === fechaStr;
+  });
+  
+  // Extraer solo las horas
+  return solicitudesEnFecha.map(s => s.horaCita);
+}
 
 // Función para obtener solicitudes simuladas
 export const obtenerSolicitudesSimuladas = (): SolicitudMantenimiento[] => {

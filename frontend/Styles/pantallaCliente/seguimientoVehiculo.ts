@@ -253,6 +253,16 @@ export default StyleSheet.create({
   verDetallesButtonPressed: {
     backgroundColor: '#2563EB',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+    width: 18,
+    textAlign: 'center',
+  },
   verDetallesButtonText: {
     fontSize: 15,
     fontWeight: '800',

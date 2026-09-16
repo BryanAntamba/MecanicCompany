@@ -29,9 +29,17 @@ const FinalizacionSolicitud: React.FC<FinalizacionSolicitudProps> = ({ visible, 
             onPress={onCerrar}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={styles.buttonContent}>
+                <FontAwesome 
+                  name="times-circle" 
+                  size={18} 
+                  color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                  style={styles.buttonIcon}
+                />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

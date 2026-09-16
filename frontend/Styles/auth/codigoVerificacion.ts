@@ -178,6 +178,16 @@ export default StyleSheet.create({
     fontWeight: '600',
   },
 
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+
   // Contenedor del bloqueo y temporizador - debajo del botón
   blockedContainer: {
     backgroundColor: 'rgba(239, 68, 68, 0.1)',

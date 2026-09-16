@@ -1074,9 +1074,24 @@ function EditarProducto({ visible, onClose, producto, onGuardar }: Props) {
           <View style={styles.modalFooter}>
             <Pressable 
               onPress={onClose} 
-              style={styles.cancelButton}
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed
+              ]}
             >
-              <Text style={styles.cancelButtonText}>CANCELAR</Text>
+              {({ pressed }) => (
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={16} 
+                    color={pressed ? '#1E293B' : '#F1F5F9'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
+              )}
             </Pressable>
             <Pressable 
               onPress={handleGuardar} 
@@ -1086,12 +1101,20 @@ function EditarProducto({ visible, onClose, producto, onGuardar }: Props) {
               ]}
             >
               {({ pressed }) => (
-                <Text style={[
-                  styles.saveBtnText,
-                  pressed && styles.saveBtnTextPressed
-                ]}>
-                  GUARDAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                  <FontAwesome 
+                    name="save" 
+                    size={16} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 8 }} />
+                  <Text style={[
+                    styles.saveBtnText,
+                    pressed && styles.saveBtnTextPressed
+                  ]}>
+                    GUARDAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

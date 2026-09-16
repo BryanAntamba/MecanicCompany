@@ -36,9 +36,12 @@ const RegistroEnProceso: React.FC<RegistroEnProcesoProps> = ({ visible, onCerrar
             onPress={onCerrar}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <FontAwesome name="times-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

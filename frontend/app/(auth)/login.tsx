@@ -16,7 +16,7 @@ import ResponsiveContainer from '@/components/ResponsiveContainer';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, setSession } = useAuth();
   const { iniciarSesionCliente } = useCliente();
   // Detectar si viene de un cierre de sesión o de cambio de contraseña exitoso
   const params = useLocalSearchParams<{ fromLogout?: string; fromPasswordReset?: string }>();
@@ -143,15 +143,49 @@ export default function LoginScreen() {
           setErrGeneral('Ingrese una credencial válida.');
         }
       } else if (correoLower.endsWith('@mecanic.com')) {
-        // Si es @mecanic.com, usar la API real (mecánicos y admin)
-        const user = await login(correoLower, password);
-
-        // Redirige según el rol
-        if (user.esAdmin) {
-          router.replace('/Admin/GestionUsuarios' as any);
+        // Primero intentar con datos simulados
+        const usuario = verificarUsuario(correoLower, password);
+        
+        if (usuario) {
+          // Usuario mecánico encontrado en datos simulados
+          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
+          
+          // Crear un token simulado y usuario simulado para el AuthContext
+          const tokenSimulado = `simulado-mecanico-${Date.now()}`;
+          const usuarioSimulado = {
+            id: `sim-${Date.now()}`,
+            nombres: usuario.nombre,
+            apellidos: usuario.apellido,
+            correoEmpresarial: correoLower,
+            especialidad: 'General',
+            estadoLaboral: 'Disponible',
+            esAdmin: false,
+            tipoPersonal: 'Mecánico',
+          };
+          
+          console.log('🔐 LOGIN - Usuario simulado creado:', usuarioSimulado);
+          
+          // Usar setSession para actualizar el contexto Y AsyncStorage
+          await setSession(tokenSimulado, usuarioSimulado);
+          
+          console.log('💾 LOGIN - Sesión establecida en contexto');
+          
+          // Ir al index que hará la redirección correcta según el tipoPersonal
+          console.log('➡️ LOGIN - Redirigiendo a /');
+          router.replace('/' as any);
+          return;
         } else {
-          // Mecánico
-          router.replace('/SeccionMecanico/ReportesClientes' as any);
+          // Si no está en simulados, intentar con API real (admin y otros mecánicos)
+          try {
+            const user = await login(correoLower, password);
+            console.log('🔐 LOGIN - Usuario desde API:', user);
+
+            // Ir al index que hará la redirección correcta
+            router.replace('/' as any);
+            return;
+          } catch (apiError) {
+            setErrGeneral('Ingrese una credencial válida.');
+          }
         }
       } else {
         setErrGeneral('Ingrese una credencial válida.');
@@ -245,9 +279,17 @@ export default function LoginScreen() {
                 disabled={loading}
               >
                 {({ pressed }) => (
-                  <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
-                    {loading ? 'Ingresando...' : 'Iniciar sesión'}
-                  </Text>
+                  <View style={loginStyles.buttonContent}>
+                    <FontAwesome 
+                      name="sign-in" 
+                      size={20} 
+                      color={pressed ? '#FFFFFF' : '#000000'}
+                      style={loginStyles.buttonIcon}
+                    />
+                    <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
+                      {loading ? 'Ingresando...' : 'Iniciar sesión'}
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 

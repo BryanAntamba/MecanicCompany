@@ -544,9 +544,12 @@ export default function HistorialFinancieroScreen() {
                       ]}
                     >
                       {({ pressed }) => (
-                        <Text style={[styles.btnReenviarText, pressed && styles.btnReenviarTextPressed]}>
-                          REENVIAR COMPROBANTE
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <FontAwesome name="send" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                          <Text style={[styles.btnReenviarText, pressed && styles.btnReenviarTextPressed]}>
+                            REENVIAR COMPROBANTE
+                          </Text>
+                        </View>
                       )}
                       </Pressable>
 
@@ -559,14 +562,17 @@ export default function HistorialFinancieroScreen() {
                       ]}
                     >
                       {({ pressed }) => (
-                        <Text
-                          style={[
-                            styles.btnVerText,
-                            pressed && styles.btnVerTextPressed,
-                          ]}
-                        >
-                          VER DETALLES
-                        </Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                          <FontAwesome name="eye" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                          <Text
+                            style={[
+                              styles.btnVerText,
+                              pressed && styles.btnVerTextPressed,
+                            ]}
+                          >
+                            VER DETALLES
+                          </Text>
+                        </View>
                       )}
                       </Pressable>
                     </View>

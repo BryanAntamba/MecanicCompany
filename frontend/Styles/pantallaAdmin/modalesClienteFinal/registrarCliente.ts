@@ -129,4 +129,14 @@ export default StyleSheet.create({
   saveBtnTextPressed: {
     color: '#FFFFFF',
   },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 });

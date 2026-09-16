@@ -20,6 +20,8 @@ interface VerificacionFormularioProps {
     hora: string;
     provincia: string;
     ubicacion: string;
+    motivoEmergencia?: string; // Solo si es domingo
+    esDomingo?: boolean; // Indicador de si la cita es domingo
   };
   onConfirmar: () => void;
   onCancelar: () => void;
@@ -113,6 +115,14 @@ export default function VerificacionFormulario({
                 <Text style={styles.fieldValue}>{datos.hora}</Text>
               </View>
 
+              {/* Mostrar motivo de emergencia solo si es domingo */}
+              {datos.esDomingo && datos.motivoEmergencia && (
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Motivo de Emergencia (Domingo):</Text>
+                  <Text style={styles.fieldValue}>{datos.motivoEmergencia}</Text>
+                </View>
+              )}
+
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>Provincia de la Cita:</Text>
                 <Text style={styles.fieldValue}>{datos.provincia}</Text>
@@ -145,25 +155,48 @@ export default function VerificacionFormulario({
               }}
             >
               {({ pressed }) => (
-                <Text
-                  style={[
-                    styles.confirmButtonText,
-                    pressed && styles.confirmButtonTextPressed,
-                  ]}
-                >
-                  CONFIRMAR SOLICITUD
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="check-square-o" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.confirmButtonText,
+                      pressed && styles.confirmButtonTextPressed,
+                    ]}
+                  >
+                    CONFIRMAR SOLICITUD
+                  </Text>
+                </View>
               )}
             </Pressable>
 
             <Pressable
-              style={styles.cancelButton}
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+              ]}
               onPress={() => {
                 console.log('🟡 Botón CANCELAR presionado');
                 onCancelar();
               }}
             >
-              <Text style={styles.cancelButtonText}>CANCELAR</Text>
+              {({ pressed }) => (
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>

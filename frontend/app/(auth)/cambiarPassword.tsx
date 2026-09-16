@@ -183,9 +183,17 @@ export default function CambiarPasswordScreen() {
                 disabled={loading}
               >
                 {({ pressed }) => (
-                  <Text style={[cambiarStyles.buttonText, pressed && cambiarStyles.buttonTextPressed]}>
-                    {loading ? 'Guardando...' : 'Guardar contraseña'}
-                  </Text>
+                  <View style={cambiarStyles.buttonContent}>
+                    <FontAwesome 
+                      name="save" 
+                      size={20} 
+                      color={pressed ? '#FFFFFF' : '#000000'} 
+                      style={cambiarStyles.buttonIcon}
+                    />
+                    <Text style={[cambiarStyles.buttonText, pressed && cambiarStyles.buttonTextPressed]}>
+                      {loading ? 'Guardando...' : 'Guardar contraseña'}
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 

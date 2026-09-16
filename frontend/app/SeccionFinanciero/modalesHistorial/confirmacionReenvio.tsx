@@ -61,9 +61,12 @@ export default function ConfirmacionReenvio({
                 style={({ pressed }) => [styles.btnConfirmar, pressed && styles.btnConfirmarPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnConfirmarText, pressed && styles.btnConfirmarTextPressed]}>
-                    CONFIRMAR REENVÍO
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="check" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                    <Text style={[styles.btnConfirmarText, pressed && styles.btnConfirmarTextPressed]}>
+                      CONFIRMAR REENVÍO
+                    </Text>
+                  </View>
                 )}
               </Pressable>
               <Pressable
@@ -71,9 +74,12 @@ export default function ConfirmacionReenvio({
                 style={({ pressed }) => [styles.btnCancelar, pressed && styles.btnCancelarPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
-                    CANCELAR
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="times" size={16} color={pressed ? '#1E293B' : '#000000'} />
+                    <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
+                      CANCELAR
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>

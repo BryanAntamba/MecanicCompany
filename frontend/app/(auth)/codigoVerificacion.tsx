@@ -214,9 +214,17 @@ export default function CodigoVerificacionScreen() {
                 disabled={loading}
               >
                 {({ pressed }) => (
-                  <Text style={[codigoStyles.buttonText, pressed && codigoStyles.buttonTextPressed]}>
-                    {loading ? 'Verificando...' : 'Verificar código'}
-                  </Text>
+                  <View style={codigoStyles.buttonContent}>
+                    <FontAwesome 
+                      name="check-circle" 
+                      size={20} 
+                      color={pressed ? '#FFFFFF' : '#000000'} 
+                      style={codigoStyles.buttonIcon}
+                    />
+                    <Text style={[codigoStyles.buttonText, pressed && codigoStyles.buttonTextPressed]}>
+                      {loading ? 'Verificando...' : 'Verificar código'}
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 

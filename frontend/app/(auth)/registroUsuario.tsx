@@ -456,9 +456,17 @@ export default function RegistroUsuarioScreen() {
               disabled={loading}
             >
               {({ pressed }) => (
-                <Text style={[registroStyles.buttonText, pressed && registroStyles.buttonTextPressed]}>
-                  {loading ? 'Registrando...' : 'Registrarse'}
-                </Text>
+                <View style={registroStyles.buttonContent}>
+                  <FontAwesome 
+                    name="user-plus" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={registroStyles.buttonIcon}
+                  />
+                  <Text style={[registroStyles.buttonText, pressed && registroStyles.buttonTextPressed]}>
+                    {loading ? 'Registrando...' : 'Registrarse'}
+                  </Text>
+                </View>
               )}
             </Pressable>
 

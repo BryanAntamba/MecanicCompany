@@ -475,14 +475,22 @@ export default function SeguimientoVehiculoScreen() {
                     onPress={() => handleVerDetalles(solicitud)}
                   >
                     {({ pressed }) => (
-                      <Text
-                        style={[
-                          styles.verDetallesButtonText,
-                          pressed && styles.verDetallesButtonTextPressed,
-                        ]}
-                      >
-                        VER DETALLES
-                      </Text>
+                      <View style={styles.buttonContent}>
+                        <FontAwesome 
+                          name="file-text-o" 
+                          size={18} 
+                          color={pressed ? '#FFFFFF' : '#000000'} 
+                          style={styles.buttonIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.verDetallesButtonText,
+                            pressed && styles.verDetallesButtonTextPressed,
+                          ]}
+                        >
+                          DETALLES
+                        </Text>
+                      </View>
                     )}
                   </Pressable>
                 </View>

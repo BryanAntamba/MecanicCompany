@@ -233,6 +233,7 @@ export default StyleSheet.create({
     maxWidth: 450,
     width: '100%',
     marginTop: 4,
+    cursor: 'pointer',
   },
 
   heroCitaButtonPressed: {
@@ -777,7 +778,6 @@ export default StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
     ...(Platform.OS === 'web' && {
       maxWidth: 280,
       cursor: 'pointer',
@@ -800,7 +800,18 @@ export default StyleSheet.create({
   },
 
   scrollTopIcon: {
-    marginLeft: 0,
+    marginLeft: 8,
+  },
+
+  // --- ESTILOS PARA ICONOS EN BOTONES ---
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  buttonIcon: {
+    marginRight: 10,
   },
 
   // --- RESTO DE ESTILOS (sin cambios entre web y móvil) ---
@@ -877,6 +888,14 @@ export default StyleSheet.create({
     fontWeight: '600',
     marginBottom: 8,
     paddingLeft: 4,
+  },
+
+  fieldDescription: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 8,
+    paddingLeft: 4,
+    lineHeight: 18,
   },
 
   input: {
@@ -1021,6 +1040,7 @@ export default StyleSheet.create({
     ...(Platform.OS === 'web' && {
       maxWidth: 600,
       alignSelf: 'center',
+      cursor: 'pointer',
       // @ts-ignore - Media query funciona en React Native Web
       '@media (max-width: 640px)': {
         maxWidth: '100%',
@@ -1121,6 +1141,7 @@ export default StyleSheet.create({
     ...(Platform.OS === 'web' && {
       maxWidth: 800,
       alignSelf: 'center',
+      cursor: 'pointer',
       // @ts-ignore - Media query funciona en React Native Web
       '@media (max-width: 640px)': {
         maxWidth: '100%',
@@ -1135,11 +1156,11 @@ export default StyleSheet.create({
   mapsButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    justifyContent: 'center',
   },
 
   mapsButtonIcon: {
-    marginRight: 0,
+    marginRight: 10,
   },
 
   mapsButtonText: {
@@ -1211,6 +1232,32 @@ export default StyleSheet.create({
 
   calendarCellPast: {
     opacity: 0.25,
+  },
+
+  // Estilos de disponibilidad de citas
+  calendarCellDisponible: {
+    backgroundColor: 'rgba(34, 197, 94, 0.2)', // Verde suave
+    borderWidth: 1,
+    borderColor: '#22C55E',
+  },
+
+  calendarCellMedio: {
+    backgroundColor: 'rgba(251, 146, 60, 0.2)', // Naranja suave
+    borderWidth: 1,
+    borderColor: '#FB923C',
+  },
+
+  calendarCellBajo: {
+    backgroundColor: 'rgba(239, 68, 68, 0.2)', // Rojo suave
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+
+  calendarCellLleno: {
+    backgroundColor: 'rgba(100, 116, 139, 0.3)', // Gris
+    borderWidth: 1,
+    borderColor: '#64748B',
+    opacity: 0.5,
   },
 
   calendarCellText: {

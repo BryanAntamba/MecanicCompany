@@ -80,6 +80,9 @@ import { authApi, solicitudesApi } from '@/utils/api';
 // Sistema de provincias y mecánicas de Ecuador
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, obtenerMecanicaPorId, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
 
+// Funciones de disponibilidad de citas
+import { obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha } from '@/utils/datosSimulados';
+
 // Componente reutilizable de la barra de navegación del cliente
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';
 
@@ -312,6 +315,10 @@ export default function HomeScreen() {
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
   // Estado: hora seleccionada para la cita
   const [appointmentTime, setAppointmentTime] = useState<string | null>(null);
+  // Estado: motivo de emergencia (solo para domingos)
+  const [motivoEmergencia, setMotivoEmergencia] = useState('');
+  // Estado: error de validación del motivo de emergencia
+  const [errMotivoEmergencia, setErrMotivoEmergencia] = useState('');
   // Estado: controla si el modal del calendario está visible
   const [calendarVisible, setCalendarVisible] = useState(false);
   // Estado: controla si el dropdown de hora está abierto
@@ -572,14 +579,46 @@ export default function HomeScreen() {
     return [...blanks, ...days];
   };
 
-  // Genera opciones de hora de 07:00 a 22:00 cada 30 minutos
+  // Genera opciones de hora dinámicamente basado en el día seleccionado
   const timeOptions: string[] = (() => {
     const opts: string[] = [];
-    for (let h = 7; h <= 22; h++) {
-      opts.push(`${h.toString().padStart(2, '0')}:00`);
-      if (h < 22) opts.push(`${h.toString().padStart(2, '0')}:30`);
+    
+    if (!appointmentDate) {
+      // Si no hay fecha seleccionada, mostrar horario completo entre semana (7:00 - 20:00)
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+      return opts;
     }
-    return opts;
+    
+    // Obtener las horas ocupadas en esta fecha
+    const horasOcupadas = obtenerHorasOcupadasPorFecha(appointmentDate);
+    
+    const dayOfWeek = appointmentDate.getDay(); // 0 = Domingo, 6 = Sábado
+    
+    if (dayOfWeek === 6) {
+      // Sábado: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else if (dayOfWeek === 0) {
+      // Domingo: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else {
+      // Entre semana (Lunes a Viernes): hasta 20:00
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    }
+    
+    // Filtrar las horas ocupadas
+    return opts.filter(hora => !horasOcupadas.includes(hora));
   })();
 
   // Navega el carrusel "Nosotros" al índice indicado con animación suave
@@ -590,6 +629,17 @@ export default function HomeScreen() {
     // Hace scroll programático al offset exacto de esa tarjeta usando el ancho actual
     aboutSliderRef.current?.scrollTo({ x: clamped * CURRENT_ITEM_WIDTH, animated: true });
   };
+
+  // Efecto para validar y limpiar la hora seleccionada si cambia la fecha
+  useEffect(() => {
+    if (appointmentDate && appointmentTime) {
+      const horasOcupadas = obtenerHorasOcupadasPorFecha(appointmentDate);
+      if (horasOcupadas.includes(appointmentTime)) {
+        setAppointmentTime(null);
+        setErrTime('La hora seleccionada ya no está disponible para esta fecha.');
+      }
+    }
+  }, [appointmentDate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -618,7 +668,7 @@ export default function HomeScreen() {
       // Limpiar todas las validaciones
       setErrBrand(''); setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
       setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime(''); 
-      setErrProvincia(''); setErrLocation('');
+      setErrProvincia(''); setErrLocation(''); setMotivoEmergencia(''); setErrMotivoEmergencia('');
     }, [])
   );
 
@@ -628,12 +678,13 @@ export default function HomeScreen() {
     setAppointmentTime(null);
     setSelectedLocation(null);
     setSelectedProvincia('');
+    setMotivoEmergencia('');
     setServiceDropdownOpen(false);
     setLocationDropdownOpen(false);
     setProvinciaDropdownOpen(false);
     setErrBrand(''); setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
     setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime(''); 
-    setErrProvincia(''); setErrLocation('');
+    setErrProvincia(''); setErrLocation(''); setErrMotivoEmergencia('');
   };
 
   const onSend = async () => {
@@ -650,6 +701,12 @@ export default function HomeScreen() {
     const eTime = !appointmentTime ? 'La hora de la cita es obligatoria.' : null;
     const eProvincia = !selectedProvincia ? 'La provincia es obligatoria.' : null;
     const eLocation = !selectedLocation ? 'La ubicación de la mecánica es obligatoria.' : null;
+    
+    // Validar motivo de emergencia solo si es domingo
+    const isDomingo = appointmentDate && appointmentDate.getDay() === 0;
+    const eMotivoEmergencia = isDomingo && !motivoEmergencia.trim() 
+      ? 'El motivo de emergencia es obligatorio para reservas en domingo.' 
+      : null;
 
     setErrBrand(eBrand ?? '');
     setErrModel(eModel ?? '');
@@ -661,12 +718,17 @@ export default function HomeScreen() {
     setErrDetails(eDetails ?? '');
     setErrDate(eDate ?? '');
     setErrTime(eTime ?? '');
+    setErrMotivoEmergencia(eMotivoEmergencia ?? '');
     setErrProvincia(eProvincia ?? '');
     setErrLocation(eLocation ?? '');
 
     // Si hay algún error, no continúa
-    if ([eBrand, eModel, eYear, ePlate, eMileage,
-      eService, eOther, eDetails, eDate, eTime, eProvincia, eLocation].some(Boolean)) return;
+    const errores = [eBrand, eModel, eYear, ePlate, eMileage, eService, eOther, eDetails, eDate, eTime, eProvincia, eLocation, eMotivoEmergencia].filter(Boolean);
+    if (errores.length > 0) {
+      // Scroll hacia arriba para que vea los errores en rojo
+      scrollRef.current?.scrollTo({ y: formPosition - 100, animated: true });
+      return;
+    }
 
     // Todo válido → abre modal de verificación
     setVerificacionVisible(true);
@@ -909,9 +971,17 @@ export default function HomeScreen() {
                   onPress={() => scrollRef.current?.scrollTo({ y: formPosition, animated: true })}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
-                      SOLICITA TU CITA
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="calendar-check-o" 
+                        size={18} 
+                        color={pressed ? '#FFFFFF' : '#000000'}
+                      />
+                      <View style={{ width: 10 }} />
+                      <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
+                        SOLICITA TU CITA
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               )}
@@ -1362,6 +1432,11 @@ export default function HomeScreen() {
               <View style={styles.formDividerLine} />
             </View>
 
+            <Text style={styles.fieldDescription}>
+              Horarios disponibles: Lunes a Viernes hasta las 20:00h. Sábados y Domingos solo hasta las 12:00h (mediodía). 
+              Los domingos requieren motivo de emergencia.
+            </Text>
+
             <Text style={styles.fieldLabel}>Fecha de la Cita</Text>
 
             {/* Botón que abre el modal del calendario al presionar */}
@@ -1432,9 +1507,15 @@ export default function HomeScreen() {
                       maxDate.setHours(23, 59, 59, 999); // Final del día
                       const isPast = day < today;                                           // Día pasado
                       const isTooFarFuture = day > maxDate;                                 // Después del 31/dic del año actual
-                      const isDisabled = isPast || isTooFarFuture;                          // Deshabilitado si está fuera de rango
+                      
+                      // Obtener disponibilidad del día
+                      const disponibilidad = isPast || isTooFarFuture ? null : obtenerDisponibilidadDia(day);
+                      const isDayFull = disponibilidad === 'lleno';
+                      const isDisabled = isPast || isTooFarFuture || isDayFull;             // Deshabilitado si está fuera de rango o lleno
+                      
                       const isSelected = appointmentDate?.toDateString() === day.toDateString(); // Seleccionado
                       const isToday = day.toDateString() === today.toDateString();            // Hoy
+                      
                       return (
                         <Pressable
                           key={i}
@@ -1443,6 +1524,10 @@ export default function HomeScreen() {
                             isToday && styles.calendarCellToday,    // Borde azul si es hoy
                             isSelected && styles.calendarCellSelected, // Fondo azul si seleccionado
                             isDisabled && styles.calendarCellPast,     // Opacidad reducida si deshabilitado
+                            !isDisabled && !isSelected && disponibilidad === 'disponible' && styles.calendarCellDisponible, // Verde
+                            !isDisabled && !isSelected && disponibilidad === 'medio' && styles.calendarCellMedio, // Naranja
+                            !isDisabled && !isSelected && disponibilidad === 'bajo' && styles.calendarCellBajo, // Rojo
+                            isDayFull && styles.calendarCellLleno, // Gris/bloqueado
                           ]}
                           // Selecciona el día y cierra el modal (solo si está dentro del rango permitido)
                           onPress={() => { 
@@ -1493,35 +1578,79 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.dropdownArrow}>{timeDropdownOpen ? '▲' : '▼'}</Text>
             </Pressable>
+            {appointmentDate && !timeDropdownOpen && (
+              <Text style={[styles.fieldDescription, { marginTop: 4, fontSize: 12 }]}>
+                {timeOptions.length} {timeOptions.length === 1 ? 'hora disponible' : 'horas disponibles'} para esta fecha
+              </Text>
+            )}
             {errTime ? <Text style={styles.errorText}>{errTime}</Text> : null}
 
             {/* Lista desplegable de horas */}
             {timeDropdownOpen && (
               <View style={styles.dropdownList}>
-                <ScrollView
-                  style={styles.timeScrollList}
-                  showsVerticalScrollIndicator={true}
-                  nestedScrollEnabled={true}
-                  scrollEnabled={true}
-                >
-                  {timeOptions.map((t) => (
-                    <Pressable
-                      key={t}
-                      style={[styles.dropdownItem, appointmentTime === t && styles.dropdownItemActive]}
-                      onPress={() => { 
-                        setAppointmentTime(t); 
-                        setTimeDropdownOpen(false); 
-                        setErrTime(''); // Limpia el error al seleccionar hora
-                      }}
-                    >
-                      <Text style={styles.dropdownItemCheck}>
-                        {appointmentTime === t ? '✓ ' : '    '}
-                      </Text>
-                      <Text style={styles.dropdownItemText}>{t}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
+                {timeOptions.length === 0 ? (
+                  <View style={{ padding: 16, alignItems: 'center' }}>
+                    <Text style={{ color: '#EF4444', fontSize: 14, textAlign: 'center' }}>
+                      No hay horas disponibles para esta fecha.{'\n'}
+                      Todas las horas están reservadas.
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.timeScrollList}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                  >
+                    {timeOptions.map((t) => (
+                      <Pressable
+                        key={t}
+                        style={[styles.dropdownItem, appointmentTime === t && styles.dropdownItemActive]}
+                        onPress={() => { 
+                          setAppointmentTime(t); 
+                          setTimeDropdownOpen(false); 
+                          setErrTime(''); // Limpia el error al seleccionar hora
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>
+                          {appointmentTime === t ? '✓ ' : '    '}
+                        </Text>
+                        <Text style={styles.dropdownItemText}>{t}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
               </View>
+            )}
+
+            {/* Campo de Motivo de Emergencia (solo para domingos) */}
+            {appointmentDate && appointmentDate.getDay() === 0 && (
+              <>
+                <Text style={[styles.fieldDescription, { marginBottom: 8, color: '#EF4444', fontWeight: '600' }]}>
+                  IMPORTANTE: Los domingos NO son días laborables. Solo se aceptan reservas de emergencia. 
+                  Describa claramente por qué necesita el servicio en domingo y confirme que comprende que se trata de una atención excepcional.
+                </Text>
+                <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Motivo de Emergencia (Obligatorio)</Text>
+                <TextInput
+                  placeholder="Ej: Mi vehículo no enciende y necesito usarlo urgentemente para..."
+                  placeholderTextColor="#94A3B8"
+                  value={motivoEmergencia}
+                  onChangeText={(text) => {
+                    // Solo permite letras, números, espacios y puntuación básica
+                    const filtered = text.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,;:()¿?¡!-]/g, '');
+                    setMotivoEmergencia(filtered);
+                    setErrMotivoEmergencia('');
+                  }}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={300}
+                  style={[styles.input, styles.textarea, errMotivoEmergencia ? styles.inputError : null, { height: 100 }]}
+                />
+                <Text style={[styles.fieldDescription, { marginTop: 4, textAlign: 'right' }]}>
+                  {motivoEmergencia.length}/300 caracteres
+                </Text>
+                {errMotivoEmergencia ? <Text style={styles.errorText}>{errMotivoEmergencia}</Text> : null}
+              </>
             )}
 
             {/* SEPARADOR: Ubicación de la cita */}
@@ -1634,13 +1763,22 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
+                { marginTop: 24 } // Espacio adicional para el mensaje de error de ubicación
               ]}
               onPress={onSend}
             >
               {({ pressed }) => (
-                <Text style={[styles.buttonText, pressed && styles.buttonTextPressed]}>
-                  ENVIAR SOLICITUD
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="send" 
+                    size={18} 
+                    color={pressed ? (Platform.OS === 'web' ? '#E0E7FF' : '#FFFFFF') : (Platform.OS === 'web' ? '#FFFFFF' : '#000000')}
+                  />
+                  <View style={{ width: 10 }} />
+                  <Text style={[styles.buttonText, pressed && styles.buttonTextPressed]}>
+                    ENVIAR SOLICITUD
+                  </Text>
+                </View>
               )}
             </Pressable>
 
@@ -1701,13 +1839,13 @@ export default function HomeScreen() {
                   }}
                 >
                   {({ pressed }) => (
-                    <View style={styles.mapsButtonContent}>
+                    <View style={[styles.mapsButtonContent, { flexDirection: 'row', alignItems: 'center' }]}>
                       <FontAwesome
                         name="map-marker"
-                        size={20}
+                        size={18}
                         color={pressed ? '#FFFFFF' : '#000000'}
-                        style={styles.mapsButtonIcon}
                       />
+                      <View style={{ width: 10 }} />
                       <Text style={[styles.mapsButtonText, pressed && styles.mapsButtonTextPressed]}>
                         ABRIR EN GOOGLE MAPS
                       </Text>
@@ -1736,20 +1874,20 @@ export default function HomeScreen() {
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
           >
             {({ pressed }) => (
-              <>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={[
                   styles.scrollTopText,
                   pressed && styles.scrollTopTextPressed
                 ]}>
                   REGRESAR ARRIBA
                 </Text>
+                <View style={{ width: 8 }} />
                 <FontAwesome 
                   name="arrow-up" 
                   size={18} 
-                  color={pressed ? '#FFFFFF' : '#000000'} 
-                  style={styles.scrollTopIcon}
+                  color={pressed ? '#FFFFFF' : '#000000'}
                 />
-              </>
+              </View>
             )}
           </Pressable>
         </View>
@@ -1772,6 +1910,8 @@ export default function HomeScreen() {
           hora: appointmentTime || '',
           provincia: selectedProvincia || '',
           ubicacion: obtenerMecanicaPorId(selectedLocation || '')?.nombre || '',
+          motivoEmergencia: motivoEmergencia || undefined,
+          esDomingo: appointmentDate?.getDay() === 0,
         }}
         onConfirmar={onConfirmarSolicitud}
         onCancelar={() => setVerificacionVisible(false)}

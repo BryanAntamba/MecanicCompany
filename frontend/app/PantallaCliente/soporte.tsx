@@ -365,9 +365,17 @@ export default function SoporteScreen() {
               onPress={handleVerificarReporte}
             >
               {({ pressed }) => (
-                <Text style={[styles.submitButtonText, pressed && styles.submitButtonTextPressed]}>
-                  VERIFICAR ENVÍO
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="check-circle" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.submitButtonText, pressed && styles.submitButtonTextPressed]}>
+                    VERIFICAR ENVÍO
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

@@ -206,4 +206,14 @@ export default StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 });

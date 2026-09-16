@@ -74,6 +74,12 @@ export default StyleSheet.create({
     marginBottom: 8,
     marginTop: 12,
   },
+  fieldDescription: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginBottom: 8,
+    lineHeight: 18,
+  },
   infoText: {
     fontSize: 15,
     color: '#CBD5E1',
@@ -134,6 +140,14 @@ export default StyleSheet.create({
     fontSize: 12,
     color: '#64748B',
   },
+  dropdownSelected: {
+    fontSize: 16,
+    color: '#F1F5F9',
+  },
+  dropdownPlaceholder: {
+    fontSize: 16,
+    color: '#64748B',
+  },
   dropdownList: {
     backgroundColor: '#0F172A',
     borderWidth: 1,
@@ -142,6 +156,9 @@ export default StyleSheet.create({
     marginTop: 4,
     maxHeight: 200,
     overflow: 'hidden',
+  },
+  timeScrollList: {
+    maxHeight: 200,
   },
   dropdownItem: {
     flexDirection: 'row',
@@ -287,6 +304,24 @@ export default StyleSheet.create({
   calendarCellReservedText: {
     color: '#FFFFFF',
     fontWeight: 'bold',
+  },
+  // Estilos para disponibilidad de citas (colores del calendario)
+  calendarCellDisponible: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+  },
+  calendarCellMedio: {
+    backgroundColor: '#F59E0B',
+    borderRadius: 8,
+  },
+  calendarCellBajo: {
+    backgroundColor: '#EF4444',
+    borderRadius: 8,
+  },
+  calendarCellLleno: {
+    backgroundColor: '#64748B',
+    borderRadius: 8,
+    opacity: 0.5,
   },
   calendarCloseBtn: {
     backgroundColor: '#FFFFFF',

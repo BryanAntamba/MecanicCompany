@@ -245,14 +245,17 @@ export default function FinancieroScreen() {
             }}
           >
             {({ pressed }) => (
-              <Text
-                style={[
-                  styles.btnAnalisisAvanzadoText,
-                  pressed && styles.btnAnalisisAvanzadoTextPressed,
-                ]}
-              >
-                ABRIR ANÁLISIS AVANZADO
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <FontAwesome name="line-chart" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                <Text
+                  style={[
+                    styles.btnAnalisisAvanzadoText,
+                    pressed && styles.btnAnalisisAvanzadoTextPressed,
+                  ]}
+                >
+                  ANÁLISIS AVANZADO
+                </Text>
+              </View>
             )}
           </Pressable>
 
@@ -461,14 +464,17 @@ export default function FinancieroScreen() {
                         ]}
                       >
                         {({ pressed }) => (
-                          <Text
-                            style={[
-                              styles.btnRegistrarPagoText,
-                              pressed && styles.btnRegistrarPagoTextPressed,
-                            ]}
-                          >
-                            REGISTRAR PAGO
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                            <FontAwesome name="dollar" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                            <Text
+                              style={[
+                                styles.btnRegistrarPagoText,
+                                pressed && styles.btnRegistrarPagoTextPressed,
+                              ]}
+                            >
+                              REGISTRAR PAGO
+                            </Text>
+                          </View>
                         )}
                       </Pressable>
                     )}

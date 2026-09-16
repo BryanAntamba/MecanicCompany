@@ -39,6 +39,8 @@ import ConfirmacionReporte from './modalReporteMatenimiento/confirmacionReporte'
 import EnvioExitoso from './modalReporteMatenimiento/envioExitoso';
 import VisualizarSolicitud from './modalesReporte/visualizarSolicitud';
 import RegistroEnProceso from './modalesReporte/registroEnProceso';
+import ConfirmacionReportePDF from './modalReportePDF/confirmacionReportePDF';
+import ReporteExitoso from './modalReportePDF/reporteExitoso';
 
 // Tipos
 type EstadoSolicitud = 'Pendiente' | 'En_proceso' | 'Completado';
@@ -108,6 +110,8 @@ export default function ReportesClientesScreen() {
   const [modalConfirmacionReporteVisible, setModalConfirmacionReporteVisible] = useState(false);
   const [modalEnvioExitosoVisible, setModalEnvioExitosoVisible] = useState(false);
   const [modalRegistroEnProcesoVisible, setModalRegistroEnProcesoVisible] = useState(false);
+  const [modalConfirmacionPDFVisible, setModalConfirmacionPDFVisible] = useState(false);
+  const [modalReporteExitosoVisible, setModalReporteExitosoVisible] = useState(false);
   
   // Estado para almacenar repuestos seleccionados
   const [repuestosSeleccionados, setRepuestosSeleccionados] = useState<any[]>([]);
@@ -252,6 +256,20 @@ export default function ReportesClientesScreen() {
     setRepuestosSeleccionados([]);
   };
 
+  const handleGenerarAutorizacion = (solicitud: SolicitudMantenimiento) => {
+    console.log('handleGenerarAutorizacion llamado con solicitud:', solicitud);
+    setSolicitudSeleccionada(solicitud);
+    setModalConfirmacionPDFVisible(true);
+    console.log('Modal PDF visible establecido a true');
+  };
+
+  const handleConfirmarGenerarPDF = () => {
+    console.log('handleConfirmarGenerarPDF llamado');
+    setModalConfirmacionPDFVisible(false);
+    setModalReporteExitosoVisible(true);
+  };
+
+
   // Verificar si el reporte está completo (solo verificar el estado)
   const reporteCompleto = (solicitud: SolicitudMantenimiento) => {
     return solicitud.estado === 'Completado';
@@ -264,7 +282,7 @@ export default function ReportesClientesScreen() {
         solicitud.repuestosUtilizados || solicitud.diagnosticoRealizado ||
         solicitud.costoManoObra || solicitud.costoRepuestos || solicitud.observaciones ||
         solicitud.fechaInicio || solicitud.fechaFinalizacion) {
-      return 'EDITAR REGISTRO DE MANTENIMIENTO';
+      return 'EDITAR MANTENIMIENTO';
     }
     return 'REGISTRO MANTENIMIENTO';
   };
@@ -495,9 +513,17 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
-                      VISUALIZAR SOLICITUD
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="eye" 
+                        size={16} 
+                        color={pressed ? '#FFFFFF' : '#000000'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
+                        VISUALIZAR SOLICITUD
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -506,9 +532,17 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                      EDITAR SOLICITUD
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="edit" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                        EDITAR SOLICITUD
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -517,9 +551,17 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                      {getTextoBotonMantenimiento(solicitud)}
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="wrench" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                        {getTextoBotonMantenimiento(solicitud)}
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -528,9 +570,17 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnDelete, pressed && styles.btnDeletePressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnDeleteText, pressed && styles.btnDeleteTextPressed]}>
-                      ELIMINAR
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="trash" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnDeleteText, pressed && styles.btnDeleteTextPressed]}>
+                        ELIMINAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -545,15 +595,57 @@ export default function ReportesClientesScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnEnviarReporteText,
-                        !reporteCompleto(solicitud) && styles.btnEnviarReporteTextLocked,
-                        pressed && reporteCompleto(solicitud) && styles.btnEnviarReporteTextPressed,
-                      ]}
-                    >
-                      ENVIAR REPORTE
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="send" 
+                        size={16} 
+                        color={
+                          !reporteCompleto(solicitud) 
+                            ? '#64748B' 
+                            : pressed 
+                              ? '#F1F5F9' 
+                              : '#FFFFFF'
+                        } 
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.btnEnviarReporteText,
+                          !reporteCompleto(solicitud) && styles.btnEnviarReporteTextLocked,
+                          pressed && reporteCompleto(solicitud) && styles.btnEnviarReporteTextPressed,
+                        ]}
+                      >
+                        ENVIAR REPORTE
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+
+                {/* Botón GENERAR AUTORIZACIÓN */}
+                <Pressable
+                  onPress={() => handleGenerarAutorizacion(solicitud)}
+                  style={({ pressed }) => [
+                    styles.btnGenerarAutorizacion,
+                    pressed && styles.btnGenerarAutorizacionPressed,
+                  ]}
+                >
+                  {({ pressed }) => (
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="file-text" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.btnGenerarAutorizacionText,
+                          pressed && styles.btnGenerarAutorizacionTextPressed,
+                        ]}
+                      >
+                        GENERAR AUTORIZACIÓN
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -703,6 +795,19 @@ export default function ReportesClientesScreen() {
           // Limpiar repuestos cuando se cierra el modal de éxito
           setRepuestosSeleccionados([]);
         }}
+      />
+
+      <ConfirmacionReportePDF
+        visible={modalConfirmacionPDFVisible}
+        solicitud={solicitudSeleccionada}
+        onCancelar={() => setModalConfirmacionPDFVisible(false)}
+        onConfirmar={handleConfirmarGenerarPDF}
+      />
+
+      <ReporteExitoso
+        visible={modalReporteExitosoVisible}
+        nombreCliente={solicitudSeleccionada?.nombreCliente || ''}
+        onCerrar={() => setModalReporteExitosoVisible(false)}
       />
 
       <RegistroEnProceso

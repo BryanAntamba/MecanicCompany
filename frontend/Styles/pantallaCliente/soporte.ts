@@ -174,6 +174,14 @@ export default StyleSheet.create({
   submitButtonTextPressed: {
     color: '#FFFFFF',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 
   // --- PIE DE PÁGINA (FOOTER) ---
   footer: {

@@ -253,9 +253,12 @@ export default function VisualizarReporte({
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
-                  CERRAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="times-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                  <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
+                    CERRAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

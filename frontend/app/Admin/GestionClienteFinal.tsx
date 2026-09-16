@@ -318,9 +318,17 @@ export default function GestionClienteFinalScreen() {
           style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
         >
           {({ pressed }) => (
-            <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-              REGISTRAR NUEVO USUARIO
-            </Text>
+            <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+              <FontAwesome 
+                name="user-plus" 
+                size={18} 
+                color={pressed ? '#FFFFFF' : '#000000'}
+              />
+              <View style={{ width: 10 }} />
+              <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
+                REGISTRAR NUEVO USUARIO
+              </Text>
+            </View>
           )}
         </Pressable>
 
@@ -543,7 +551,7 @@ export default function GestionClienteFinalScreen() {
                   </View>
                 </View>
 
-                {/* Botón principal: VER PERFIL */}
+                {/* Botón principal: PERFIL */}
                 <Pressable
                   onPress={() => handleAbrirPerfil(cliente)}
                   style={({ pressed }) => [
@@ -552,14 +560,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnPerfilText,
-                        pressed && styles.btnPerfilTextPressed,
-                      ]}
-                    >
-                      VER PERFIL
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="user" 
+                        size={16} 
+                        color={pressed ? '#FFFFFF' : '#000000'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnPerfilText,
+                          pressed && styles.btnPerfilTextPressed,
+                        ]}
+                      >
+                        PERFIL
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -573,14 +589,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      EDITAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="edit" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        EDITAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -594,14 +618,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      ELIMINAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="trash" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        ELIMINAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -615,14 +647,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      {cliente.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name={cliente.cuentaActiva ? 'ban' : 'check-circle'} 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        {cliente.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               </View>

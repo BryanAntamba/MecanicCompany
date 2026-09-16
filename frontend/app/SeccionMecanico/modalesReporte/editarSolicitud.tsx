@@ -1,7 +1,7 @@
 // editarSolicitud.tsx
 // Modal para editar una solicitud existente
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -27,11 +27,7 @@ import {
   validarSoloNumeros,
 } from '@/utils/validaciones';
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
-import { obtenerSolicitudesSimuladas } from '@/utils/datosSimulados';
-
-const ESTADOS = ['Pendiente', 'En_proceso', 'Completado'] as const;
-
-type EstadoSolicitud = typeof ESTADOS[number];
+import { obtenerSolicitudesSimuladas, obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha } from '@/utils/datosSimulados';
 
 interface EditarSolicitudProps {
   visible: boolean;
@@ -64,11 +60,11 @@ export default function EditarSolicitud({
   const [kilometraje, setKilometraje] = useState('');
 
   // Campos de solicitud
-  const [estado, setEstado] = useState<EstadoSolicitud>('Pendiente');
   const [descripcionProblema, setDescripcionProblema] = useState('');
   const [fechaCita, setFechaCita] = useState<Date | null>(null);
   const [horaCita, setHoraCita] = useState('');
-  const [estadoDropdown, setEstadoDropdown] = useState(false);
+  const [motivoEmergencia, setMotivoEmergencia] = useState('');
+  const [horaDropdownOpen, setHoraDropdownOpen] = useState(false);
 
   // Estados del calendario
   const [calendarVisible, setCalendarVisible] = useState(false);
@@ -95,6 +91,7 @@ export default function EditarSolicitud({
   const [errDescripcionProblema, setErrDescripcionProblema] = useState('');
   const [errFechaCita, setErrFechaCita] = useState('');
   const [errHoraCita, setErrHoraCita] = useState('');
+  const [errMotivoEmergencia, setErrMotivoEmergencia] = useState('');
   const [errProvincia, setErrProvincia] = useState('');
   const [errUbicacion, setErrUbicacion] = useState('');
 
@@ -129,7 +126,6 @@ export default function EditarSolicitud({
       setAnio(solicitud.anio || '');
       setPlaca(solicitud.placa || '');
       setKilometraje(solicitud.kilometraje || '');
-      setEstado(solicitud.estado || 'Pendiente');
       setDescripcionProblema(solicitud.descripcionProblema || '');
       
       // Convertir fechaCita string a Date
@@ -141,6 +137,7 @@ export default function EditarSolicitud({
       }
       
       setHoraCita(solicitud.horaCita || '');
+      setMotivoEmergencia(solicitud.motivoEmergencia || '');
       setProvincia(solicitud.provincia || '');
       setUbicacionMecanica(solicitud.ubicacionMecanicaId || '');
       
@@ -159,10 +156,65 @@ export default function EditarSolicitud({
       setErrDescripcionProblema('');
       setErrFechaCita('');
       setErrHoraCita('');
+      setErrMotivoEmergencia('');
       setErrProvincia('');
       setErrUbicacion('');
     }
   }, [solicitud]);
+
+  // Efecto para limpiar la hora seleccionada si cambia la fecha y la hora ya no está disponible
+  useEffect(() => {
+    if (fechaCita && horaCita) {
+      const horasOcupadas = obtenerHorasOcupadasPorFecha(fechaCita, solicitud?.id);
+      if (horasOcupadas.includes(horaCita)) {
+        setHoraCita('');
+        setErrHoraCita('La hora seleccionada ya no está disponible para esta fecha.');
+      }
+    }
+  }, [fechaCita]);
+
+  // Genera opciones de hora dinámicamente basado en el día seleccionado
+  // Excluye las horas ya ocupadas por otras citas
+  const timeOptions = useMemo(() => {
+    const opts: string[] = [];
+    
+    if (!fechaCita) {
+      // Si no hay fecha seleccionada, mostrar horario completo entre semana (7:00 - 20:00)
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+      return opts;
+    }
+    
+    // Obtener las horas ocupadas en esta fecha (excluyendo la solicitud actual que se está editando)
+    const horasOcupadas = obtenerHorasOcupadasPorFecha(fechaCita, solicitud?.id);
+    
+    const dayOfWeek = fechaCita.getDay(); // 0 = Domingo, 6 = Sábado
+    
+    if (dayOfWeek === 6) {
+      // Sábado: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else if (dayOfWeek === 0) {
+      // Domingo: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else {
+      // Entre semana (Lunes a Viernes): hasta 20:00
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    }
+    
+    // Filtrar las horas ocupadas
+    return opts.filter(hora => !horasOcupadas.includes(hora));
+  }, [fechaCita, solicitud?.id]);
 
   const guardar = async () => {
     if (!solicitud) return;
@@ -186,6 +238,13 @@ export default function EditarSolicitud({
     const eDescripcion = validarTextoYNumeros(descripcionProblema, 'La descripción del problema');
     const eFechaCita = !fechaCita ? 'La fecha de cita es obligatoria.' : null;
     const eHoraCita = !horaCita.trim() ? 'La hora de cita es obligatoria.' : null;
+    
+    // Validar motivo de emergencia solo si es domingo
+    const isDomingo = fechaCita && fechaCita.getDay() === 0;
+    const eMotivoEmergencia = isDomingo && !motivoEmergencia.trim() 
+      ? 'El motivo de emergencia es obligatorio para reservas en domingo.' 
+      : null;
+    
     const eProvincia = !provincia ? 'La provincia es obligatoria.' : null;
     const eUbicacion = !ubicacionMecanica ? 'La ubicación de la mecánica es obligatoria.' : null;
 
@@ -204,13 +263,14 @@ export default function EditarSolicitud({
     setErrDescripcionProblema(eDescripcion ?? '');
     setErrFechaCita(eFechaCita ?? '');
     setErrHoraCita(eHoraCita ?? '');
+    setErrMotivoEmergencia(eMotivoEmergencia ?? '');
     setErrProvincia(eProvincia ?? '');
     setErrUbicacion(eUbicacion ?? '');
 
     // Si hay errores, no continuar
     if ([eNombre, eSegundoNombre, eApellido, eSegundoApellido, eCorreo, eTelefono,
       eMarca, eModelo, eAnio, ePlaca, eKilometraje, eDescripcion, eFechaCita, eHoraCita,
-      eProvincia, eUbicacion].some(Boolean)) {
+      eMotivoEmergencia, eProvincia, eUbicacion].some(Boolean)) {
       return;
     }
 
@@ -244,10 +304,10 @@ export default function EditarSolicitud({
         anio: anio.trim(),
         placa: placa.trim().toUpperCase(),
         kilometraje: kilometraje.trim(),
-        estado,
         descripcionProblema: descripcionProblema.trim(),
         fechaCita: fechaCita ? formatearFecha(fechaCita) : '',
         horaCita: horaCita.trim(),
+        motivoEmergencia: motivoEmergencia.trim() || undefined,
         provincia,
         ubicacionMecanicaId: ubicacionMecanica,
         ubicacionMecanicaNombre: mecanicaSeleccionada?.nombre || '',
@@ -533,42 +593,6 @@ export default function EditarSolicitud({
             {/* SECCIÓN: DATOS DE LA SOLICITUD */}
             <Text style={[styles.sectionTitle, { marginTop: 24 }]}>Datos de la Solicitud</Text>
 
-            {/* Estado de la solicitud */}
-            <Text style={styles.label}>Estado de la Solicitud</Text>
-            <Pressable
-              style={styles.dropdown}
-              onPress={() => setEstadoDropdown((v) => !v)}
-            >
-              <Text style={styles.dropdownText}>
-                {estado === 'En_proceso' ? 'En Proceso' : estado}
-              </Text>
-              <Text style={styles.dropdownArrow}>{estadoDropdown ? '▲' : '▼'}</Text>
-            </Pressable>
-            {estadoDropdown && (
-              <View style={styles.dropdownList}>
-                {ESTADOS.map((est) => (
-                  <Pressable
-                    key={est}
-                    style={[
-                      styles.dropdownItem,
-                      estado === est && styles.dropdownItemActive,
-                    ]}
-                    onPress={() => {
-                      setEstado(est);
-                      setEstadoDropdown(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>
-                      {estado === est ? '✓ ' : '    '}
-                    </Text>
-                    <Text style={styles.dropdownItemText}>
-                      {est === 'En_proceso' ? 'En Proceso' : est}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-
             {/* Descripción del problema */}
             <Text style={styles.label}>Descripción del Problema</Text>
             <TextInput
@@ -586,6 +610,10 @@ export default function EditarSolicitud({
             {errDescripcionProblema ? <Text style={styles.errorText}>{errDescripcionProblema}</Text> : null}
 
             {/* Fecha de cita */}
+            <Text style={styles.fieldDescription}>
+              Horarios disponibles: Lunes a Viernes hasta las 20:00h. Sábados y Domingos solo hasta las 12:00h (mediodía). 
+              Los domingos requieren motivo de emergencia.
+            </Text>
             <Text style={styles.label}>Fecha de Cita</Text>
             <Pressable
               style={[styles.dateButton, errFechaCita && styles.inputError]}
@@ -603,17 +631,89 @@ export default function EditarSolicitud({
 
             {/* Hora de cita */}
             <Text style={styles.label}>Hora de Cita</Text>
-            <TextInput
-              placeholder="HH:MM"
-              placeholderTextColor="#64748B"
-              value={horaCita}
-              onChangeText={(val) => {
-                setHoraCita(val);
-                setErrHoraCita('');
-              }}
-              style={[styles.input, errHoraCita && styles.inputError]}
-            />
+            <Pressable
+              style={[styles.dropdown, errHoraCita && styles.inputError]}
+              onPress={() => setHoraDropdownOpen((v) => !v)}
+            >
+              <Text style={horaCita ? styles.dropdownSelected : styles.dropdownPlaceholder}>
+                {horaCita || 'Seleccionar hora'}
+              </Text>
+              <Text style={styles.dropdownArrow}>{horaDropdownOpen ? '▲' : '▼'}</Text>
+            </Pressable>
+            {fechaCita && !horaDropdownOpen && (
+              <Text style={[styles.fieldDescription, { marginTop: 4, fontSize: 12, color: '#64748B' }]}>
+                {timeOptions.length} {timeOptions.length === 1 ? 'hora disponible' : 'horas disponibles'} para esta fecha
+              </Text>
+            )}
             {errHoraCita ? <Text style={styles.errorText}>{errHoraCita}</Text> : null}
+
+            {/* Lista desplegable de horas */}
+            {horaDropdownOpen && (
+              <View style={styles.dropdownList}>
+                {timeOptions.length === 0 ? (
+                  <View style={{ padding: 16, alignItems: 'center' }}>
+                    <Text style={{ color: '#EF4444', fontSize: 14, textAlign: 'center' }}>
+                      No hay horas disponibles para esta fecha.{'\n'}
+                      Todas las horas están reservadas.
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.timeScrollList}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                  >
+                    {timeOptions.map((t) => (
+                      <Pressable
+                        key={t}
+                        style={[styles.dropdownItem, horaCita === t && styles.dropdownItemActive]}
+                        onPress={() => { 
+                          setHoraCita(t); 
+                          setHoraDropdownOpen(false); 
+                          setErrHoraCita('');
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>
+                          {horaCita === t ? '✓ ' : '    '}
+                        </Text>
+                        <Text style={styles.dropdownItemText}>{t}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                )}
+              </View>
+            )}
+
+            {/* Campo de Motivo de Emergencia (solo para domingos) */}
+            {fechaCita && fechaCita.getDay() === 0 && (
+              <>
+                <Text style={[styles.fieldDescription, { marginBottom: 8, color: '#EF4444', fontWeight: '600' }]}>
+                  IMPORTANTE: Los domingos NO son días laborables. Solo se aceptan reservas de emergencia. 
+                  Describa claramente por qué necesita el servicio en domingo y confirme que comprende que se trata de una atención excepcional.
+                </Text>
+                <Text style={styles.label}>Motivo de Emergencia (Obligatorio)</Text>
+                <TextInput
+                  placeholder="Ej: Mi vehículo no enciende y necesito usarlo urgentemente para..."
+                  placeholderTextColor="#64748B"
+                  value={motivoEmergencia}
+                  onChangeText={(text) => {
+                    // Solo permite letras, números, espacios y puntuación básica
+                    const filtered = text.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,;:()¿?¡!-]/g, '');
+                    setMotivoEmergencia(filtered);
+                    setErrMotivoEmergencia('');
+                  }}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={300}
+                  style={[styles.input, styles.textarea, errMotivoEmergencia && styles.inputError, { height: 100 }]}
+                />
+                <Text style={[styles.fieldDescription, { marginTop: 4, textAlign: 'right' }]}>
+                  {motivoEmergencia.length}/300 caracteres
+                </Text>
+                {errMotivoEmergencia ? <Text style={styles.errorText}>{errMotivoEmergencia}</Text> : null}
+              </>
+            )}
 
             {/* Provincia de la Visita */}
             <Text style={styles.label}>Provincia de la Visita</Text>
@@ -702,9 +802,12 @@ export default function EditarSolicitud({
               style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  ACTUALIZAR SOLICITUD
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="check-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    ACTUALIZAR SOLICITUD
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>
@@ -741,30 +844,37 @@ export default function EditarSolicitud({
                   if (!day) return <View key={i} style={styles.calendarCell} />;
                   const isSelected = fechaCita?.toDateString() === day.toDateString();
                   const isDisabled = isDateDisabled(day);
-                  const isReserved = isDateReserved(day);
+                  
+                  // Obtener disponibilidad del día
+                  const disponibilidad = isDisabled ? null : obtenerDisponibilidadDia(day);
+                  const isDayFull = disponibilidad === 'lleno';
+                  const finalDisabled = isDisabled || isDayFull;
+                  
                   return (
                     <Pressable 
                       key={i} 
                       style={[
                         styles.calendarCell, 
                         isSelected && styles.calendarCellSelected,
-                        isDisabled && styles.calendarCellDisabled,
-                        isReserved && !isSelected && styles.calendarCellReserved
+                        finalDisabled && styles.calendarCellDisabled,
+                        !finalDisabled && !isSelected && disponibilidad === 'disponible' && styles.calendarCellDisponible,
+                        !finalDisabled && !isSelected && disponibilidad === 'medio' && styles.calendarCellMedio,
+                        !finalDisabled && !isSelected && disponibilidad === 'bajo' && styles.calendarCellBajo,
+                        isDayFull && styles.calendarCellLleno,
                       ]} 
                       onPress={() => { 
-                        if (!isDisabled && !isReserved) {
+                        if (!finalDisabled) {
                           setFechaCita(day); 
                           setCalendarVisible(false);
                           setErrFechaCita('');
                         }
                       }}
-                      disabled={isDisabled || isReserved}
+                      disabled={finalDisabled}
                     >
                       <Text style={[
                         styles.calendarCellText, 
                         isSelected && styles.calendarCellSelectedText,
-                        isDisabled && styles.calendarCellDisabledText,
-                        isReserved && !isSelected && styles.calendarCellReservedText
+                        finalDisabled && styles.calendarCellDisabledText,
                       ]}>
                         {day.getDate()}
                       </Text>

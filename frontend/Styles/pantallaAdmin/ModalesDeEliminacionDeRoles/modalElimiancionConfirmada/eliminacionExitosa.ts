@@ -67,4 +67,14 @@ export default StyleSheet.create({
   closeButtonTextPressed: {
     color: '#FFFFFF',
   },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
 });

@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import styles from '@/Styles/pantallaCliente/modalConfirmacionSoporte/confirmacionSoporte';
 
 interface ConfirmacionSoporteProps {
@@ -84,29 +85,45 @@ const ConfirmacionSoporte: React.FC<ConfirmacionSoporteProps> = ({
           <View style={styles.buttonContainer}>
             <Pressable
               style={({ pressed }) => [
-                styles.cancelButton,
-                pressed && styles.cancelButtonPressed,
-              ]}
-              onPress={onCerrar}
-            >
-              {({ pressed }) => (
-                <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
-                  Cancelar
-                </Text>
-              )}
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [
                 styles.sendButton,
                 pressed && styles.sendButtonPressed,
               ]}
               onPress={onEnviar}
             >
               {({ pressed }) => (
-                <Text style={[styles.sendButtonText, pressed && styles.sendButtonTextPressed]}>
-                  Enviar Reporte
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="paper-plane" 
+                    size={18} 
+                    color={pressed ? '#E0E7FF' : '#FFFFFF'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.sendButtonText, pressed && styles.sendButtonTextPressed]}>
+                    ENVIAR REPORTE
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+              ]}
+              onPress={onCerrar}
+            >
+              {({ pressed }) => (
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

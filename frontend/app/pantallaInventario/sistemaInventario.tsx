@@ -367,8 +367,26 @@ export default function SistemaInventarioScreen() {
             <Text style={styles.screenSubtitle}>Administra y registra componentes vehiculares para el mantenimiento de vehículos</Text>
           </Pressable>
           
-          <Pressable onPress={handleIngresarProducto} style={styles.ingresarBtn}>
-            <Text style={styles.ingresarBtnText}>INGRESAR PRODUCTO</Text>
+          <Pressable 
+            onPress={handleIngresarProducto} 
+            style={({ pressed }) => [
+              styles.ingresarBtn,
+              pressed && styles.ingresarBtnPressed
+            ]}
+          >
+            {({ pressed }) => (
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <FontAwesome 
+                  name="plus-circle" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'}
+                />
+                <View style={{ width: 10 }} />
+                <Text style={[styles.ingresarBtnText, pressed && styles.ingresarBtnTextPressed]}>
+                  INGRESAR PRODUCTO
+                </Text>
+              </View>
+            )}
           </Pressable>
 
           <View style={styles.filterContainer}>
@@ -760,7 +778,7 @@ export default function SistemaInventarioScreen() {
               Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
             ]}>
               {productosFiltrados.map((producto) => {
-                const estadoStock = getEstadoStock(producto);
+                const ewstadoStock = getEstadoStock(producto);
                 const compatibilidadesExtra = producto.compatibilidades.length > 1 
                   ? producto.compatibilidades.length - 1 
                   : 0;
@@ -852,9 +870,17 @@ export default function SistemaInventarioScreen() {
                         ]}
                       >
                         {({ pressed }) => (
-                          <Text style={[styles.btnPrimarioText, pressed && styles.btnPrimarioTextPressed]}>
-                            VER DETALLES
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <FontAwesome 
+                              name="eye" 
+                              size={16} 
+                              color={pressed ? '#FFFFFF' : '#000000'}
+                            />
+                            <View style={{ width: 8 }} />
+                            <Text style={[styles.btnPrimarioText, pressed && styles.btnPrimarioTextPressed]}>
+                              DETALLES
+                            </Text>
+                          </View>
                         )}
                       </Pressable>
 
@@ -867,9 +893,17 @@ export default function SistemaInventarioScreen() {
                         ]}
                       >
                         {({ pressed }) => (
-                          <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
-                            EDITAR
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <FontAwesome 
+                              name="edit" 
+                              size={14} 
+                              color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                            />
+                            <View style={{ width: 8 }} />
+                            <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
+                              EDITAR
+                            </Text>
+                          </View>
                         )}
                       </Pressable>
 
@@ -882,9 +916,17 @@ export default function SistemaInventarioScreen() {
                         ]}
                       >
                         {({ pressed }) => (
-                          <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
-                            ELIMINAR
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <FontAwesome 
+                              name="trash" 
+                              size={14} 
+                              color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                            />
+                            <View style={{ width: 8 }} />
+                            <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
+                              ELIMINAR
+                            </Text>
+                          </View>
                         )}
                       </Pressable>
 
@@ -897,9 +939,17 @@ export default function SistemaInventarioScreen() {
                         ]}
                       >
                         {({ pressed }) => (
-                          <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
-                            {producto.activo ? 'DESACTIVAR' : 'ACTIVAR'}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                            <FontAwesome 
+                              name={producto.activo ? 'ban' : 'check-circle'} 
+                              size={14} 
+                              color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                            />
+                            <View style={{ width: 8 }} />
+                            <Text style={[styles.btnSecundarioText, pressed && styles.btnSecundarioTextPressed]}>
+                              {producto.activo ? 'DESACTIVAR' : 'ACTIVAR'}
+                            </Text>
+                          </View>
                         )}
                       </Pressable>
                     </View>

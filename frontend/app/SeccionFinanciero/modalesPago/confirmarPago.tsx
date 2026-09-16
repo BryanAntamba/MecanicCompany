@@ -69,9 +69,17 @@ export default function ConfirmarPago({
                 style={({ pressed }) => [styles.btnConfirmar, pressed && styles.btnConfirmarPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnConfirmarText, pressed && styles.btnConfirmarTextPressed]}>
-                    CONFIRMAR PAGO
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <FontAwesome 
+                      name="check-circle" 
+                      size={16} 
+                      color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                    />
+                    <View style={{ width: 8 }} />
+                    <Text style={[styles.btnConfirmarText, pressed && styles.btnConfirmarTextPressed]}>
+                      CONFIRMAR PAGO
+                    </Text>
+                  </View>
                 )}
               </Pressable>
               <Pressable
@@ -79,9 +87,17 @@ export default function ConfirmarPago({
                 style={({ pressed }) => [styles.btnCancelar, pressed && styles.btnCancelarPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
-                    CANCELAR
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                    <FontAwesome 
+                      name="times-circle" 
+                      size={16} 
+                      color={pressed ? '#1E293B' : '#000000'} 
+                    />
+                    <View style={{ width: 8 }} />
+                    <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
+                      CANCELAR
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>
