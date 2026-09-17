@@ -39,6 +39,11 @@ export default function LoginScreen() {
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
+  // Detectar si completamos el password reset desde sessionStorage
+  const passwordResetCompletedRef = useRef(
+    Platform.OS === 'web' && sessionStorage.getItem('passwordResetCompleted') === 'true'
+  );
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
@@ -46,28 +51,73 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
-  // BackHandler para retroceder
+  // Si completamos password reset, bloquear COMPLETAMENTE el retroceso
   useEffect(() => {
-    // Solo usar BackHandler en plataformas móviles
-    if (Platform.OS === 'web') return;
-    
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Usar los ref para mantener el valor original incluso después de limpiar parámetros
-      const esDesdeLogout = fromLogoutRef.current;
-      const esDesdePasswordReset = fromPasswordResetRef.current;
+    if (Platform.OS === 'web' && passwordResetCompletedRef.current) {
+      // Limpiar la bandera
+      sessionStorage.removeItem('passwordResetCompleted');
       
-      if (esDesdeLogout || esDesdePasswordReset) {
-        // Ir directo al index
-        router.replace('/PantallaCliente' as any);
-        return true; // Consumir el evento
-      } else {
-        // Navegación normal
-        router.back();
-        return true; // Consumir el evento
-      }
-    });
+      // Bloquear el retroceso permanentemente en esta sesión
+      const blockBack = (e: PopStateEvent) => {
+        e.preventDefault();
+        // Mantener en la página actual
+        window.history.pushState(null, '', window.location.href);
+        // Opcionalmente, redirigir al index
+        window.location.href = '/PantallaCliente';
+      };
+      
+      // Agregar múltiples entradas para "absorber" intentos de retroceso
+      window.history.pushState(null, '', window.location.href);
+      window.history.pushState(null, '', window.location.href);
+      window.history.pushState(null, '', window.location.href);
+      
+      window.addEventListener('popstate', blockBack);
+      
+      return () => {
+        window.removeEventListener('popstate', blockBack);
+      };
+    }
+  }, []);
 
-    return () => backHandler.remove();
+  // BackHandler para retroceder - Bloquear completamente
+  useEffect(() => {
+    const esDesdePasswordReset = passwordResetCompletedRef.current;
+    
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // No hacer nada, bloquear el retroceso
+        // Mantener en la página actual agregando entrada al historial
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        // En móvil, bloquear también (no permitir salir del login)
+        return true; // Esto consume el evento sin hacer nada
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      // Si NO venimos de password reset, agregar el listener normal
+      if (!esDesdePasswordReset) {
+        const handlePopState = (e: PopStateEvent) => {
+          e.preventDefault();
+          handleBack();
+        };
+
+        // Agregar entrada inicial para prevenir retroceso
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        // En móvil, ir a PantallaCliente
+        router.replace('/PantallaCliente' as any);
+        return true;
+      });
+      return () => backHandler.remove();
+    }
   }, [router]);
 
   const validar = (): boolean => {
@@ -96,6 +146,7 @@ export default function LoginScreen() {
           await iniciarSesionCliente(correoLower, nombreCompleto);
           
           // Usuario cliente encontrado, redirigir a pantalla de cliente
+          // IMPORTANTE: Usar router.replace para mantener sesión en memoria
           router.replace('/PantallaCliente' as any);
         } else {
           setErrGeneral('Ingrese una credencial válida.');
@@ -105,16 +156,30 @@ export default function LoginScreen() {
         const usuario = verificarUsuario(correoLower, password);
         
         if (usuario) {
-          // Guardar datos del usuario de inventario en AsyncStorage
+          // Crear datos de usuario para AuthContext
           const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
-          const userData = {
+          const tokenSimulado = `simulado-inventario-${Date.now()}`;
+          const usuarioSimulado = {
+            id: `sim-inv-${Date.now()}`,
+            nombres: usuario.nombre,
+            apellidos: usuario.apellido,
+            correoEmpresarial: correoLower,
+            especialidad: 'Inventario',
+            estadoLaboral: 'Disponible',
+            esAdmin: false,
+            tipoPersonal: 'Inventario',
+          };
+          
+          // Guardar en AuthContext (que usa sessionStorage en web)
+          await setSession(tokenSimulado, usuarioSimulado);
+          
+          // También guardar en AsyncStorage para compatibilidad con código existente
+          await AsyncStorage.setItem('inventario_user', JSON.stringify({
             correo: correoLower,
             nombreCompleto,
             tipoPersonal: 'Inventario',
             esAdmin: false
-          };
-          
-          await AsyncStorage.setItem('inventario_user', JSON.stringify(userData));
+          }));
           
           // Redirigir a sistema de inventario
           router.replace('/pantallaInventario/sistemaInventario' as any);
@@ -126,16 +191,30 @@ export default function LoginScreen() {
         const usuario = verificarUsuario(correoLower, password);
         
         if (usuario) {
-          // Guardar datos del usuario financiero en AsyncStorage
+          // Crear datos de usuario para AuthContext
           const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
-          const userData = {
+          const tokenSimulado = `simulado-financiero-${Date.now()}`;
+          const usuarioSimulado = {
+            id: `sim-fin-${Date.now()}`,
+            nombres: usuario.nombre,
+            apellidos: usuario.apellido,
+            correoEmpresarial: correoLower,
+            especialidad: 'Financiero',
+            estadoLaboral: 'Disponible',
+            esAdmin: false,
+            tipoPersonal: 'Financiero',
+          };
+          
+          // Guardar en AuthContext (que usa sessionStorage en web)
+          await setSession(tokenSimulado, usuarioSimulado);
+          
+          // También guardar en AsyncStorage para compatibilidad con código existente
+          await AsyncStorage.setItem('financiero_user', JSON.stringify({
             correo: correoLower,
             nombreCompleto,
             tipoPersonal: 'Financiero',
             esAdmin: false
-          };
-          
-          await AsyncStorage.setItem('financiero_user', JSON.stringify(userData));
+          }));
           
           // Redirigir a sistema financiero
           router.replace('/SeccionFinanciero/financiero' as any);
@@ -219,7 +298,10 @@ export default function LoginScreen() {
           >
             {/* Botón regresar */}
             <Pressable
-              onPress={() => router.push('/PantallaCliente' as any)}
+              onPress={() => {
+                // Usar router.replace para no perder sesión de clientes en memoria
+                router.replace('/PantallaCliente' as any);
+              }}
               style={loginStyles.backButton}
               hitSlop={8}
             >
@@ -263,7 +345,7 @@ export default function LoginScreen() {
               {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
 
               {/* Enlace registro */}
-              <Pressable onPress={() => router.replace('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
+              <Pressable onPress={() => router.push('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
                 <Text style={loginStyles.forgotText}>Registrarse</Text>
               </Pressable>
 

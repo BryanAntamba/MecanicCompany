@@ -81,7 +81,7 @@ import { authApi, solicitudesApi } from '@/utils/api';
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, obtenerMecanicaPorId, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
 
 // Funciones de disponibilidad de citas
-import { obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha } from '@/utils/datosSimulados';
+import { obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha, obtenerEstadoDisponibilidadHora, obtenerNivelDisponibilidadDia } from '@/utils/datosSimulados';
 
 // Componente reutilizable de la barra de navegación del cliente
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';
@@ -352,9 +352,23 @@ export default function HomeScreen() {
   }, []);
 
   // Manejo del botón de retroceso: cierra la app y logout (solo en móvil)
+  // En web, bloquear retroceso en index para no volver a auth después de logout o cambio contraseña
   useFocusEffect(
     useCallback(() => {
-      if (Platform.OS === 'web') return;
+      if (Platform.OS === 'web') {
+        // Bloquear retroceso en web desde la pantalla principal
+        const handlePopState = (e: PopStateEvent) => {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.href);
+        };
+        
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+        
+        return () => {
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
       
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         logout();
@@ -592,9 +606,6 @@ export default function HomeScreen() {
       return opts;
     }
     
-    // Obtener las horas ocupadas en esta fecha
-    const horasOcupadas = obtenerHorasOcupadasPorFecha(appointmentDate);
-    
     const dayOfWeek = appointmentDate.getDay(); // 0 = Domingo, 6 = Sábado
     
     if (dayOfWeek === 6) {
@@ -617,9 +628,15 @@ export default function HomeScreen() {
       }
     }
     
-    // Filtrar las horas ocupadas
-    return opts.filter(hora => !horasOcupadas.includes(hora));
+    // Ahora NO filtramos, mostramos todas las horas con colores
+    return opts;
   })();
+
+  // Obtener el estado de disponibilidad para cada hora
+  const getHoraDisponibilidad = (hora: string) => {
+    if (!appointmentDate) return { disponible: true, nivel: 'verde' as const, reservas: 0 };
+    return obtenerEstadoDisponibilidadHora(appointmentDate, hora);
+  };
 
   // Navega el carrusel "Nosotros" al índice indicado con animación suave
   const scrollAboutTo = (index: number) => {
@@ -1508,10 +1525,15 @@ export default function HomeScreen() {
                       const isPast = day < today;                                           // Día pasado
                       const isTooFarFuture = day > maxDate;                                 // Después del 31/dic del año actual
                       
-                      // Obtener disponibilidad del día
-                      const disponibilidad = isPast || isTooFarFuture ? null : obtenerDisponibilidadDia(day);
-                      const isDayFull = disponibilidad === 'lleno';
-                      const isDisabled = isPast || isTooFarFuture || isDayFull;             // Deshabilitado si está fuera de rango o lleno
+                      // Obtener disponibilidad del día completo (según total de reservas)
+                      let nivelDia: 'verde' | 'naranja' | 'rojo' | 'bloqueado' | null = null;
+                      if (!isPast && !isTooFarFuture) {
+                        // Aplicar colores a TODOS los días (lunes-domingo)
+                        nivelDia = obtenerNivelDisponibilidadDia(day);
+                      }
+                      
+                      const isDayBlocked = nivelDia === 'bloqueado';
+                      const isDisabled = isPast || isTooFarFuture || isDayBlocked;
                       
                       const isSelected = appointmentDate?.toDateString() === day.toDateString(); // Seleccionado
                       const isToday = day.toDateString() === today.toDateString();            // Hoy
@@ -1524,10 +1546,10 @@ export default function HomeScreen() {
                             isToday && styles.calendarCellToday,    // Borde azul si es hoy
                             isSelected && styles.calendarCellSelected, // Fondo azul si seleccionado
                             isDisabled && styles.calendarCellPast,     // Opacidad reducida si deshabilitado
-                            !isDisabled && !isSelected && disponibilidad === 'disponible' && styles.calendarCellDisponible, // Verde
-                            !isDisabled && !isSelected && disponibilidad === 'medio' && styles.calendarCellMedio, // Naranja
-                            !isDisabled && !isSelected && disponibilidad === 'bajo' && styles.calendarCellBajo, // Rojo
-                            isDayFull && styles.calendarCellLleno, // Gris/bloqueado
+                            !isDisabled && !isSelected && nivelDia === 'verde' && styles.calendarCellDisponible, // Verde
+                            !isDisabled && !isSelected && nivelDia === 'naranja' && styles.calendarCellMedio, // Naranja
+                            !isDisabled && !isSelected && nivelDia === 'rojo' && styles.calendarCellBajo, // Rojo
+                            isDayBlocked && styles.calendarCellLleno, // Gris/bloqueado
                           ]}
                           // Selecciona el día y cierra el modal (solo si está dentro del rango permitido)
                           onPress={() => { 
@@ -1578,11 +1600,6 @@ export default function HomeScreen() {
               </Text>
               <Text style={styles.dropdownArrow}>{timeDropdownOpen ? '▲' : '▼'}</Text>
             </Pressable>
-            {appointmentDate && !timeDropdownOpen && (
-              <Text style={[styles.fieldDescription, { marginTop: 4, fontSize: 12 }]}>
-                {timeOptions.length} {timeOptions.length === 1 ? 'hora disponible' : 'horas disponibles'} para esta fecha
-              </Text>
-            )}
             {errTime ? <Text style={styles.errorText}>{errTime}</Text> : null}
 
             {/* Lista desplegable de horas */}
@@ -1602,22 +1619,40 @@ export default function HomeScreen() {
                     nestedScrollEnabled={true}
                     scrollEnabled={true}
                   >
-                    {timeOptions.map((t) => (
-                      <Pressable
-                        key={t}
-                        style={[styles.dropdownItem, appointmentTime === t && styles.dropdownItemActive]}
-                        onPress={() => { 
-                          setAppointmentTime(t); 
-                          setTimeDropdownOpen(false); 
-                          setErrTime(''); // Limpia el error al seleccionar hora
-                        }}
-                      >
-                        <Text style={styles.dropdownItemCheck}>
-                          {appointmentTime === t ? '✓ ' : '    '}
-                        </Text>
-                        <Text style={styles.dropdownItemText}>{t}</Text>
-                      </Pressable>
-                    ))}
+                    {timeOptions.map((t) => {
+                      const estado = getHoraDisponibilidad(t);
+                      const isOcupada = estado.reservas >= 1; // Bloquear si hay al menos 1 reserva
+                      
+                      return (
+                        <Pressable
+                          key={t}
+                          style={[
+                            styles.dropdownItem,
+                            appointmentTime === t && styles.dropdownItemActive,
+                            isOcupada && { opacity: 0.5, backgroundColor: '#F3F4F6' }
+                          ]}
+                          onPress={() => {
+                            if (!isOcupada) {
+                              setAppointmentTime(t);
+                              setTimeDropdownOpen(false);
+                              setErrTime('');
+                            }
+                          }}
+                          disabled={isOcupada}
+                        >
+                          <Text style={styles.dropdownItemCheck}>
+                            {appointmentTime === t ? '✓ ' : '    '}
+                          </Text>
+                          <Text style={[
+                            styles.dropdownItemText,
+                            isOcupada && { textDecorationLine: 'line-through', color: '#9CA3AF' }
+                          ]}>
+                            {t}
+                            {isOcupada && ' (Ocupada)'}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
                   </ScrollView>
                 )}
               </View>

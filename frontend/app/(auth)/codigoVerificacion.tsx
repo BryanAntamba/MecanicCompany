@@ -41,27 +41,43 @@ export default function CodigoVerificacionScreen() {
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
 
-    // BackHandler: va de regreso a restablecimiento (solo en móvil)
-    if (Platform.OS === 'web') {
-      verificarEstadoInicial();
-      return () => {
-        if (timerRef.current) clearInterval(timerRef.current);
-      };
-    }
-
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-
     // Verificar estado inicial de reenvíos
     verificarEstadoInicial();
 
-    return () => {
-      backHandler.remove();
-      if (timerRef.current) clearInterval(timerRef.current);
+    // Manejar botón atrás - Ir a restablecimientoPassword
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // En web, usar window.location para limpiar historial
+        window.location.href = '/(auth)/restablecimientoPassword';
+      } else {
+        router.replace('/(auth)/restablecimientoPassword' as any);
+      }
     };
-  }, []);
+
+    if (Platform.OS === 'web') {
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        handleBack();
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+      
+      return () => {
+        backHandler.remove();
+        if (timerRef.current) clearInterval(timerRef.current);
+      };
+    }
+  }, [router]);
 
   // Verificar estado inicial al cargar la pantalla
   const verificarEstadoInicial = () => {
@@ -182,7 +198,13 @@ export default function CodigoVerificacionScreen() {
           >
             {/* Botón regresar */}
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  window.location.href = '/(auth)/restablecimientoPassword';
+                } else {
+                  router.replace('/(auth)/restablecimientoPassword' as any);
+                }
+              }}
               style={codigoStyles.backButton}
               hitSlop={8}
             >

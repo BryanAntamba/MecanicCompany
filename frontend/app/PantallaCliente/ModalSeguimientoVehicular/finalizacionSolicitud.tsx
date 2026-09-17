@@ -33,7 +33,7 @@ const FinalizacionSolicitud: React.FC<FinalizacionSolicitudProps> = ({ visible, 
                 <FontAwesome 
                   name="times-circle" 
                   size={18} 
-                  color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                  color={pressed ? '#FFFFFF' : '#000000'} 
                   style={styles.buttonIcon}
                 />
                 <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>

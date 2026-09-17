@@ -299,6 +299,14 @@ export default StyleSheet.create({
   verDetallesButtonTextPressed: {
     color: '#FFFFFF',
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 6,
+  },
   dateButton: {
     backgroundColor: '#0F172A',
     borderWidth: 1,

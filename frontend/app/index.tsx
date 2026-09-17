@@ -9,9 +9,19 @@
  */
 
 import { useEffect, useState } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage helper para soportar sessionStorage en web
+const storage = {
+  async getItem(key: string): Promise<string | null> {
+    if (Platform.OS === 'web' && typeof sessionStorage !== 'undefined') {
+      return sessionStorage.getItem(key);
+    }
+    return AsyncStorage.getItem(key);
+  }
+};
 
 export default function Index() {
   const router = useRouter();
@@ -23,10 +33,10 @@ export default function Index() {
 
   const checkAuthAndRedirect = async () => {
     try {
-      // Verificar si hay sesión activa
+      // Verificar si hay sesión activa (sessionStorage en web, AsyncStorage en móvil)
       const [token, userStr] = await Promise.all([
-        AsyncStorage.getItem('@mecaniccompany/token'),
-        AsyncStorage.getItem('@mecaniccompany/user'),
+        storage.getItem('@mecaniccompany/token'),
+        storage.getItem('@mecaniccompany/user'),
       ]);
 
       console.log('🔍 INDEX.TSX - Token:', token ? 'EXISTS' : 'NULL');

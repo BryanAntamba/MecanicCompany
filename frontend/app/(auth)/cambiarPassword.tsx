@@ -44,15 +44,35 @@ export default function CambiarPasswordScreen() {
       Animated.timing(opacityAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
 
-    // BackHandler: va de regreso a código verificación (navegación natural, solo en móvil)
-    if (Platform.OS === 'web') return;
+    // Manejar botón atrás - Ir a restablecimientoPassword
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // En web, usar window.location para limpiar historial
+        window.location.href = '/(auth)/restablecimientoPassword';
+      } else {
+        router.replace('/(auth)/restablecimientoPassword' as any);
+      }
+    };
 
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+    if (Platform.OS === 'web') {
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        handleBack();
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [router, correo]);
 
   const validar = (): boolean => {
     let ok = true;
@@ -128,7 +148,13 @@ export default function CambiarPasswordScreen() {
           >
             {/* Botón regresar */}
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  window.location.href = '/(auth)/restablecimientoPassword';
+                } else {
+                  router.replace('/(auth)/restablecimientoPassword' as any);
+                }
+              }}
               style={cambiarStyles.backButton}
               hitSlop={8}
             >
@@ -206,7 +232,14 @@ export default function CambiarPasswordScreen() {
           visible={modalVisible}
           onClose={() => {
             setModalVisible(false);
-            router.replace('/(auth)/login' as any);
+            if (Platform.OS === 'web') {
+              // Marcar en sessionStorage que completamos el cambio de contraseña
+              sessionStorage.setItem('passwordResetCompleted', 'true');
+              // Navegar al login
+              window.location.href = '/(auth)/login';
+            } else {
+              router.replace('/(auth)/login?fromPasswordReset=true' as any);
+            }
           }}
         />
       </ImageBackground>

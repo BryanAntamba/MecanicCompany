@@ -27,7 +27,7 @@ import {
   validarSoloNumeros,
 } from '@/utils/validaciones';
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
-import { obtenerSolicitudesSimuladas, obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha } from '@/utils/datosSimulados';
+import { obtenerSolicitudesSimuladas, obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha, obtenerEstadoDisponibilidadHora, obtenerNivelDisponibilidadDia } from '@/utils/datosSimulados';
 
 interface EditarSolicitudProps {
   visible: boolean;
@@ -69,6 +69,10 @@ export default function EditarSolicitud({
   // Estados del calendario
   const [calendarVisible, setCalendarVisible] = useState(false);
   const [calendarMonth, setCalendarMonth] = useState(new Date());
+  
+  // Fecha de referencia para validaciones
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
 
   // Campos de provincia y ubicación
   const [provincia, setProvincia] = useState<ProvinciaEcuador | ''>('');
@@ -174,7 +178,7 @@ export default function EditarSolicitud({
   }, [fechaCita]);
 
   // Genera opciones de hora dinámicamente basado en el día seleccionado
-  // Excluye las horas ya ocupadas por otras citas
+  // Muestra TODAS las horas, pero se bloquearán las ocupadas en el renderizado
   const timeOptions = useMemo(() => {
     const opts: string[] = [];
     
@@ -186,9 +190,6 @@ export default function EditarSolicitud({
       }
       return opts;
     }
-    
-    // Obtener las horas ocupadas en esta fecha (excluyendo la solicitud actual que se está editando)
-    const horasOcupadas = obtenerHorasOcupadasPorFecha(fechaCita, solicitud?.id);
     
     const dayOfWeek = fechaCita.getDay(); // 0 = Domingo, 6 = Sábado
     
@@ -212,9 +213,15 @@ export default function EditarSolicitud({
       }
     }
     
-    // Filtrar las horas ocupadas
-    return opts.filter(hora => !horasOcupadas.includes(hora));
-  }, [fechaCita, solicitud?.id]);
+    // NO filtrar horas ocupadas, retornar todas
+    return opts;
+  }, [fechaCita]);
+
+  // Función para obtener disponibilidad de una hora específica
+  const getHoraDisponibilidad = (hora: string) => {
+    if (!fechaCita) return { reservas: 0, bloqueada: false };
+    return obtenerEstadoDisponibilidadHora(fechaCita, hora, solicitud?.id);
+  };
 
   const guardar = async () => {
     if (!solicitud) return;
@@ -640,48 +647,54 @@ export default function EditarSolicitud({
               </Text>
               <Text style={styles.dropdownArrow}>{horaDropdownOpen ? '▲' : '▼'}</Text>
             </Pressable>
-            {fechaCita && !horaDropdownOpen && (
-              <Text style={[styles.fieldDescription, { marginTop: 4, fontSize: 12, color: '#64748B' }]}>
-                {timeOptions.length} {timeOptions.length === 1 ? 'hora disponible' : 'horas disponibles'} para esta fecha
-              </Text>
-            )}
             {errHoraCita ? <Text style={styles.errorText}>{errHoraCita}</Text> : null}
 
             {/* Lista desplegable de horas */}
             {horaDropdownOpen && (
               <View style={styles.dropdownList}>
-                {timeOptions.length === 0 ? (
-                  <View style={{ padding: 16, alignItems: 'center' }}>
-                    <Text style={{ color: '#EF4444', fontSize: 14, textAlign: 'center' }}>
-                      No hay horas disponibles para esta fecha.{'\n'}
-                      Todas las horas están reservadas.
-                    </Text>
-                  </View>
-                ) : (
-                  <ScrollView
-                    style={styles.timeScrollList}
-                    showsVerticalScrollIndicator={true}
-                    nestedScrollEnabled={true}
-                    scrollEnabled={true}
-                  >
-                    {timeOptions.map((t) => (
+                <ScrollView
+                  style={styles.timeScrollList}
+                  showsVerticalScrollIndicator={true}
+                  nestedScrollEnabled={true}
+                  scrollEnabled={true}
+                >
+                  {timeOptions.map((t) => {
+                    const estado = getHoraDisponibilidad(t);
+                    const isOcupada = estado.reservas >= 1; // Bloquear si tiene 1 o más reservas
+                    
+                    return (
                       <Pressable
                         key={t}
-                        style={[styles.dropdownItem, horaCita === t && styles.dropdownItemActive]}
+                        style={[
+                          styles.dropdownItem, 
+                          horaCita === t && styles.dropdownItemActive,
+                          isOcupada && { backgroundColor: '#F1F5F9', opacity: 0.6 }
+                        ]}
                         onPress={() => { 
-                          setHoraCita(t); 
-                          setHoraDropdownOpen(false); 
-                          setErrHoraCita('');
+                          if (!isOcupada) {
+                            setHoraCita(t); 
+                            setHoraDropdownOpen(false); 
+                            setErrHoraCita('');
+                          }
                         }}
+                        disabled={isOcupada}
                       >
                         <Text style={styles.dropdownItemCheck}>
                           {horaCita === t ? '✓ ' : '    '}
                         </Text>
-                        <Text style={styles.dropdownItemText}>{t}</Text>
+                        <Text style={[
+                          styles.dropdownItemText,
+                          isOcupada && { 
+                            textDecorationLine: 'line-through',
+                            color: '#94A3B8'
+                          }
+                        ]}>
+                          {t} {isOcupada ? '(Ocupada)' : ''}
+                        </Text>
                       </Pressable>
-                    ))}
-                  </ScrollView>
-                )}
+                    );
+                  })}
+                </ScrollView>
               </View>
             )}
 
@@ -843,12 +856,20 @@ export default function EditarSolicitud({
                 {buildCalendarDays(calendarMonth).map((day, i) => {
                   if (!day) return <View key={i} style={styles.calendarCell} />;
                   const isSelected = fechaCita?.toDateString() === day.toDateString();
-                  const isDisabled = isDateDisabled(day);
+                  const isPast = day < hoy;
+                  const maxDate = new Date(hoy);
+                  maxDate.setDate(maxDate.getDate() + 60);
+                  const isTooFarFuture = day > maxDate;
                   
-                  // Obtener disponibilidad del día
-                  const disponibilidad = isDisabled ? null : obtenerDisponibilidadDia(day);
-                  const isDayFull = disponibilidad === 'lleno';
-                  const finalDisabled = isDisabled || isDayFull;
+                  // Obtener disponibilidad del día completo (según total de reservas)
+                  let nivelDia: 'verde' | 'naranja' | 'rojo' | 'bloqueado' | null = null;
+                  if (!isPast && !isTooFarFuture) {
+                    // Aplicar colores a TODOS los días (lunes-domingo)
+                    nivelDia = obtenerNivelDisponibilidadDia(day, solicitud?.id);
+                  }
+                  
+                  const isDayBlocked = nivelDia === 'bloqueado';
+                  const isDisabled = isPast || isTooFarFuture || isDayBlocked;
                   
                   return (
                     <Pressable 
@@ -856,20 +877,20 @@ export default function EditarSolicitud({
                       style={[
                         styles.calendarCell, 
                         isSelected && styles.calendarCellSelected,
-                        finalDisabled && styles.calendarCellDisabled,
-                        !finalDisabled && !isSelected && disponibilidad === 'disponible' && styles.calendarCellDisponible,
-                        !finalDisabled && !isSelected && disponibilidad === 'medio' && styles.calendarCellMedio,
-                        !finalDisabled && !isSelected && disponibilidad === 'bajo' && styles.calendarCellBajo,
-                        isDayFull && styles.calendarCellLleno,
+                        isDisabled && styles.calendarCellDisabled,
+                        !isDisabled && !isSelected && nivelDia === 'verde' && styles.calendarCellDisponible,
+                        !isDisabled && !isSelected && nivelDia === 'naranja' && styles.calendarCellMedio,
+                        !isDisabled && !isSelected && nivelDia === 'rojo' && styles.calendarCellBajo,
+                        isDayBlocked && styles.calendarCellLleno,
                       ]} 
                       onPress={() => { 
-                        if (!finalDisabled) {
+                        if (!isDisabled) {
                           setFechaCita(day); 
                           setCalendarVisible(false);
                           setErrFechaCita('');
                         }
                       }}
-                      disabled={finalDisabled}
+                      disabled={isDisabled}
                     >
                       <Text style={[
                         styles.calendarCellText, 

@@ -29,17 +29,36 @@ export default function RestablecimientoPasswordScreen() {
     ]).start();
   }, []);
 
-  // BackHandler: va de regreso al login
+  // Manejar botón atrás - Ir a login (limpiando historial en web)
   useEffect(() => {
-    // Solo usar BackHandler en plataformas móviles
-    if (Platform.OS === 'web') return;
-    
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      router.back();
-      return true;
-    });
-    return () => backHandler.remove();
-  }, []);
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // En web, usar window.location para limpiar historial
+        window.location.href = '/(auth)/login';
+      } else {
+        router.replace('/(auth)/login' as any);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        handleBack();
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [router]);
 
   const handleSend = async () => {
     const correoLower = email.trim().toLowerCase();
@@ -96,7 +115,13 @@ export default function RestablecimientoPasswordScreen() {
         >
           {/* Botón regresar */}
           <Pressable
-            onPress={() => router.back()}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.href = '/(auth)/login';
+              } else {
+                router.replace('/(auth)/login' as any);
+              }
+            }}
             style={restablecerStyles.backButton}
             hitSlop={8}
           >

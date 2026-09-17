@@ -25,22 +25,35 @@ export default function RegistroUsuarioScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
   
-  // Manejar botón atrás del navegador en web (volver a login)
+  // Manejar botón atrás - Ir a login (limpiando historial en web)
   useEffect(() => {
-    if (Platform.OS !== 'web') return;
-
-    const handlePopState = (event: PopStateEvent) => {
-      event.preventDefault();
-      router.replace('/(auth)/login');
-      window.history.pushState(null, '', window.location.href);
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // En web, usar window.location para limpiar historial
+        window.location.href = '/(auth)/login';
+      } else {
+        router.replace('/(auth)/login' as any);
+      }
     };
 
-    window.history.pushState(null, '', window.location.href);
-    window.addEventListener('popstate', handlePopState);
+    if (Platform.OS === 'web') {
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        handleBack();
+      };
 
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
   }, [router]);
 
   // Estados del formulario
@@ -283,7 +296,13 @@ export default function RegistroUsuarioScreen() {
           >
           {/* Botón regresar */}
           <Pressable
-            onPress={() => router.replace('/(auth)/login' as any)}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.href = '/(auth)/login';
+              } else {
+                router.replace('/(auth)/login' as any);
+              }
+            }}
             style={registroStyles.backButton}
             hitSlop={8}
           >

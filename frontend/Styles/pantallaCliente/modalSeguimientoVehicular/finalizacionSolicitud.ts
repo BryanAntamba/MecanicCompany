@@ -59,9 +59,7 @@ export default StyleSheet.create({
     justifyContent: 'center',
   },
   buttonIcon: {
-    marginRight: 8,
-    width: 18,
-    textAlign: 'center',
+    marginRight: 6,
   },
   closeButtonText: {
     fontSize: 15,

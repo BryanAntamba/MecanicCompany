@@ -774,6 +774,109 @@ export function obtenerHorasOcupadasPorFecha(fecha: Date, solicitudIdExcluida?: 
   return solicitudesEnFecha.map(s => s.horaCita);
 }
 
+// Función para contar reservas por hora en una fecha específica
+// Retorna un objeto con el conteo de reservas por cada hora
+export function contarReservasPorHora(fecha: Date, solicitudIdExcluida?: string): Record<string, number> {
+  const fechaStr = formatearFechaParaComparacion(fecha);
+  const conteo: Record<string, number> = {};
+  
+  // Obtener todas las solicitudes que NO están completadas en esa fecha
+  const solicitudesEnFecha = solicitudesSimuladas.filter(solicitud => {
+    // Excluir la solicitud que se está editando
+    if (solicitudIdExcluida && solicitud.id === solicitudIdExcluida) return false;
+    
+    if (solicitud.estado === 'Completado') return false;
+    
+    // Convertir la fecha de la cita a formato comparable
+    const [dia, mes, anio] = solicitud.fechaCita.split('/');
+    const fechaCitaStr = `${anio}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+    
+    return fechaCitaStr === fechaStr;
+  });
+  
+  // Contar reservas por hora
+  solicitudesEnFecha.forEach(solicitud => {
+    const hora = solicitud.horaCita;
+    conteo[hora] = (conteo[hora] || 0) + 1;
+  });
+  
+  return conteo;
+}
+
+// Función auxiliar para determinar el estado de disponibilidad de una hora
+export function obtenerEstadoDisponibilidadHora(
+  fecha: Date,
+  hora: string,
+  solicitudIdExcluida?: string
+): { disponible: boolean; nivel: 'verde' | 'naranja' | 'rojo' | 'bloqueado'; reservas: number } {
+  const conteo = contarReservasPorHora(fecha, solicitudIdExcluida);
+  const reservas = conteo[hora] || 0;
+  
+  // Definir límites
+  const LIMITE_VERDE = 9;      // 0-9 reservas = verde
+  const LIMITE_NARANJA = 18;   // 10-18 reservas = naranja
+  const LIMITE_ROJO = 27;      // 19-27 reservas = rojo
+  
+  if (reservas >= LIMITE_ROJO) {
+    return { disponible: false, nivel: 'bloqueado', reservas };
+  } else if (reservas >= LIMITE_NARANJA) {
+    return { disponible: true, nivel: 'rojo', reservas };
+  } else if (reservas >= LIMITE_VERDE) {
+    return { disponible: true, nivel: 'naranja', reservas };
+  } else {
+    return { disponible: true, nivel: 'verde', reservas };
+  }
+}
+
+// Función para contar el total de reservas de TODO el día (todas las horas)
+export function contarReservasTotalesDia(fecha: Date, solicitudIdExcluida?: string): number {
+  const conteo = contarReservasPorHora(fecha, solicitudIdExcluida);
+  return Object.values(conteo).reduce((total, count) => total + count, 0);
+}
+
+// Función para obtener el nivel de disponibilidad de un día completo
+export function obtenerNivelDisponibilidadDia(
+  fecha: Date,
+  solicitudIdExcluida?: string
+): 'verde' | 'naranja' | 'rojo' | 'bloqueado' {
+  const totalReservas = contarReservasTotalesDia(fecha, solicitudIdExcluida);
+  const dayOfWeek = fecha.getDay(); // 0 = Domingo, 6 = Sábado
+  
+  // Sábado y Domingo: solo trabajan hasta mediodía (menos horas disponibles)
+  // Total de 11 slots de media hora desde 7:00 hasta 12:00
+  if (dayOfWeek === 6 || dayOfWeek === 0) {
+    // Límites para sábado/domingo (menos horas)
+    const LIMITE_VERDE = 4;      // 0-4 reservas = verde
+    const LIMITE_NARANJA = 8;    // 5-8 reservas = naranja (4 + 4)
+    const LIMITE_ROJO = 11;      // 9-11 reservas = rojo (8 + 3)
+    
+    if (totalReservas >= LIMITE_ROJO) {
+      return 'bloqueado'; // 11+ reservas = día completo bloqueado
+    } else if (totalReservas >= LIMITE_NARANJA) {
+      return 'rojo'; // 9-11 reservas = rojo
+    } else if (totalReservas > LIMITE_VERDE) {
+      return 'naranja'; // 5-8 reservas = naranja  
+    } else {
+      return 'verde'; // 0-4 reservas = verde
+    }
+  }
+  
+  // Lunes a Viernes: horario completo hasta 20:00
+  const LIMITE_VERDE = 9;      // 0-9 reservas = verde (primer grupo de 9)
+  const LIMITE_NARANJA = 18;   // 10-18 reservas = naranja (segundo grupo de 9)
+  const LIMITE_ROJO = 27;      // 19-27 reservas = rojo (tercer grupo de 9)
+  
+  if (totalReservas >= LIMITE_ROJO) {
+    return 'bloqueado'; // 27+ reservas = día completo bloqueado
+  } else if (totalReservas >= LIMITE_NARANJA) {
+    return 'rojo'; // 19-27 reservas = rojo
+  } else if (totalReservas >= LIMITE_VERDE) {
+    return 'naranja'; // 10-18 reservas = naranja  
+  } else {
+    return 'verde'; // 0-9 reservas = verde
+  }
+}
+
 // Función para obtener solicitudes simuladas
 export const obtenerSolicitudesSimuladas = (): SolicitudMantenimiento[] => {
   return solicitudesSimuladas;
