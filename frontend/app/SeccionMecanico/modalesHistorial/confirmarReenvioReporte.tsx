@@ -2,7 +2,7 @@
 // Modal de confirmación para reenviar reporte desde el historial
 
 import { useEffect } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, Text, View, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import styles from '../../../Styles/pantallaMecanico/modalesHistorial/confirmarReenvioReporte';
@@ -10,6 +10,7 @@ import styles from '../../../Styles/pantallaMecanico/modalesHistorial/confirmarR
 interface ConfirmarReenvioReporteProps {
   visible: boolean;
   nombreCliente: string;
+  isLoading?: boolean;
   onCancelar: () => void;
   onConfirmar: () => void;
 }
@@ -17,11 +18,14 @@ interface ConfirmarReenvioReporteProps {
 export default function ConfirmarReenvioReporte({
   visible,
   nombreCliente,
+  isLoading = false,
   onCancelar,
   onConfirmar,
 }: ConfirmarReenvioReporteProps) {
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -39,7 +43,7 @@ export default function ConfirmarReenvioReporte({
             {/* Cabecera con botón X */}
             <View style={styles.modalHeader}>
               <View style={styles.modalHeaderTextBlock}>
-                <Text style={styles.title}>¿Reenviar Factura?</Text>
+                <Text style={styles.title}>¿Reenviar Reporte?</Text>
               </View>
               <Pressable
                 onPress={onCancelar}
@@ -56,7 +60,7 @@ export default function ConfirmarReenvioReporte({
 
             {/* Mensaje */}
             <Text style={styles.message}>
-              ¿Está seguro de reenviar la factura al usuario?
+              ¿Está seguro de reenviar el reporte al usuario?
             </Text>
 
             <Text style={styles.nombreDestacado}>{nombreCliente}</Text>
@@ -65,29 +69,47 @@ export default function ConfirmarReenvioReporte({
             <View style={styles.botonesContainer}>
               <Pressable
                 onPress={onConfirmar}
+                disabled={isLoading}
                 style={({ pressed }) => [
                   styles.btnConfirmar,
-                  pressed && styles.btnConfirmarPressed,
+                  isLoading && { opacity: 0.6 },
+                  pressed && !isLoading && styles.btnConfirmarPressed,
                 ]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnConfirmarText, pressed && styles.btnConfirmarTextPressed]}>
-                    CONFIRMAR REENVÍO
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    {isLoading ? (
+                      <ActivityIndicator size={16} color="#FFFFFF" />
+                    ) : (
+                      <FontAwesome name="check" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                    )}
+                    <Text style={[styles.btnConfirmarText, pressed && !isLoading && styles.btnConfirmarTextPressed]}>
+                      {isLoading ? 'ENVIANDO...' : 'CONFIRMAR'}
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 
               <Pressable
                 onPress={onCancelar}
+                disabled={isLoading}
                 style={({ pressed }) => [
                   styles.btnCancelar,
-                  pressed && styles.btnCancelarPressed,
+                  isLoading && { opacity: 0.6 },
+                  pressed && !isLoading && styles.btnCancelarPressed,
                 ]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnCancelarText, pressed && styles.btnCancelarTextPressed]}>
-                    CANCELAR
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome 
+                      name="times" 
+                      size={16} 
+                      color={isLoading ? '#999999' : (pressed ? '#1E293B' : '#000000')} 
+                    />
+                    <Text style={[styles.btnCancelarText, pressed && !isLoading && styles.btnCancelarTextPressed, isLoading && { color: '#999999' }]}>
+                      CANCELAR
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>

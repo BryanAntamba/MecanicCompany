@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import styles from '@/Styles/pantallaCliente/modalSeguimientoVehicular/detallesSolicitud';
 
 interface Solicitud {
@@ -122,9 +123,17 @@ const DetallesSolicitud: React.FC<DetallesSolicitudProps> = ({ visible, solicitu
             onPress={onCerrar}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={styles.buttonContent}>
+                <FontAwesome 
+                  name="times-circle" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'} 
+                  style={styles.buttonIcon}
+                />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

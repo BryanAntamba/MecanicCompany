@@ -4,28 +4,27 @@ import { Image } from 'expo-image';
 // expo-asset: resuelve la URI local de assets del bundle
 import { Asset } from 'expo-asset';
 
-// expo-file-system: copia archivos a directorios accesibles del dispositivo
-import * as FileSystem from 'expo-file-system/legacy';
+// FileSystem y Sharing: versiones compatibles con web
+import * as FileSystem from '@/utils/fileSystem';
+import * as Sharing from '@/utils/sharing';
 
-// expo-sharing: abre el diálogo nativo para compartir/abrir archivos locales
-import * as Sharing from 'expo-sharing';
+// MapView: mapa compatible con web y móvil
+import MapView, { Marker } from '@/components/MapView';
 
-// react-native-maps: mapa nativo embebido directamente en la app
-import MapView, { Marker } from 'react-native-maps';
-
-// expo-av: reproducción de video en la app
-import { Video, ResizeMode } from 'expo-av';
+// Video player: compatible con web y móvil
+import { Video, ResizeMode } from '@/utils/video';
 
 // FontAwesome para íconos vectoriales
 import { FontAwesome } from '@expo/vector-icons';
 
 // Linking para abrir Google Maps externo
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 
 // Hooks de React:
 // - useEffect: ejecuta efectos secundarios (timers, animaciones) después del render
 // - useRef: referencia mutable a un elemento del DOM o un valor persistente sin re-render
 // - useState: maneja el estado local del componente
+// - useCallback: memoriza funciones para evitar recrearlas en cada render
 import { useEffect, useRef, useState, useCallback } from 'react';
 
 // Context del cliente para verificar sesión
@@ -81,18 +80,36 @@ import { authApi, solicitudesApi } from '@/utils/api';
 // Sistema de provincias y mecánicas de Ecuador
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, obtenerMecanicaPorId, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
 
+// Funciones de disponibilidad de citas
+import { obtenerDisponibilidadDia, obtenerHorasOcupadasPorFecha, obtenerEstadoDisponibilidadHora, obtenerNivelDisponibilidadDia } from '@/utils/datosSimulados';
+
 // Componente reutilizable de la barra de navegación del cliente
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';
 
 // Componente footer del cliente
 // import FooterCliente from '@/components/footerCliente/footerCliente'; // Ya no se necesita
 
+// ResponsiveContainer para diseño responsive
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
+
 // Modales del flujo de solicitud
 import VerificacionFormulario from './ModalFormularioSolicitud/verificacionFormulario';
 import ConfirmacionSolicitud from './ModalFormularioSolicitud/confirmacionSolicitud';
 
 // Ancho fijo de cada tarjeta del carrusel "Nosotros"
-const CARD_WIDTH = 260;
+// En web es más grande para mejor visualización
+// Función para calcular dinámicamente según pantalla
+const getCardWidth = (windowWidth: number): number => {
+  if (Platform.OS !== 'web') return 260;
+  if (windowWidth <= 480) return 240;
+  if (windowWidth <= 640) return 260;
+  if (windowWidth >= 1440) return 420;
+  if (windowWidth >= 1024) return 380;
+  if (windowWidth >= 768) return 360;
+  return 340;
+};
+
+const CARD_WIDTH = Platform.OS === 'web' ? 340 : 260;
 // Margen derecho entre tarjetas
 const CARD_MARGIN = 16;
 // Ancho total que ocupa cada "slot" en el carrusel
@@ -137,7 +154,7 @@ const slideMessages = [
 export default function HomeScreen() {
   
   // Obtener estado de sesión del cliente
-  const { estaLogueado, correoCliente, nombreCliente } = useCliente();
+  const { estaLogueado, correoCliente, nombreCliente, telefonoCliente } = useCliente();
   const { logout } = useAuth();
 
   // Estado: índice del slide activo en el carrusel (0 = primero)
@@ -171,10 +188,83 @@ export default function HomeScreen() {
   const [aboutIndex, setAboutIndex] = useState(1);
 
   // Estado: ancho real del contenedor del carrusel "Nosotros" (para calcular padding de centrado)
-  const [carouselWidth, setCarouselWidth] = useState(Dimensions.get('window').width);
+  const [carouselWidth, setCarouselWidth] = useState(() => {
+    return Dimensions.get('window').width;
+  });
 
   // Estado: ancho actual del área hero (se actualiza con onLayout para soporte responsive)
-  const [heroWidth, setHeroWidth] = useState(Dimensions.get('window').width);
+  const [heroWidth, setHeroWidth] = useState(() => {
+    return Dimensions.get('window').width;
+  });
+
+  // Estado: ancho de la ventana para el carrusel de vehículos
+  const [windowWidth, setWindowWidth] = useState(() => {
+    return Dimensions.get('window').width;
+  });
+
+  // Estado: controla si el video debe estar trabado (pausado en un frame)
+  // En web escritorio (>768px) el video se traba, en responsive y móvil se reproduce normal
+  const [isVideoFrozen, setIsVideoFrozen] = useState(() => {
+    if (Platform.OS !== 'web') return false;
+    return Dimensions.get('window').width > 768;
+  });
+
+  // Ref al Video de fondo para controlar su reproducción
+  const videoRef = useRef<any>(null);
+
+  // Estado: fuerza actualización del carrusel cuando cambia el tamaño en web
+  const [carouselKey, setCarouselKey] = useState(0);
+
+  // Listener para actualizar anchos cuando cambia el tamaño de ventana
+  useEffect(() => {
+    const updateDimensions = () => {
+      const width = Dimensions.get('window').width;
+      setCarouselWidth(width);
+      setHeroWidth(width);
+      setWindowWidth(width);
+      
+      // Actualizar estado del video: trabado en escritorio (>768px), normal en responsive/móvil
+      if (Platform.OS === 'web') {
+        setIsVideoFrozen(width > 768);
+        // Forzar actualización del carrusel en web cuando cambia el tamaño
+        setCarouselKey(prev => prev + 1);
+      }
+    };
+
+    // Escuchar cambios de dimensiones
+    const subscription = Dimensions.addEventListener('change', updateDimensions);
+
+    return () => subscription?.remove();
+  }, []);
+
+  // Efecto para resetear el scroll del carrusel de vehículos cuando cambia windowWidth
+  useEffect(() => {
+    if (Platform.OS === 'web' && vehicleSliderRef.current && windowWidth > 0) {
+      // Resetear al primer slide cuando cambia el tamaño
+      const timer = setTimeout(() => {
+        vehicleSliderRef.current?.scrollTo({ x: 0, y: 0, animated: false });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [windowWidth]);
+
+  // Efecto para controlar la reproducción del video según el tamaño de pantalla
+  useEffect(() => {
+    if (Platform.OS === 'web' && videoRef.current) {
+      const timer = setTimeout(() => {
+        if (isVideoFrozen) {
+          // Pausar el video en escritorio y posicionarlo en el primer frame
+          videoRef.current.pauseAsync?.().then(() => {
+            videoRef.current.setPositionAsync?.(0);
+          });
+        } else {
+          // Reproducir el video en responsive/móvil
+          videoRef.current.playAsync?.();
+        }
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [isVideoFrozen]);
 
   // Opciones del selector de tipo de servicio
   const serviceOptions = [
@@ -225,6 +315,10 @@ export default function HomeScreen() {
   const [appointmentDate, setAppointmentDate] = useState<Date | null>(null);
   // Estado: hora seleccionada para la cita
   const [appointmentTime, setAppointmentTime] = useState<string | null>(null);
+  // Estado: motivo de emergencia (solo para domingos)
+  const [motivoEmergencia, setMotivoEmergencia] = useState('');
+  // Estado: error de validación del motivo de emergencia
+  const [errMotivoEmergencia, setErrMotivoEmergencia] = useState('');
   // Estado: controla si el modal del calendario está visible
   const [calendarVisible, setCalendarVisible] = useState(false);
   // Estado: controla si el dropdown de hora está abierto
@@ -257,9 +351,25 @@ export default function HomeScreen() {
     return () => clearTimeout(t);
   }, []);
 
-  // Manejo del botón de retroceso: cierra la app y logout
+  // Manejo del botón de retroceso: cierra la app y logout (solo en móvil)
+  // En web, bloquear retroceso en index para no volver a auth después de logout o cambio contraseña
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') {
+        // Bloquear retroceso en web desde la pantalla principal
+        const handlePopState = (e: PopStateEvent) => {
+          e.preventDefault();
+          window.history.pushState(null, '', window.location.href);
+        };
+        
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+        
+        return () => {
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
+      
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         logout();
         BackHandler.exitApp();
@@ -328,9 +438,21 @@ export default function HomeScreen() {
 
   // Los títulos usan interpolación directa de scrollX — sin estado ni animaciones separadas
 
+  // Calcula el CARD_WIDTH actual según el ancho de pantalla
+  const currentCardWidth = Platform.OS === 'web' ? getCardWidth(windowWidth) : CARD_WIDTH;
+  const CURRENT_ITEM_WIDTH = currentCardWidth + CARD_MARGIN;
+
   // Valor animado que rastrea el scroll X del carrusel de tarjetas "Nosotros"
   // Inicia en ITEM_WIDTH para que la tarjeta central (Misión, índice 1) quede activa al inicio
   const aboutScrollX = useRef(new Animated.Value(ITEM_WIDTH)).current;
+
+  // useEffect para actualizar aboutScrollX cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      // Actualiza aboutScrollX para mantener el índice actual centrado
+      aboutScrollX.setValue(aboutIndex * CURRENT_ITEM_WIDTH);
+    }
+  }, [CURRENT_ITEM_WIDTH]);
 
   // Valor animado para la animación de entrada del logo (opacidad + escala)
   // Inicia en 0 (invisible) y se anima a 1 cuando la sección entra en pantalla
@@ -339,11 +461,52 @@ export default function HomeScreen() {
   // Ref al Animated.ScrollView del carrusel "Nosotros" para scroll programático con las flechas
   const aboutSliderRef = useRef<any>(null);
 
+  // useEffect para centrar el carrusel de tarjetas en "Misión" al iniciar
+  useEffect(() => {
+    if (aboutSliderRef.current) {
+      // Pequeño delay para asegurar que el layout esté listo
+      const timer = setTimeout(() => {
+        // Solo hacer scroll inicial si no se ha cambiado el índice manualmente
+        if (aboutIndex === 1) {
+          aboutSliderRef.current?.scrollTo({ x: CURRENT_ITEM_WIDTH, y: 0, animated: false });
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [CURRENT_ITEM_WIDTH]);
+
+  // useEffect para recentrar el carrusel cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    if (Platform.OS === 'web' && aboutSliderRef.current) {
+      // Delay más largo para que el key force el re-mount completo
+      const timer = setTimeout(() => {
+        // Recalcula la posición del scroll según el índice actual y nuevo tamaño
+        const newScrollX = aboutIndex * CURRENT_ITEM_WIDTH;
+        aboutSliderRef.current?.scrollTo({ x: newScrollX, y: 0, animated: false });
+        // Actualiza el valor animado también para mantener sincronía
+        aboutScrollX.setValue(newScrollX);
+      }, 200);
+      return () => clearTimeout(timer);
+    }
+  }, [carouselKey, CURRENT_ITEM_WIDTH]);
+
   // Valores animados para la imagen HammerSobreSaliendo
-  // Entra desde la izquierda (translateX negativo) hacia el lado derecho, de invisible a visible
+  // Entra desde la derecha (translateX positivo alto) hacia el borde derecho (0), de invisible a visible
   const hammerOpacity = useRef(new Animated.Value(0)).current;
-  const hammerTranslateX = useRef(new Animated.Value(400)).current; // desde el lado derecho
+  const hammerTranslateX = useRef(new Animated.Value(Platform.OS === 'web' ? 800 : 400)).current;
   const hammerTriggered = useRef(false);
+
+  // Reinicia la posición del hammer cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    if (Platform.OS === 'web' && !hammerTriggered.current) {
+      let initialX = 500;
+      if (windowWidth <= 640) initialX = 400;
+      else if (windowWidth >= 1440) initialX = 800;
+      else if (windowWidth >= 1024) initialX = 700;
+      else if (windowWidth >= 768) initialX = 600;
+      hammerTranslateX.setValue(initialX);
+    }
+  }, [windowWidth]);
 
   // Posición Y de la imagen del hammer (para detectar cuándo entra en pantalla)
   const [hammerPosition, setHammerPosition] = useState(0);
@@ -383,30 +546,30 @@ export default function HomeScreen() {
 
   // Efecto: avanza el carrusel de vehículos cada 10 segundos siempre hacia adelante
   useEffect(() => {
-    const W = Dimensions.get('window').width;
     let currentIndex = 0;
 
     const interval = setInterval(() => {
       currentIndex += 1;
 
+      // Usar windowWidth para el scroll del carrusel de vehículos
       if (currentIndex >= vehicleImages.length - 1) {
         // Avanza al penúltimo slide con animación
-        vehicleSliderRef.current?.scrollTo({ x: currentIndex * W, animated: true });
+        vehicleSliderRef.current?.scrollTo({ x: currentIndex * windowWidth, animated: true });
         setVehicleActive(currentIndex % 2);
 
         // Después de la animación, resetea silenciosamente al primer slide equivalente
         setTimeout(() => {
           currentIndex = currentIndex % 2;
-          vehicleSliderRef.current?.scrollTo({ x: currentIndex * W, animated: false });
+          vehicleSliderRef.current?.scrollTo({ x: currentIndex * windowWidth, animated: false });
         }, 700);
       } else {
-        vehicleSliderRef.current?.scrollTo({ x: currentIndex * W, animated: true });
+        vehicleSliderRef.current?.scrollTo({ x: currentIndex * windowWidth, animated: true });
         setVehicleActive(currentIndex % 2);
       }
     }, 10000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [windowWidth]); // Dependencia: windowWidth
 
   // Formatea una fecha como "lun, 12 ene 2026"
   const formatDate = (date: Date) =>
@@ -430,24 +593,70 @@ export default function HomeScreen() {
     return [...blanks, ...days];
   };
 
-  // Genera opciones de hora de 07:00 a 22:00 cada 30 minutos
+  // Genera opciones de hora dinámicamente basado en el día seleccionado
   const timeOptions: string[] = (() => {
     const opts: string[] = [];
-    for (let h = 7; h <= 22; h++) {
-      opts.push(`${h.toString().padStart(2, '0')}:00`);
-      if (h < 22) opts.push(`${h.toString().padStart(2, '0')}:30`);
+    
+    if (!appointmentDate) {
+      // Si no hay fecha seleccionada, mostrar horario completo entre semana (7:00 - 20:00)
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+      return opts;
     }
+    
+    const dayOfWeek = appointmentDate.getDay(); // 0 = Domingo, 6 = Sábado
+    
+    if (dayOfWeek === 6) {
+      // Sábado: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else if (dayOfWeek === 0) {
+      // Domingo: solo hasta 12:00
+      for (let h = 7; h <= 12; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 12) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    } else {
+      // Entre semana (Lunes a Viernes): hasta 20:00
+      for (let h = 7; h <= 20; h++) {
+        opts.push(`${h.toString().padStart(2, '0')}:00`);
+        if (h < 20) opts.push(`${h.toString().padStart(2, '0')}:30`);
+      }
+    }
+    
+    // Ahora NO filtramos, mostramos todas las horas con colores
     return opts;
   })();
+
+  // Obtener el estado de disponibilidad para cada hora
+  const getHoraDisponibilidad = (hora: string) => {
+    if (!appointmentDate) return { disponible: true, nivel: 'verde' as const, reservas: 0 };
+    return obtenerEstadoDisponibilidadHora(appointmentDate, hora);
+  };
 
   // Navega el carrusel "Nosotros" al índice indicado con animación suave
   const scrollAboutTo = (index: number) => {
     // Limita el índice entre 0 y el último elemento
     const clamped = Math.max(0, Math.min(index, aboutCards.length - 1));
     setAboutIndex(clamped);
-    // Hace scroll programático al offset exacto de esa tarjeta
-    aboutSliderRef.current?.scrollTo({ x: clamped * ITEM_WIDTH, animated: true });
+    // Hace scroll programático al offset exacto de esa tarjeta usando el ancho actual
+    aboutSliderRef.current?.scrollTo({ x: clamped * CURRENT_ITEM_WIDTH, animated: true });
   };
+
+  // Efecto para validar y limpiar la hora seleccionada si cambia la fecha
+  useEffect(() => {
+    if (appointmentDate && appointmentTime) {
+      const horasOcupadas = obtenerHorasOcupadasPorFecha(appointmentDate);
+      if (horasOcupadas.includes(appointmentTime)) {
+        setAppointmentTime(null);
+        setErrTime('La hora seleccionada ya no está disponible para esta fecha.');
+      }
+    }
+  }, [appointmentDate]);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -463,8 +672,20 @@ export default function HomeScreen() {
   // Limpiar validaciones y campos cada vez que la pantalla gana foco (cuando se regresa de otra pantalla)
   useFocusEffect(
     useCallback(() => {
-      // Limpiar todos los campos del formulario
-      setForm({ name: '', phone: '', email: '', brand: '', model: '', year: '', plate: '', mileage: '', service: '', otherService: '', details: '' });
+      // Limpiar todos los campos del formulario pero mantener nombre, correo y teléfono del cliente
+      setForm({ 
+        name: nombreCliente || '', 
+        phone: telefonoCliente || '', 
+        email: correoCliente || '', 
+        brand: '', 
+        model: '', 
+        year: '', 
+        plate: '', 
+        mileage: '', 
+        service: '', 
+        otherService: '', 
+        details: '' 
+      });
       setAppointmentDate(null);
       setAppointmentTime(null);
       setSelectedLocation(null);
@@ -476,8 +697,8 @@ export default function HomeScreen() {
       // Limpiar todas las validaciones
       setErrBrand(''); setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
       setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime(''); 
-      setErrProvincia(''); setErrLocation('');
-    }, [])
+      setErrProvincia(''); setErrLocation(''); setMotivoEmergencia(''); setErrMotivoEmergencia('');
+    }, [nombreCliente, correoCliente, telefonoCliente])
   );
 
   const resetForm = () => {
@@ -486,12 +707,13 @@ export default function HomeScreen() {
     setAppointmentTime(null);
     setSelectedLocation(null);
     setSelectedProvincia('');
+    setMotivoEmergencia('');
     setServiceDropdownOpen(false);
     setLocationDropdownOpen(false);
     setProvinciaDropdownOpen(false);
     setErrBrand(''); setErrModel(''); setErrYear(''); setErrPlate(''); setErrMileage('');
     setErrService(''); setErrOther(''); setErrDetails(''); setErrDate(''); setErrTime(''); 
-    setErrProvincia(''); setErrLocation('');
+    setErrProvincia(''); setErrLocation(''); setErrMotivoEmergencia('');
   };
 
   const onSend = async () => {
@@ -508,6 +730,12 @@ export default function HomeScreen() {
     const eTime = !appointmentTime ? 'La hora de la cita es obligatoria.' : null;
     const eProvincia = !selectedProvincia ? 'La provincia es obligatoria.' : null;
     const eLocation = !selectedLocation ? 'La ubicación de la mecánica es obligatoria.' : null;
+    
+    // Validar motivo de emergencia solo si es domingo
+    const isDomingo = appointmentDate && appointmentDate.getDay() === 0;
+    const eMotivoEmergencia = isDomingo && !motivoEmergencia.trim() 
+      ? 'El motivo de emergencia es obligatorio para reservas en domingo.' 
+      : null;
 
     setErrBrand(eBrand ?? '');
     setErrModel(eModel ?? '');
@@ -519,12 +747,17 @@ export default function HomeScreen() {
     setErrDetails(eDetails ?? '');
     setErrDate(eDate ?? '');
     setErrTime(eTime ?? '');
+    setErrMotivoEmergencia(eMotivoEmergencia ?? '');
     setErrProvincia(eProvincia ?? '');
     setErrLocation(eLocation ?? '');
 
     // Si hay algún error, no continúa
-    if ([eBrand, eModel, eYear, ePlate, eMileage,
-      eService, eOther, eDetails, eDate, eTime, eProvincia, eLocation].some(Boolean)) return;
+    const errores = [eBrand, eModel, eYear, ePlate, eMileage, eService, eOther, eDetails, eDate, eTime, eProvincia, eLocation, eMotivoEmergencia].filter(Boolean);
+    if (errores.length > 0) {
+      // Scroll hacia arriba para que vea los errores en rojo
+      scrollRef.current?.scrollTo({ y: formPosition - 100, animated: true });
+      return;
+    }
 
     // Todo válido → abre modal de verificación
     setVerificacionVisible(true);
@@ -532,14 +765,22 @@ export default function HomeScreen() {
 
   // Se llama cuando el usuario confirma la solicitud desde el modal de verificación
   const onConfirmarSolicitud = async () => {
+    console.log('🔵 onConfirmarSolicitud - Iniciando...');
+    
+    // Primero cerramos el modal de verificación
+    setVerificacionVisible(false);
+    console.log('🔵 Modal verificación cerrado');
+    
     try {
       // Obtener datos de la ubicación seleccionada
       const mecanicaSeleccionada = obtenerMecanicaPorId(selectedLocation || '');
+      console.log('🔵 Mecánica seleccionada:', mecanicaSeleccionada);
 
       // Envía la solicitud al backend
+      console.log('🔵 Enviando solicitud al backend...');
       await solicitudesApi.crear({
         nombreCliente:       nombreCliente || '',
-        telefono:            '', // Ya no se usa
+        telefono:            form.phone.trim(),
         correoCliente:       correoCliente?.trim().toLowerCase() || '',
         marca:               form.brand.trim(),
         modelo:              form.model.trim(),
@@ -559,11 +800,32 @@ export default function HomeScreen() {
         ubicacionMecanicaDireccion: mecanicaSeleccionada?.direccion || '',
       });
 
-      // Cierra modal de verificación y abre modal de confirmación
-      setVerificacionVisible(false);
+      console.log('✅ Solicitud enviada exitosamente');
+      // Abre modal de confirmación
       setConfirmacionVisible(true);
+      console.log('🔵 Modal confirmación abierto');
     } catch (err: any) {
-      Alert.alert('Error', err?.message ?? 'No se pudo enviar la solicitud. Intenta de nuevo.');
+      // Analizar el tipo de error ANTES de loguear
+      const errorMessage = err?.message || 'Error desconocido';
+      const errorStatus = err?.status || 500;
+      
+      if (errorStatus === 403 && errorMessage.includes('no ha sido verificado')) {
+        // El código expiró o ya fue usado - NO mostrar en consola
+        console.warn('⚠️ Código de verificación expirado');
+        Alert.alert(
+          'Código de Verificación Expirado',
+          'Tu código de verificación expiró o ya fue usado. Por favor solicita un nuevo código e intenta nuevamente.',
+          [{ text: 'Entendido' }]
+        );
+      } else {
+        // Otros errores - sí mostrar en consola
+        console.error('❌ Error al enviar solicitud:', err);
+        Alert.alert(
+          'Error al Enviar Solicitud',
+          `No se pudo enviar tu solicitud: ${errorMessage}. Por favor verifica tu conexión e intenta nuevamente.`,
+          [{ text: 'Entendido' }]
+        );
+      }
     }
   };
 
@@ -600,8 +862,10 @@ export default function HomeScreen() {
       }
 
       // 2. Copia el archivo al directorio de caché del dispositivo
+      // @ts-ignore - FileSystem es solo para móvil
       const destUri = FileSystem.cacheDirectory + 'Mecanic-ManualFormulario.pdf';
       
+      // @ts-ignore - FileSystem es solo para móvil
       await FileSystem.copyAsync({ from: asset.localUri, to: destUri });
 
       // 3. Verifica si el dispositivo puede abrir archivos
@@ -627,8 +891,9 @@ export default function HomeScreen() {
 
   //Render de componente
   return (
-    // Contenedor raíz que ocupa toda la pantalla (style: flex:1, fondo negro)
-    <View style={styles.page}>
+    <ResponsiveContainer>
+      {/* Contenedor raíz que ocupa toda la pantalla (style: flex:1, fondo negro) */}
+      <View style={styles.page}>
 
       {/* ScrollView principal con navbar sticky en índice 0 */}
       <ScrollView
@@ -735,9 +1000,17 @@ export default function HomeScreen() {
                   onPress={() => scrollRef.current?.scrollTo({ y: formPosition, animated: true })}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
-                      SOLICITA TU CITA
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="calendar-check-o" 
+                        size={18} 
+                        color={pressed ? '#FFFFFF' : '#000000'}
+                      />
+                      <View style={{ width: 10 }} />
+                      <Text style={[styles.heroCitaButtonText, pressed && styles.heroCitaButtonTextPressed]}>
+                        SOLICITA TU CITA
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               )}
@@ -753,12 +1026,13 @@ export default function HomeScreen() {
 
             {/* Video de fondo en loop, silenciado, sin controles */}
             <Video
+              ref={videoRef}
               source={require('../../assets/videos/videoplayback.webm')}
               style={styles.videoBg}
               resizeMode={ResizeMode.COVER}
-              isLooping
+              isLooping={!isVideoFrozen} // Solo loop si no está trabado
               isMuted
-              shouldPlay
+              shouldPlay={Platform.OS !== 'web' || !isVideoFrozen} // Reproducir solo en móvil o web responsive
             />
 
             {/* Capa oscura más intensa sobre el video */}
@@ -810,7 +1084,15 @@ export default function HomeScreen() {
               haciendo que los slides entren desde la derecha (giro a la derecha).
               scaleX(-1) en cada View hijo compensa el espejo para que las imágenes
               no se vean reflejadas horizontalmente. */}
-          <View style={styles.vehicleCarousel}>
+          <View 
+            style={styles.vehicleCarousel}
+            onLayout={(e) => {
+              // Captura el ancho real del contenedor para los slides
+              if (Platform.OS === 'web') {
+                setWindowWidth(e.nativeEvent.layout.width);
+              }
+            }}
+          >
             {/* ScrollView horizontal con paginación exacta por slide */}
             <ScrollView
               ref={vehicleSliderRef}              // Ref para controlar el scroll programáticamente
@@ -827,7 +1109,7 @@ export default function HomeScreen() {
                   style={[
                     styles.vehicleSlide,
                     {
-                      width: Dimensions.get('window').width, // Cada slide ocupa el ancho completo de la pantalla
+                      width: windowWidth, // Usa el ancho de ventana completo
                       transform: [{ scaleX: -1 }],           // Compensa el espejo del ScrollView padre
                     },
                   ]}
@@ -870,43 +1152,48 @@ export default function HomeScreen() {
 
             {/* Contenedor del carrusel animado.
                 onLayout captura el ancho real para calcular el padding de centrado dinámico. */}
-            <View
-              onLayout={(e) => setCarouselWidth(e.nativeEvent.layout.width)} // Guarda el ancho real
+            <View 
               style={styles.aboutCarouselWrapper}
+              onLayout={(e) => {
+                // Captura el ancho real del contenedor
+                const containerWidth = e.nativeEvent.layout.width;
+                setCarouselWidth(containerWidth);
+              }}
             >
               {/* IIFE (función autoejecutable) para calcular variables locales antes del return */}
               {(() => {
-                // Calcula el padding lateral para centrar la tarjeta activa en el contenedor.
-                // (ancho del contenedor - ancho de la tarjeta) / 2 = espacio a cada lado
-                const sidePadding = (carouselWidth - CARD_WIDTH) / 2;
+                // Genera los offsets exactos de snap para cada tarjeta usando el ancho actual.
+                const snapOffsets = aboutCards.map((_, i) => i * CURRENT_ITEM_WIDTH);
 
-                // Genera los offsets exactos de snap para cada tarjeta.
-                // snapToOffsets trabaja sobre el contentOffset real del scroll (sin padding).
-                const snapOffsets = aboutCards.map((_, i) => i * ITEM_WIDTH);
-
-                // El contentContainerStyle se calcula aquí porque sidePadding es dinámico
-                // (depende del ancho real del contenedor, no puede ir en StyleSheet.create)
-                const carouselContentStyle = { paddingHorizontal: sidePadding, paddingVertical: 20 };
+                // Calcula el padding para centrar la tarjeta en el contenedor
+                // (ancho del contenedor - ancho de la tarjeta) / 2 = padding a cada lado
+                // En web responsive y móvil, centra la tarjeta visible
+                const paddingValue = Math.max(0, (carouselWidth - currentCardWidth) / 2);
 
                 return (
                   // Animated.ScrollView para poder vincular el scroll a aboutScrollX
                   // y calcular la escala de cada tarjeta en tiempo real
                   <Animated.ScrollView
+                    key={Platform.OS === 'web' ? `carousel-${carouselKey}` : undefined} // Key solo en web para forzar re-render
                     ref={aboutSliderRef}                    // Ref para scroll programático con las flechas
                     horizontal                              // Scroll horizontal
                     showsHorizontalScrollIndicator={false}  // Oculta la barra de scroll
                     snapToOffsets={snapOffsets}             // Snap exacto a cada tarjeta
+                    snapToInterval={Platform.OS !== 'web' ? CURRENT_ITEM_WIDTH : undefined} // Snap suave en móvil
                     decelerationRate="fast"                 // Frenado rápido para snap preciso
-                    contentContainerStyle={carouselContentStyle} // Padding dinámico para centrar
-                    contentOffset={{ x: ITEM_WIDTH, y: 0 }} // Inicia en la tarjeta central (Misión, índice 1)
+                    scrollEnabled={true}                    // Permite scroll manual
+                    contentContainerStyle={{ 
+                      paddingHorizontal: paddingValue,
+                      alignItems: 'center',
+                    }}
                     onScroll={Animated.event(
                       [{ nativeEvent: { contentOffset: { x: aboutScrollX } } }], // Vincula scroll a aboutScrollX
                       { useNativeDriver: true }, // Driver nativo para máximo rendimiento
                     )}
                     // Se ejecuta cuando el usuario termina de deslizar manualmente
                     onMomentumScrollEnd={(e) => {
-                      // Calcula el índice de la tarjeta visible dividiendo el offset por el ancho de cada slot
-                      const i = Math.round(e.nativeEvent.contentOffset.x / ITEM_WIDTH);
+                      // Calcula el índice de la tarjeta visible dividiendo el offset por el ancho actual de cada slot
+                      const i = Math.round(e.nativeEvent.contentOffset.x / CURRENT_ITEM_WIDTH);
                       setAboutIndex(i); // Actualiza el índice activo para sincronizar las flechas
                     }}
                     scrollEventThrottle={16} // Frecuencia de eventos de scroll (~60fps)
@@ -914,13 +1201,13 @@ export default function HomeScreen() {
                     {/* Itera sobre las tarjetas para renderizar cada una con animación de escala */}
                     {aboutCards.map((card, index) => {
                       // Interpola la escala de esta tarjeta basándose en la posición del scroll.
-                      // Cuando la tarjeta está centrada (offset = index * ITEM_WIDTH) → escala 1.0
+                      // Cuando la tarjeta está centrada (offset = index * CURRENT_ITEM_WIDTH) → escala 1.0
                       // Cuando está a un slot de distancia → escala 0.85 (más pequeña)
                       const scale = aboutScrollX.interpolate({
                         inputRange: [
-                          (index - 1) * ITEM_WIDTH, // Posición cuando la tarjeta anterior está centrada
-                          index * ITEM_WIDTH,        // Posición cuando ESTA tarjeta está centrada → máximo
-                          (index + 1) * ITEM_WIDTH,  // Posición cuando la tarjeta siguiente está centrada
+                          (index - 1) * CURRENT_ITEM_WIDTH, // Posición cuando la tarjeta anterior está centrada
+                          index * CURRENT_ITEM_WIDTH,        // Posición cuando ESTA tarjeta está centrada → máximo
+                          (index + 1) * CURRENT_ITEM_WIDTH,  // Posición cuando la tarjeta siguiente está centrada
                         ],
                         outputRange: [0.85, 1.0, 0.85], // Escala: pequeña → grande → pequeña
                         extrapolate: 'clamp',            // No extrapola fuera del rango definido
@@ -970,7 +1257,7 @@ export default function HomeScreen() {
               styles.hammerContainer,
               {
                 opacity: hammerOpacity,                    // Controla la visibilidad (0 → 1)
-                transform: [{ translateX: hammerTranslateX }], // Desplazamiento horizontal (400 → 0)
+                transform: [{ translateX: hammerTranslateX }], // Desplazamiento horizontal (800 web / 400 móvil → 0)
               },
             ]}
             onLayout={(e) => {
@@ -1007,6 +1294,43 @@ export default function HomeScreen() {
           {/* Contenedor del formulario con padding y separación */}
           <View style={styles.form}>
 
+            {/* SEPARADOR: Datos del Cliente */}
+            <View style={styles.formDivider}>
+              <View style={styles.formDividerLine} />
+              <Text style={styles.formDividerText}>Tus Datos</Text>
+              <View style={styles.formDividerLine} />
+            </View>
+
+            {/* Campo: Nombre del Cliente (No editable) */}
+            <Text style={styles.fieldLabel}>Nombre Completo</Text>
+            <TextInput
+              placeholder="Tu nombre"
+              placeholderTextColor="#94A3B8"
+              editable={false}
+              value={nombreCliente || ''}
+              style={styles.input}
+            />
+
+            {/* Campo: Correo del Cliente (No editable) */}
+            <Text style={styles.fieldLabel}>Correo Electrónico</Text>
+            <TextInput
+              placeholder="Tu correo"
+              placeholderTextColor="#94A3B8"
+              editable={false}
+              value={correoCliente || ''}
+              style={styles.input}
+            />
+
+            {/* Campo: Teléfono del Cliente (No editable) */}
+            <Text style={styles.fieldLabel}>Teléfono</Text>
+            <TextInput
+              placeholder="Ej: 0987654321"
+              placeholderTextColor="#94A3B8"
+              editable={false}
+              value={form.phone}
+              style={styles.input}
+            />
+
             {/* SEPARADOR: Información del vehículo */}
             <View style={styles.formDivider}>
               <View style={styles.formDividerLine} />
@@ -1041,9 +1365,10 @@ export default function HomeScreen() {
               <View style={styles.inputHalf}>
                 <Text style={styles.fieldLabel}>Año</Text>
                 <TextInput
-                  placeholder="Ej: 2020"
+                  placeholder="Ej: 2015"
                   placeholderTextColor="#94A3B8"
                   keyboardType="numeric"
+                  maxLength={4}
                   value={form.year}
                   onChangeText={(t) => { setForm((p) => ({ ...p, year: t })); setErrYear(''); }}
                   style={[styles.input, errYear ? styles.inputError : null]}
@@ -1101,7 +1426,7 @@ export default function HomeScreen() {
 
             {/* Lista de opciones del dropdown — solo visible cuando serviceDropdownOpen === true */}
             {serviceDropdownOpen && (
-              <View style={styles.dropdownList}>
+              <ScrollView style={styles.dropdownList} nestedScrollEnabled>
                 {/* Itera sobre las opciones de servicio para crear un item por cada una */}
                 {serviceOptions.map((option) => (
                   <Pressable
@@ -1114,6 +1439,7 @@ export default function HomeScreen() {
                       // Actualiza el servicio y limpia el campo "Otro" al seleccionar
                       setForm((p) => ({ ...p, service: option, otherService: '' }));
                       setServiceDropdownOpen(false); // Cierra el dropdown al seleccionar
+                      setErrService(''); // Limpia el error al seleccionar servicio
                     }}
                   >
                     {/* Checkmark ✓ si esta opción está seleccionada, espacios si no */}
@@ -1123,7 +1449,7 @@ export default function HomeScreen() {
                     <Text style={styles.dropdownItemText}>{option}</Text>
                   </Pressable>
                 ))}
-              </View>
+              </ScrollView>
             )}
 
             {/* Campo extra: solo visible cuando el servicio seleccionado es "Otro" */}
@@ -1171,6 +1497,11 @@ export default function HomeScreen() {
               <Text style={styles.formDividerText}>Fecha de la cita</Text>
               <View style={styles.formDividerLine} />
             </View>
+
+            <Text style={styles.fieldDescription}>
+              Horarios disponibles: Lunes a Viernes hasta las 20:00h. Sábados y Domingos solo hasta las 12:00h (mediodía). 
+              Los domingos requieren motivo de emergencia.
+            </Text>
 
             <Text style={styles.fieldLabel}>Fecha de la Cita</Text>
 
@@ -1236,9 +1567,26 @@ export default function HomeScreen() {
                       if (!day) return <View key={`b-${i}`} style={styles.calendarCell} />;
                       // Obtiene la fecha de hoy sin hora para comparaciones correctas
                       const today = new Date(); today.setHours(0, 0, 0, 0);
+                      // Calcula fecha máxima permitida (31 de diciembre del año actual)
+                      const añoActual = today.getFullYear();
+                      const maxDate = new Date(añoActual, 11, 31); // 11 = diciembre, 31 = último día
+                      maxDate.setHours(23, 59, 59, 999); // Final del día
                       const isPast = day < today;                                           // Día pasado
+                      const isTooFarFuture = day > maxDate;                                 // Después del 31/dic del año actual
+                      
+                      // Obtener disponibilidad del día completo (según total de reservas)
+                      let nivelDia: 'verde' | 'naranja' | 'rojo' | 'bloqueado' | null = null;
+                      if (!isPast && !isTooFarFuture) {
+                        // Aplicar colores a TODOS los días (lunes-domingo)
+                        nivelDia = obtenerNivelDisponibilidadDia(day);
+                      }
+                      
+                      const isDayBlocked = nivelDia === 'bloqueado';
+                      const isDisabled = isPast || isTooFarFuture || isDayBlocked;
+                      
                       const isSelected = appointmentDate?.toDateString() === day.toDateString(); // Seleccionado
                       const isToday = day.toDateString() === today.toDateString();            // Hoy
+                      
                       return (
                         <Pressable
                           key={i}
@@ -1246,17 +1594,27 @@ export default function HomeScreen() {
                             styles.calendarCell,
                             isToday && styles.calendarCellToday,    // Borde azul si es hoy
                             isSelected && styles.calendarCellSelected, // Fondo azul si seleccionado
-                            isPast && styles.calendarCellPast,     // Opacidad reducida si pasado
+                            isDisabled && styles.calendarCellPast,     // Opacidad reducida si deshabilitado
+                            !isDisabled && !isSelected && nivelDia === 'verde' && styles.calendarCellDisponible, // Verde
+                            !isDisabled && !isSelected && nivelDia === 'naranja' && styles.calendarCellMedio, // Naranja
+                            !isDisabled && !isSelected && nivelDia === 'rojo' && styles.calendarCellBajo, // Rojo
+                            isDayBlocked && styles.calendarCellLleno, // Gris/bloqueado
                           ]}
-                          // Selecciona el día y cierra el modal (solo si no es pasado)
-                          onPress={() => { if (!isPast) { setAppointmentDate(day); setCalendarVisible(false); } }}
-                          disabled={isPast} // Deshabilita los días pasados
+                          // Selecciona el día y cierra el modal (solo si está dentro del rango permitido)
+                          onPress={() => { 
+                            if (!isDisabled) { 
+                              setAppointmentDate(day); 
+                              setCalendarVisible(false); 
+                              setErrDate(''); // Limpia el error al seleccionar fecha
+                            } 
+                          }}
+                          disabled={isDisabled} // Deshabilita los días fuera de rango
                         >
                           <Text style={[
                             styles.calendarCellText,
                             isToday && styles.calendarCellTodayText,
                             isSelected && styles.calendarCellSelectedText,
-                            isPast && styles.calendarCellPastText,
+                            isDisabled && styles.calendarCellPastText,
                           ]}>
                             {day.getDate()} {/* Número del día del mes */}
                           </Text>
@@ -1296,26 +1654,87 @@ export default function HomeScreen() {
             {/* Lista desplegable de horas */}
             {timeDropdownOpen && (
               <View style={styles.dropdownList}>
-                <ScrollView
-                  style={styles.timeScrollList}
-                  showsVerticalScrollIndicator={true}
-                  nestedScrollEnabled={true}
-                  scrollEnabled={true}
-                >
-                  {timeOptions.map((t) => (
-                    <Pressable
-                      key={t}
-                      style={[styles.dropdownItem, appointmentTime === t && styles.dropdownItemActive]}
-                      onPress={() => { setAppointmentTime(t); setTimeDropdownOpen(false); }}
-                    >
-                      <Text style={styles.dropdownItemCheck}>
-                        {appointmentTime === t ? '✓ ' : '    '}
-                      </Text>
-                      <Text style={styles.dropdownItemText}>{t}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
+                {timeOptions.length === 0 ? (
+                  <View style={{ padding: 16, alignItems: 'center' }}>
+                    <Text style={{ color: '#EF4444', fontSize: 14, textAlign: 'center' }}>
+                      No hay horas disponibles para esta fecha.{'\n'}
+                      Todas las horas están reservadas.
+                    </Text>
+                  </View>
+                ) : (
+                  <ScrollView
+                    style={styles.timeScrollList}
+                    showsVerticalScrollIndicator={true}
+                    nestedScrollEnabled={true}
+                    scrollEnabled={true}
+                  >
+                    {timeOptions.map((t) => {
+                      const estado = getHoraDisponibilidad(t);
+                      const isOcupada = estado.reservas >= 1; // Bloquear si hay al menos 1 reserva
+                      
+                      return (
+                        <Pressable
+                          key={t}
+                          style={[
+                            styles.dropdownItem,
+                            appointmentTime === t && styles.dropdownItemActive,
+                            isOcupada && { opacity: 0.5, backgroundColor: '#F3F4F6' }
+                          ]}
+                          onPress={() => {
+                            if (!isOcupada) {
+                              setAppointmentTime(t);
+                              setTimeDropdownOpen(false);
+                              setErrTime('');
+                            }
+                          }}
+                          disabled={isOcupada}
+                        >
+                          <Text style={styles.dropdownItemCheck}>
+                            {appointmentTime === t ? '✓ ' : '    '}
+                          </Text>
+                          <Text style={[
+                            styles.dropdownItemText,
+                            isOcupada && { textDecorationLine: 'line-through', color: '#9CA3AF' }
+                          ]}>
+                            {t}
+                            {isOcupada && ' (Ocupada)'}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
               </View>
+            )}
+
+            {/* Campo de Motivo de Emergencia (solo para domingos) */}
+            {appointmentDate && appointmentDate.getDay() === 0 && (
+              <>
+                <Text style={[styles.fieldDescription, { marginBottom: 8, color: '#EF4444', fontWeight: '600' }]}>
+                  IMPORTANTE: Los domingos NO son días laborables. Solo se aceptan reservas de emergencia. 
+                  Describa claramente por qué necesita el servicio en domingo y confirme que comprende que se trata de una atención excepcional.
+                </Text>
+                <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Motivo de Emergencia (Obligatorio)</Text>
+                <TextInput
+                  placeholder="Ej: Mi vehículo no enciende y necesito usarlo urgentemente para..."
+                  placeholderTextColor="#94A3B8"
+                  value={motivoEmergencia}
+                  onChangeText={(text) => {
+                    // Solo permite letras, números, espacios y puntuación básica
+                    const filtered = text.replace(/[^a-zA-Z0-9\sáéíóúÁÉÍÓÚñÑ.,;:()¿?¡!-]/g, '');
+                    setMotivoEmergencia(filtered);
+                    setErrMotivoEmergencia('');
+                  }}
+                  multiline
+                  numberOfLines={4}
+                  maxLength={300}
+                  style={[styles.input, styles.textarea, errMotivoEmergencia ? styles.inputError : null, { height: 100 }]}
+                />
+                <Text style={[styles.fieldDescription, { marginTop: 4, textAlign: 'right' }]}>
+                  {motivoEmergencia.length}/300 caracteres
+                </Text>
+                {errMotivoEmergencia ? <Text style={styles.errorText}>{errMotivoEmergencia}</Text> : null}
+              </>
             )}
 
             {/* SEPARADOR: Ubicación de la cita */}
@@ -1428,13 +1847,22 @@ export default function HomeScreen() {
               style={({ pressed }) => [
                 styles.button,
                 pressed && styles.buttonPressed,
+                { marginTop: 24 } // Espacio adicional para el mensaje de error de ubicación
               ]}
               onPress={onSend}
             >
               {({ pressed }) => (
-                <Text style={[styles.buttonText, pressed && styles.buttonTextPressed]}>
-                  ENVIAR SOLICITUD
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="send" 
+                    size={18} 
+                    color={pressed ? (Platform.OS === 'web' ? '#E0E7FF' : '#FFFFFF') : (Platform.OS === 'web' ? '#FFFFFF' : '#000000')}
+                  />
+                  <View style={{ width: 10 }} />
+                  <Text style={[styles.buttonText, pressed && styles.buttonTextPressed]}>
+                    ENVIAR SOLICITUD
+                  </Text>
+                </View>
               )}
             </Pressable>
 
@@ -1495,13 +1923,13 @@ export default function HomeScreen() {
                   }}
                 >
                   {({ pressed }) => (
-                    <View style={styles.mapsButtonContent}>
+                    <View style={[styles.mapsButtonContent, { flexDirection: 'row', alignItems: 'center' }]}>
                       <FontAwesome
                         name="map-marker"
-                        size={20}
+                        size={18}
                         color={pressed ? '#FFFFFF' : '#000000'}
-                        style={styles.mapsButtonIcon}
                       />
+                      <View style={{ width: 10 }} />
                       <Text style={[styles.mapsButtonText, pressed && styles.mapsButtonTextPressed]}>
                         ABRIR EN GOOGLE MAPS
                       </Text>
@@ -1530,20 +1958,20 @@ export default function HomeScreen() {
             onPress={() => scrollRef.current?.scrollTo({ y: 0, animated: true })}
           >
             {({ pressed }) => (
-              <>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={[
                   styles.scrollTopText,
                   pressed && styles.scrollTopTextPressed
                 ]}>
                   REGRESAR ARRIBA
                 </Text>
+                <View style={{ width: 8 }} />
                 <FontAwesome 
                   name="arrow-up" 
                   size={18} 
-                  color={pressed ? '#FFFFFF' : '#000000'} 
-                  style={styles.scrollTopIcon}
+                  color={pressed ? '#FFFFFF' : '#000000'}
                 />
-              </>
+              </View>
             )}
           </Pressable>
         </View>
@@ -1554,6 +1982,9 @@ export default function HomeScreen() {
       <VerificacionFormulario
         visible={verificacionVisible}
         datos={{
+          nombre: nombreCliente || '',
+          correo: correoCliente || '',
+          telefono: form.phone,
           marca: form.brand,
           modelo: form.model,
           año: form.year,
@@ -1566,6 +1997,8 @@ export default function HomeScreen() {
           hora: appointmentTime || '',
           provincia: selectedProvincia || '',
           ubicacion: obtenerMecanicaPorId(selectedLocation || '')?.nombre || '',
+          motivoEmergencia: motivoEmergencia || undefined,
+          esDomingo: appointmentDate?.getDay() === 0,
         }}
         onConfirmar={onConfirmarSolicitud}
         onCancelar={() => setVerificacionVisible(false)}
@@ -1579,6 +2012,7 @@ export default function HomeScreen() {
         onCerrar={onCerrarConfirmacion}
       />
 
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

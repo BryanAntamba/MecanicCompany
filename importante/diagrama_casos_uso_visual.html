@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Casos de Uso - MecanicCompany</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #666;
+        }
+
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .diagram-container {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin-bottom: 30px;
+        }
+
+        svg {
+            width: 100%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            background: white;
+            border-radius: 4px;
+        }
+
+        .leyenda {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .leyenda h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .leyenda-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .leyenda-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .leyenda-item strong {
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .leyenda-item em {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .stats {
+            background: #e3f2fd;
+            border-left: 4px solid #1976d2;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stats p {
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .stats strong {
+            color: #1976d2;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Diagrama de Casos de Uso</h1>
+            <p>MecanicCompany - Sistema de Gestión de Mantenimiento Vehicular</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="descargarDiagrama()">⬇️ Descargar como Imagen</button>
+        </div>
+
+        <div class="stats">
+            <p><strong>50 Casos de Uso</strong> distribuidos en <strong>5 Actores Principales</strong></p>
+            <p>Cliente (8) • Mecánico (12) • Inventario (8) • Financiero (8) • Administrador (8) • Sistema (6)</p>
+        </div>
+
+        <div class="diagram-container" id="diagramContainer">
+            <svg viewBox="0 0 2400 1700" xmlns="http://www.w3.org/2000/svg">
+                <!-- Definir estilos -->
+                <defs>
+                    <style>
+                        .actor-text { font-size: 18px; font-weight: bold; text-anchor: middle; }
+                        .rectangle-border { fill: none; stroke: #333; stroke-width: 2; }
+                        .use-case { fill: #FFF9E6; stroke: #FF9800; stroke-width: 2; }
+                        .use-case-text { font-size: 13px; text-anchor: middle; }
+                        .line { stroke: #333; stroke-width: 1.5; }
+                        .section-title { font-size: 20px; font-weight: bold; }
+                    </style>
+                </defs>
+
+                <!-- FONDO -->
+                <rect width="2400" height="1700" fill="white"/>
+
+                <!-- RECTÁNGULO SISTEMA (Contenedor principal) -->
+                <rect x="20" y="20" width="2360" height="1660" class="rectangle-border"/>
+
+                <!-- TÍTULO SISTEMA -->
+                <text x="1200" y="55" class="section-title" text-anchor="middle" fill="#333">SISTEMA MECANICCOMPANY - 50 CASOS DE USO</text>
+
+                <!-- ==================== ACTOR CLIENTE (Izquierda) ==================== -->
+                <g>
+                    <!-- Círculo cabeza cliente -->
+                    <circle cx="100" cy="200" r="28" fill="#E3F2FD" stroke="#1976D2" stroke-width="2"/>
+                    <!-- Líneas del cuerpo -->
+                    <line x1="100" y1="228" x2="100" y2="290" class="line"/>
+                    <line x1="100" y1="255" x2="60" y2="275" class="line"/>
+                    <line x1="100" y1="255" x2="140" y2="275" class="line"/>
+                    <line x1="100" y1="290" x2="60" y2="350" class="line"/>
+                    <line x1="100" y1="290" x2="140" y2="350" class="line"/>
+                    <text x="100" y="410" class="actor-text" fill="#1976D2">CLIENTE</text>
+                </g>
+
+                <!-- Casos de Uso CLIENTE - Distribuidos en 2 COLUMNAS -->
+                <!-- Columna 1 (izquierda) -->
+                <ellipse cx="200" cy="150" rx="75" ry="40" class="use-case"/>
+                <text x="200" y="143" class="use-case-text">UC-001</text>
+                <text x="200" y="162" class="use-case-text">Registrarse</text>
+                <line x1="128" y1="190" x2="160" y2="150" class="line"/>
+
+                <ellipse cx="200" cy="240" rx="75" ry="40" class="use-case"/>
+                <text x="200" y="233" class="use-case-text">UC-002</text>
+                <text x="200" y="252" class="use-case-text">Iniciar Sesión</text>
+                <line x1="128" y1="220" x2="160" y2="240" class="line"/>
+
+                <ellipse cx="200" cy="330" rx="75" ry="40" class="use-case"/>
+                <text x="200" y="323" class="use-case-text">UC-003</text>
+                <text x="200" y="342" class="use-case-text">Solicitar Mto.</text>
+                <line x1="128" y1="240" x2="160" y2="330" class="line"/>
+
+                <ellipse cx="200" cy="420" rx="75" ry="40" class="use-case"/>
+                <text x="200" y="413" class="use-case-text">UC-004</text>
+                <text x="200" y="432" class="use-case-text">Ver Estado</text>
+                <line x1="128" y1="270" x2="160" y2="420" class="line"/>
+
+                <!-- Columna 2 (más a la derecha) -->
+                <ellipse cx="340" cy="150" rx="75" ry="40" class="use-case"/>
+                <text x="340" y="143" class="use-case-text">UC-005</text>
+                <text x="340" y="162" class="use-case-text">Ver Historial</text>
+                <line x1="128" y1="190" x2="290" y2="150" class="line"/>
+
+                <ellipse cx="340" cy="240" rx="75" ry="40" class="use-case"/>
+                <text x="340" y="233" class="use-case-text">UC-006</text>
+                <text x="340" y="252" class="use-case-text">Descargar</text>
+                <line x1="128" y1="220" x2="290" y2="240" class="line"/>
+
+                <ellipse cx="340" cy="330" rx="75" ry="40" class="use-case"/>
+                <text x="340" y="323" class="use-case-text">UC-007</text>
+                <text x="340" y="342" class="use-case-text">Calificar</text>
+                <line x1="128" y1="250" x2="290" y2="330" class="line"/>
+
+                <ellipse cx="340" cy="420" rx="75" ry="40" class="use-case"/>
+                <text x="340" y="413" class="use-case-text">UC-008</text>
+                <text x="340" y="432" class="use-case-text">Recuperar Pwd</text>
+                <line x1="128" y1="280" x2="290" y2="420" class="line"/>
+
+                <!-- ==================== ACTOR MECÁNICO (Centro-Superior) ==================== -->
+                <g>
+                    <circle cx="700" cy="120" r="28" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="2"/>
+                    <line x1="700" y1="148" x2="700" y2="210" class="line"/>
+                    <line x1="700" y1="170" x2="665" y2="190" class="line"/>
+                    <line x1="700" y1="170" x2="735" y2="190" class="line"/>
+                    <line x1="700" y1="210" x2="665" y2="270" class="line"/>
+                    <line x1="700" y1="210" x2="735" y2="270" class="line"/>
+                    <text x="700" y="330" class="actor-text" fill="#7B1FA2">MECÁNICO</text>
+                </g>
+
+                <!-- Casos de Uso MECÁNICO - Distribuidos en 3 FILAS x 4 COLUMNAS separadas -->
+                <!-- Fila 1 -->
+                <ellipse cx="550" cy="390" rx="70" ry="38" class="use-case"/>
+                <text x="550" y="383" class="use-case-text">UC-010</text>
+                <text x="550" y="400" class="use-case-text">Iniciar Sesión</text>
+                <line x1="700" y1="240" x2="580" y2="350" class="line"/>
+
+                <ellipse cx="680" cy="390" rx="70" ry="38" class="use-case"/>
+                <text x="680" y="383" class="use-case-text">UC-011</text>
+                <text x="680" y="400" class="use-case-text">Ver Solicitudes</text>
+
+                <ellipse cx="810" cy="390" rx="70" ry="38" class="use-case"/>
+                <text x="810" y="383" class="use-case-text">UC-012</text>
+                <text x="810" y="400" class="use-case-text">Aceptar</text>
+
+                <ellipse cx="940" cy="390" rx="70" ry="38" class="use-case"/>
+                <text x="940" y="383" class="use-case-text">UC-013</text>
+                <text x="940" y="400" class="use-case-text">Registrar Mto.</text>
+
+                <!-- Fila 2 -->
+                <ellipse cx="550" cy="500" rx="70" ry="38" class="use-case"/>
+                <text x="550" y="493" class="use-case-text">UC-014</text>
+                <text x="550" y="510" class="use-case-text">Capturar Fotos</text>
+
+                <ellipse cx="680" cy="500" rx="70" ry="38" class="use-case"/>
+                <text x="680" y="493" class="use-case-text">UC-015</text>
+                <text x="680" y="510" class="use-case-text">Registrar Pzas</text>
+
+                <ellipse cx="810" cy="500" rx="70" ry="38" class="use-case"/>
+                <text x="810" y="493" class="use-case-text">UC-016</text>
+                <text x="810" y="510" class="use-case-text">Calcular Costos</text>
+
+                <ellipse cx="940" cy="500" rx="70" ry="38" class="use-case"/>
+                <text x="940" y="493" class="use-case-text">UC-017</text>
+                <text x="940" y="510" class="use-case-text">Cambiar Estado</text>
+
+                <!-- Fila 3 -->
+                <ellipse cx="550" cy="610" rx="70" ry="38" class="use-case"/>
+                <text x="550" y="603" class="use-case-text">UC-018</text>
+                <text x="550" y="620" class="use-case-text">Enviar Reporte</text>
+
+                <ellipse cx="680" cy="610" rx="70" ry="38" class="use-case"/>
+                <text x="680" y="603" class="use-case-text">UC-019</text>
+                <text x="680" y="620" class="use-case-text">Ver Historial</text>
+
+                <ellipse cx="810" cy="610" rx="70" ry="38" class="use-case"/>
+                <text x="810" y="603" class="use-case-text">UC-020</text>
+                <text x="810" y="620" class="use-case-text">Rechazar</text>
+
+                <ellipse cx="940" cy="610" rx="70" ry="38" class="use-case"/>
+                <text x="940" y="603" class="use-case-text">UC-021</text>
+                <text x="940" y="620" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR INVENTARIO (Centro) ==================== -->
+                <g>
+                    <circle cx="1200" cy="120" r="28" fill="#FFF3E0" stroke="#E65100" stroke-width="2"/>
+                    <line x1="1200" y1="148" x2="1200" y2="210" class="line"/>
+                    <line x1="1200" y1="170" x2="1165" y2="190" class="line"/>
+                    <line x1="1200" y1="170" x2="1235" y2="190" class="line"/>
+                    <line x1="1200" y1="210" x2="1165" y2="270" class="line"/>
+                    <line x1="1200" y1="210" x2="1235" y2="270" class="line"/>
+                    <text x="1200" y="330" class="actor-text" fill="#E65100">INVENTARIO</text>
+                </g>
+
+                <!-- Casos de Uso INVENTARIO - Distribuidos diferente (2 filas de 4 casos) -->
+                <!-- Fila 1 -->
+                <ellipse cx="1070" cy="390" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1070" y="383" class="use-case-text">UC-022</text>
+                <text x="1070" y="400" class="use-case-text">Iniciar Sesión</text>
+                <line x1="1200" y1="240" x2="1100" y2="350" class="line"/>
+
+                <ellipse cx="1200" cy="390" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1200" y="383" class="use-case-text">UC-023</text>
+                <text x="1200" y="400" class="use-case-text">Ver Inventario</text>
+
+                <ellipse cx="1330" cy="390" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1330" y="383" class="use-case-text">UC-024</text>
+                <text x="1330" y="400" class="use-case-text">Registrar Prod</text>
+
+                <ellipse cx="1460" cy="390" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1460" y="383" class="use-case-text">UC-025</text>
+                <text x="1460" y="400" class="use-case-text">Actualizar Stock</text>
+
+                <!-- Fila 2 -->
+                <ellipse cx="1070" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1070" y="493" class="use-case-text">UC-026</text>
+                <text x="1070" y="510" class="use-case-text">Buscar Producto</text>
+
+                <ellipse cx="1200" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1200" y="493" class="use-case-text">UC-027</text>
+                <text x="1200" y="510" class="use-case-text">Ver Bajo Stock</text>
+
+                <ellipse cx="1330" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1330" y="493" class="use-case-text">UC-028</text>
+                <text x="1330" y="510" class="use-case-text">O. Compra</text>
+
+                <ellipse cx="1460" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1460" y="493" class="use-case-text">UC-029</text>
+                <text x="1460" y="510" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR FINANCIERO (Derecha-Centro) ==================== -->
+                <g>
+                    <circle cx="1800" cy="200" r="28" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+                    <line x1="1800" y1="228" x2="1800" y2="290" class="line"/>
+                    <line x1="1800" y1="255" x2="1760" y2="275" class="line"/>
+                    <line x1="1800" y1="255" x2="1840" y2="275" class="line"/>
+                    <line x1="1800" y1="290" x2="1760" y2="350" class="line"/>
+                    <line x1="1800" y1="290" x2="1840" y2="350" class="line"/>
+                    <text x="1800" y="450" class="actor-text" fill="#2E7D32">FINANCIERO</text>
+                </g>
+
+                <!-- Casos de Uso FINANCIERO - Distribuidos (2 filas de 4) -->
+                <!-- Fila 1 -->
+                <ellipse cx="1650" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1650" y="493" class="use-case-text">UC-030</text>
+                <text x="1650" y="510" class="use-case-text">Iniciar Sesión</text>
+                <line x1="1800" y1="280" x2="1680" y2="460" class="line"/>
+
+                <ellipse cx="1780" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1780" y="493" class="use-case-text">UC-031</text>
+                <text x="1780" y="510" class="use-case-text">Ver Completadas</text>
+
+                <ellipse cx="1910" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1910" y="493" class="use-case-text">UC-032</text>
+                <text x="1910" y="510" class="use-case-text">Crear Factura</text>
+
+                <ellipse cx="2040" cy="500" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2040" y="493" class="use-case-text">UC-033</text>
+                <text x="2040" y="510" class="use-case-text">Registrar Pago</text>
+
+                <!-- Fila 2 -->
+                <ellipse cx="1650" cy="600" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1650" y="593" class="use-case-text">UC-034</text>
+                <text x="1650" y="610" class="use-case-text">Ver Hist. Pagos</text>
+
+                <ellipse cx="1780" cy="600" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1780" y="593" class="use-case-text">UC-035</text>
+                <text x="1780" y="610" class="use-case-text">Gen. Reportes</text>
+
+                <ellipse cx="1910" cy="600" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1910" y="593" class="use-case-text">UC-036</text>
+                <text x="1910" y="610" class="use-case-text">Ver C. Cobrar</text>
+
+                <ellipse cx="2040" cy="600" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2040" y="593" class="use-case-text">UC-037</text>
+                <text x="2040" y="610" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR ADMINISTRADOR (Derecha-Abajo) ==================== -->
+                <g>
+                    <circle cx="2100" cy="200" r="28" fill="#FCE4EC" stroke="#C2185B" stroke-width="2"/>
+                    <line x1="2100" y1="228" x2="2100" y2="290" class="line"/>
+                    <line x1="2100" y1="255" x2="2060" y2="275" class="line"/>
+                    <line x1="2100" y1="255" x2="2140" y2="275" class="line"/>
+                    <line x1="2100" y1="290" x2="2060" y2="350" class="line"/>
+                    <line x1="2100" y1="290" x2="2140" y2="350" class="line"/>
+                    <text x="2100" y="350" class="actor-text" fill="#C2185B">ADMIN</text>
+                </g>
+
+                <!-- Casos de Uso ADMINISTRADOR - Distribuidos (2 filas, parte dispersa) -->
+                <!-- Fila 1 -->
+                <ellipse cx="1950" cy="680" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1950" y="673" class="use-case-text">UC-038</text>
+                <text x="1950" y="690" class="use-case-text">Iniciar Sesión</text>
+                <line x1="2100" y1="280" x2="1980" y2="640" class="line"/>
+
+                <ellipse cx="2080" cy="680" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2080" y="673" class="use-case-text">UC-039</text>
+                <text x="2080" y="690" class="use-case-text">Gestionar Usu</text>
+
+                <ellipse cx="2210" cy="680" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2210" y="673" class="use-case-text">UC-040</text>
+                <text x="2210" y="690" class="use-case-text">Ver Reportes</text>
+
+                <ellipse cx="2330" cy="680" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2330" y="673" class="use-case-text">UC-041</text>
+                <text x="2330" y="690" class="use-case-text">Cambiar Est</text>
+
+                <!-- Fila 2 -->
+                <ellipse cx="1950" cy="800" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1950" y="793" class="use-case-text">UC-042</text>
+                <text x="1950" y="810" class="use-case-text">Ver Auditoría</text>
+
+                <ellipse cx="2080" cy="800" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2080" y="793" class="use-case-text">UC-043</text>
+                <text x="2080" y="810" class="use-case-text">Configurar</text>
+
+                <ellipse cx="2210" cy="800" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2210" y="793" class="use-case-text">UC-044</text>
+                <text x="2210" y="810" class="use-case-text">Ver Estadísticas</text>
+
+                <ellipse cx="2330" cy="800" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="2330" y="793" class="use-case-text">UC-045</text>
+                <text x="2330" y="810" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== CASOS COMPARTIDOS (Centro-Abajo) ==================== -->
+                <rect x="600" y="950" width="1200" height="180" class="rectangle-border" fill="#F1F1F1" opacity="0.3"/>
+                <text x="1200" y="990" class="section-title" text-anchor="middle" fill="#616161">CASOS DE USO COMPARTIDOS DEL SISTEMA (6)</text>
+
+                <ellipse cx="750" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="750" y="1073" class="use-case-text">UC-046</text>
+                <text x="750" y="1092" class="use-case-text">Autenticar</text>
+
+                <ellipse cx="920" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="920" y="1073" class="use-case-text">UC-047</text>
+                <text x="920" y="1092" class="use-case-text">Validar Datos</text>
+
+                <ellipse cx="1090" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1090" y="1073" class="use-case-text">UC-048</text>
+                <text x="1090" y="1092" class="use-case-text">Enviar Email</text>
+
+                <ellipse cx="1260" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1260" y="1073" class="use-case-text">UC-049</text>
+                <text x="1260" y="1092" class="use-case-text">Registrar Aud.</text>
+
+                <ellipse cx="1430" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1430" y="1073" class="use-case-text">UC-050</text>
+                <text x="1430" y="1092" class="use-case-text">Almacenar Fotos</text>
+
+                <ellipse cx="1600" cy="1080" rx="80" ry="42" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1600" y="1092" class="use-case-text">Seguridad</text>
+
+                <!-- Conexiones a casos compartidos (punteadas) -->
+                <line x1="200" y1="460" x2="750" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="680" y1="650" x2="920" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="810" y1="650" x2="1090" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1200" y1="540" x2="1260" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1330" y1="540" x2="1430" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1800" y1="600" x2="1600" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="2100" y1="750" x2="1600" y2="1030" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+
+                <!-- LEYENDA -->
+                <text x="150" y="1380" class="section-title" fill="#333">LEYENDA:</text>
+                <circle cx="180" cy="1430" r="16" fill="#E3F2FD" stroke="#1976D2" stroke-width="2"/>
+                <text x="230" y="1440" font-size="14" font-weight="bold">Cliente (8 UC)</text>
+
+                <circle cx="480" cy="1430" r="16" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="2"/>
+                <text x="530" y="1440" font-size="14" font-weight="bold">Mecánico (12 UC)</text>
+
+                <circle cx="800" cy="1430" r="16" fill="#FFF3E0" stroke="#E65100" stroke-width="2"/>
+                <text x="850" y="1440" font-size="14" font-weight="bold">Inventario (8 UC)</text>
+
+                <circle cx="1150" cy="1430" r="16" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+                <text x="1200" y="1440" font-size="14" font-weight="bold">Financiero (8 UC)</text>
+
+                <circle cx="1480" cy="1430" r="16" fill="#FCE4EC" stroke="#C2185B" stroke-width="2"/>
+                <text x="1530" y="1440" font-size="14" font-weight="bold">Administrador (8 UC)</text>
+
+                <ellipse cx="1900" cy="1430" rx="16" ry="13" fill="#E0E0E0" stroke="#616161" stroke-width="2"/>
+                <text x="1950" y="1440" font-size="14" font-weight="bold">Sistema (6 UC)</text>
+            </svg>
+        </div>
+
+                <ellipse cx="210" cy="340" rx="75" ry="40" class="use-case"/>
+                <text x="210" y="333" class="use-case-text">UC-004</text>
+                <text x="210" y="352" class="use-case-text">Ver Estado</text>
+                <line x1="130" y1="220" x2="160" y2="340" class="line"/>
+
+                <ellipse cx="360" cy="130" rx="75" ry="40" class="use-case"/>
+                <text x="360" y="123" class="use-case-text">UC-005</text>
+                <text x="360" y="142" class="use-case-text">Ver Historial</text>
+                <line x1="130" y1="240" x2="310" y2="130" class="line"/>
+
+                <ellipse cx="360" cy="200" rx="75" ry="40" class="use-case"/>
+                <text x="360" y="193" class="use-case-text">UC-006</text>
+                <text x="360" y="212" class="use-case-text">Descargar</text>
+                <line x1="130" y1="260" x2="310" y2="200" class="line"/>
+
+                <ellipse cx="360" cy="270" rx="75" ry="40" class="use-case"/>
+                <text x="360" y="263" class="use-case-text">UC-007</text>
+                <text x="360" y="282" class="use-case-text">Calificar</text>
+                <line x1="130" y1="280" x2="310" y2="270" class="line"/>
+
+                <ellipse cx="360" cy="340" rx="75" ry="40" class="use-case"/>
+                <text x="360" y="333" class="use-case-text">UC-008</text>
+                <text x="360" y="352" class="use-case-text">Recuperar Pwd</text>
+                <line x1="130" y1="300" x2="310" y2="340" class="line"/>
+
+                <!-- ==================== ACTOR MECÁNICO (Arriba Centro) ==================== -->
+                <g>
+                    <circle cx="600" cy="100" r="25" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="2"/>
+                    <text x="600" y="108" class="actor-text" fill="#7B1FA2">🔧</text>
+                    <line x1="600" y1="125" x2="600" y2="180" class="line"/>
+                    <line x1="600" y1="145" x2="570" y2="160" class="line"/>
+                    <line x1="600" y1="145" x2="630" y2="160" class="line"/>
+                    <line x1="600" y1="180" x2="570" y2="230" class="line"/>
+                    <line x1="600" y1="180" x2="630" y2="230" class="line"/>
+                    <text x="600" y="280" class="actor-text" fill="#7B1FA2">MECÁNICO</text>
+                </g>
+
+                <!-- Casos de Uso MECÁNICO (12 casos en 4 columnas x 3 filas) -->
+                <!-- Fila 1 -->
+                <ellipse cx="500" cy="370" rx="70" ry="38" class="use-case"/>
+                <text x="500" y="363" class="use-case-text">UC-010</text>
+                <text x="500" y="380" class="use-case-text">Iniciar Sesión</text>
+                <line x1="600" y1="210" x2="550" y2="330" class="line"/>
+
+                <ellipse cx="600" cy="370" rx="70" ry="38" class="use-case"/>
+                <text x="600" y="363" class="use-case-text">UC-011</text>
+                <text x="600" y="380" class="use-case-text">Ver Solicitudes</text>
+
+                <ellipse cx="700" cy="370" rx="70" ry="38" class="use-case"/>
+                <text x="700" y="363" class="use-case-text">UC-012</text>
+                <text x="700" y="380" class="use-case-text">Aceptar</text>
+
+                <ellipse cx="800" cy="370" rx="70" ry="38" class="use-case"/>
+                <text x="800" y="363" class="use-case-text">UC-013</text>
+                <text x="800" y="380" class="use-case-text">Registrar Mto.</text>
+
+                <!-- Fila 2 -->
+                <ellipse cx="500" cy="460" rx="70" ry="38" class="use-case"/>
+                <text x="500" y="453" class="use-case-text">UC-014</text>
+                <text x="500" y="470" class="use-case-text">Capturar Fotos</text>
+
+                <ellipse cx="600" cy="460" rx="70" ry="38" class="use-case"/>
+                <text x="600" y="453" class="use-case-text">UC-015</text>
+                <text x="600" y="470" class="use-case-text">Registrar Pzas</text>
+
+                <ellipse cx="700" cy="460" rx="70" ry="38" class="use-case"/>
+                <text x="700" y="453" class="use-case-text">UC-016</text>
+                <text x="700" y="470" class="use-case-text">Calcular Costos</text>
+
+                <ellipse cx="800" cy="460" rx="70" ry="38" class="use-case"/>
+                <text x="800" y="453" class="use-case-text">UC-017</text>
+                <text x="800" y="470" class="use-case-text">Cambiar Estado</text>
+
+                <!-- Fila 3 -->
+                <ellipse cx="500" cy="550" rx="70" ry="38" class="use-case"/>
+                <text x="500" y="543" class="use-case-text">UC-018</text>
+                <text x="500" y="560" class="use-case-text">Enviar Reporte</text>
+
+                <ellipse cx="600" cy="550" rx="70" ry="38" class="use-case"/>
+                <text x="600" y="543" class="use-case-text">UC-019</text>
+                <text x="600" y="560" class="use-case-text">Ver Historial</text>
+
+                <ellipse cx="700" cy="550" rx="70" ry="38" class="use-case"/>
+                <text x="700" y="543" class="use-case-text">UC-020</text>
+                <text x="700" y="560" class="use-case-text">Rechazar</text>
+
+                <ellipse cx="800" cy="550" rx="70" ry="38" class="use-case"/>
+                <text x="800" y="543" class="use-case-text">UC-021</text>
+                <text x="800" y="560" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR INVENTARIO (Centro) ==================== -->
+                <g>
+                    <circle cx="1050" cy="100" r="25" fill="#FFF3E0" stroke="#E65100" stroke-width="2"/>
+                    <text x="1050" y="108" class="actor-text" fill="#E65100">📦</text>
+                    <line x1="1050" y1="125" x2="1050" y2="180" class="line"/>
+                    <line x1="1050" y1="145" x2="1020" y2="160" class="line"/>
+                    <line x1="1050" y1="145" x2="1080" y2="160" class="line"/>
+                    <line x1="1050" y1="180" x2="1020" y2="230" class="line"/>
+                    <line x1="1050" y1="180" x2="1080" y2="230" class="line"/>
+                    <text x="1050" y="280" class="actor-text" fill="#E65100">INVENTARIO</text>
+                </g>
+
+                <!-- Casos de Uso INVENTARIO (8 casos en 2 columnas x 4 filas) -->
+                <ellipse cx="950" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="950" y="363" class="use-case-text">UC-022</text>
+                <text x="950" y="380" class="use-case-text">Iniciar Sesión</text>
+                <line x1="1050" y1="210" x2="990" y2="330" class="line"/>
+
+                <ellipse cx="1050" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1050" y="363" class="use-case-text">UC-023</text>
+                <text x="1050" y="380" class="use-case-text">Ver Inventario</text>
+
+                <ellipse cx="1150" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1150" y="363" class="use-case-text">UC-024</text>
+                <text x="1150" y="380" class="use-case-text">Registrar Prod</text>
+
+                <ellipse cx="1250" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1250" y="363" class="use-case-text">UC-025</text>
+                <text x="1250" y="380" class="use-case-text">Actualizar Stock</text>
+
+                <ellipse cx="950" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="950" y="453" class="use-case-text">UC-026</text>
+                <text x="950" y="470" class="use-case-text">Buscar Producto</text>
+
+                <ellipse cx="1050" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1050" y="453" class="use-case-text">UC-027</text>
+                <text x="1050" y="470" class="use-case-text">Ver Bajo Stock</text>
+
+                <ellipse cx="1150" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1150" y="453" class="use-case-text">UC-028</text>
+                <text x="1150" y="470" class="use-case-text">O. Compra</text>
+
+                <ellipse cx="1250" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1250" y="453" class="use-case-text">UC-029</text>
+                <text x="1250" y="470" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR FINANCIERO (Derecha Arriba) ==================== -->
+                <g>
+                    <circle cx="1550" cy="180" r="25" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+                    <text x="1550" y="188" class="actor-text" fill="#2E7D32">💰</text>
+                    <line x1="1550" y1="205" x2="1550" y2="260" class="line"/>
+                    <line x1="1550" y1="225" x2="1520" y2="240" class="line"/>
+                    <line x1="1550" y1="225" x2="1580" y2="240" class="line"/>
+                    <line x1="1550" y1="260" x2="1520" y2="310" class="line"/>
+                    <line x1="1550" y1="260" x2="1580" y2="310" class="line"/>
+                    <text x="1550" y="350" class="actor-text" fill="#2E7D32">FINANCIERO</text>
+                </g>
+
+                <!-- Casos de Uso FINANCIERO (8 casos) -->
+                <ellipse cx="1400" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1400" y="363" class="use-case-text">UC-030</text>
+                <text x="1400" y="380" class="use-case-text">Iniciar Sesión</text>
+                <line x1="1550" y1="290" x2="1450" y2="330" class="line"/>
+
+                <ellipse cx="1500" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1500" y="363" class="use-case-text">UC-031</text>
+                <text x="1500" y="380" class="use-case-text">Ver Completadas</text>
+
+                <ellipse cx="1600" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1600" y="363" class="use-case-text">UC-032</text>
+                <text x="1600" y="380" class="use-case-text">Crear Factura</text>
+
+                <ellipse cx="1700" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1700" y="363" class="use-case-text">UC-033</text>
+                <text x="1700" y="380" class="use-case-text">Registrar Pago</text>
+
+                <ellipse cx="1400" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1400" y="453" class="use-case-text">UC-034</text>
+                <text x="1400" y="470" class="use-case-text">Ver Hist. Pagos</text>
+
+                <ellipse cx="1500" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1500" y="453" class="use-case-text">UC-035</text>
+                <text x="1500" y="470" class="use-case-text">Gen. Reportes</text>
+
+                <ellipse cx="1600" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1600" y="453" class="use-case-text">UC-036</text>
+                <text x="1600" y="470" class="use-case-text">Ver C. Cobrar</text>
+
+                <ellipse cx="1700" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1700" y="453" class="use-case-text">UC-037</text>
+                <text x="1700" y="470" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== ACTOR ADMINISTRADOR (Derecha Abajo) ==================== -->
+                <g>
+                    <circle cx="1850" cy="180" r="25" fill="#FCE4EC" stroke="#C2185B" stroke-width="2"/>
+                    <text x="1850" y="188" class="actor-text" fill="#C2185B">⚙️</text>
+                    <line x1="1850" y1="205" x2="1850" y2="260" class="line"/>
+                    <line x1="1850" y1="225" x2="1820" y2="240" class="line"/>
+                    <line x1="1850" y1="225" x2="1880" y2="240" class="line"/>
+                    <line x1="1850" y1="260" x2="1820" y2="310" class="line"/>
+                    <line x1="1850" y1="260" x2="1880" y2="310" class="line"/>
+                    <text x="1850" y="350" class="actor-text" fill="#C2185B">ADMIN</text>
+                </g>
+
+                <!-- Casos de Uso ADMINISTRADOR (8 casos) -->
+                <ellipse cx="1700" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1700" y="363" class="use-case-text">UC-038</text>
+                <text x="1700" y="380" class="use-case-text">Iniciar Sesión</text>
+                <line x1="1850" y1="290" x2="1750" y2="330" class="line"/>
+
+                <ellipse cx="1800" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1800" y="363" class="use-case-text">UC-039</text>
+                <text x="1800" y="380" class="use-case-text">Gestionar Usu</text>
+
+                <ellipse cx="1900" cy="370" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1900" y="363" class="use-case-text">UC-040</text>
+                <text x="1900" y="380" class="use-case-text">Ver Reportes</text>
+
+                <ellipse cx="1700" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1700" y="453" class="use-case-text">UC-041</text>
+                <text x="1700" y="470" class="use-case-text">Cambiar Est Cta</text>
+
+                <ellipse cx="1800" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1800" y="453" class="use-case-text">UC-042</text>
+                <text x="1800" y="470" class="use-case-text">Ver Auditoría</text>
+
+                <ellipse cx="1900" cy="460" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1900" y="453" class="use-case-text">UC-043</text>
+                <text x="1900" y="470" class="use-case-text">Configurar</text>
+
+                <ellipse cx="1750" cy="550" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1750" y="543" class="use-case-text">UC-044</text>
+                <text x="1750" y="560" class="use-case-text">Ver Estadísticas</text>
+
+                <ellipse cx="1850" cy="550" rx="70" ry="38" class="use-case" fill="#FFF9E6" stroke="#FF9800"/>
+                <text x="1850" y="543" class="use-case-text">UC-045</text>
+                <text x="1850" y="560" class="use-case-text">Recuperar Pwd</text>
+
+                <!-- ==================== CASOS COMPARTIDOS (Centro Abajo) ==================== -->
+                <rect x="400" y="800" width="1200" height="180" class="rectangle-border" fill="#F1F1F1" opacity="0.3"/>
+                <text x="1000" y="835" class="section-title" text-anchor="middle" fill="#616161">CASOS DE USO COMPARTIDOS DEL SISTEMA (6)</text>
+
+                <ellipse cx="500" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="500" y="913" class="use-case-text">UC-046</text>
+                <text x="500" y="932" class="use-case-text">Autenticar</text>
+
+                <ellipse cx="650" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="650" y="913" class="use-case-text">UC-047</text>
+                <text x="650" y="932" class="use-case-text">Validar Datos</text>
+
+                <ellipse cx="800" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="800" y="913" class="use-case-text">UC-048</text>
+                <text x="800" y="932" class="use-case-text">Enviar Email</text>
+
+                <ellipse cx="1000" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1000" y="913" class="use-case-text">UC-049</text>
+                <text x="1000" y="932" class="use-case-text">Registrar Aud.</text>
+
+                <ellipse cx="1150" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1150" y="913" class="use-case-text">UC-050</text>
+                <text x="1150" y="932" class="use-case-text">Almacenar Fotos</text>
+
+                <ellipse cx="1300" cy="920" rx="75" ry="40" class="use-case" fill="#E0E0E0" stroke="#616161"/>
+                <text x="1300" y="920" class="use-case-text">🔐</text>
+                <text x="1300" y="932" class="use-case-text">Seguridad</text>
+
+                <!-- Conexiones a casos compartidos (punteadas) -->
+                <line x1="210" y1="365" x2="500" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="600" y1="590" x2="650" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="800" y1="590" x2="800" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1050" y1="510" x2="1000" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1150" y1="510" x2="1150" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+                <line x1="1550" y1="510" x2="1300" y2="880" class="line" stroke-dasharray="5,5" opacity="0.5"/>
+
+                <!-- LEYENDA -->
+                <text x="150" y="1200" class="section-title" fill="#333">LEYENDA:</text>
+                <circle cx="180" cy="1240" r="15" fill="#E3F2FD" stroke="#1976D2" stroke-width="2"/>
+                <text x="220" y="1248" font-size="14">Cliente (8 UC)</text>
+
+                <circle cx="420" cy="1240" r="15" fill="#F3E5F5" stroke="#7B1FA2" stroke-width="2"/>
+                <text x="460" y="1248" font-size="14">Mecánico (12 UC)</text>
+
+                <circle cx="700" cy="1240" r="15" fill="#FFF3E0" stroke="#E65100" stroke-width="2"/>
+                <text x="740" y="1248" font-size="14">Inventario (8 UC)</text>
+
+                <circle cx="1000" cy="1240" r="15" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+                <text x="1040" y="1248" font-size="14">Financiero (8 UC)</text>
+
+                <circle cx="1280" cy="1240" r="15" fill="#FCE4EC" stroke="#C2185B" stroke-width="2"/>
+                <text x="1320" y="1248" font-size="14">Administrador (8 UC)</text>
+
+                <ellipse cx="1620" cy="1240" rx="15" ry="12" fill="#E0E0E0" stroke="#616161" stroke-width="2"/>
+                <text x="1660" y="1248" font-size="14">Sistema (6 UC)</text>
+            </svg>
+        </div>
+
+        <div class="leyenda">
+            <h3>📋 Información del Diagrama</h3>
+            <div class="leyenda-items">
+                <div class="leyenda-item">
+                    <strong>Círculos (Actores)</strong>
+                    <em>Representan los 5 tipos de usuarios del sistema. Las líneas conectan cada actor con sus casos de uso.</em>
+                </div>
+                <div class="leyenda-item">
+                    <strong>Óvalos (Casos de Uso)</strong>
+                    <em>Cada óvalo es una funcionalidad específica. El código UC-### identifica cada caso de uso.</em>
+                </div>
+                <div class="leyenda-item">
+                    <strong>Líneas Sólidas</strong>
+                    <em>Indican que un actor puede realizar directamente un caso de uso.</em>
+                </div>
+                <div class="leyenda-item">
+                    <strong>Líneas Punteadas</strong>
+                    <em>Indican dependencias con casos de uso compartidos que respaldan múltiples funcionalidades.</em>
+                </div>
+                <div class="leyenda-item">
+                    <strong>Rectángulo Gris (Fondo)</strong>
+                    <em>Contiene todos los casos de uso compartidos del sistema que respaldan a múltiples actores.</em>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function descargarDiagrama() {
+            const btn = event.target;
+            const textoOriginal = btn.textContent;
+            btn.textContent = '⏳ Descargando...';
+            btn.disabled = true;
+
+            const container = document.getElementById('diagramContainer');
+            
+            html2canvas(container, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'diagrama_casos_uso_mecaniccompany.png';
+                link.click();
+
+                btn.textContent = textoOriginal;
+                btn.disabled = false;
+            }).catch(error => {
+                console.error('Error:', error);
+                alert('Error al descargar. Por favor, intenta de nuevo.');
+                btn.textContent = textoOriginal;
+                btn.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>

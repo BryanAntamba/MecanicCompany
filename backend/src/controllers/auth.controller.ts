@@ -1,87 +1,272 @@
 import { Request, Response } from 'express';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import * as bcrypt from 'bcryptjs';
+import * as jwt from 'jsonwebtoken';
 import prisma from '../lib/prisma';
 import { generarCodigo, enviarCodigoEmail } from '../services/email.service';
 
 // POST /api/auth/login
 export async function login(req: Request, res: Response): Promise<void> {
-    const { correoEmpresarial, contrasena } = req.body;
+    try {
+        console.error('[LOGIN] ▶️ INICIANDO LOGIN');
+        const { correoEmpresarial, contrasena } = req.body;
 
-    if (!correoEmpresarial || !contrasena) {
-        res.status(400).json({ message: 'Correo y contraseña son requeridos' });
-        return;
-    }
-
-    const correoNorm = correoEmpresarial.trim().toLowerCase();
-
-    // 1. Buscar primero en la tabla Admin
-    const admin = await prisma.admin.findUnique({
-        where: { correoEmpresarial: correoNorm },
-    });
-
-    if (admin) {
-        const passwordValida = await bcrypt.compare(contrasena, admin.contrasena);
-        if (!passwordValida) {
-            res.status(401).json({ message: 'Credenciales incorrectas' });
+        if (!correoEmpresarial || !contrasena) {
+            console.error('[LOGIN] ❌ Faltan datos');
+            res.status(400).json({ message: 'Correo y contraseña son requeridos' });
             return;
         }
 
-        const token = jwt.sign(
-            { id: admin.id, correoEmpresarial: admin.correoEmpresarial, rol: 'admin' },
-            process.env.JWT_SECRET!,
-            { expiresIn: 28800 }
-        );
+        const correoNorm = correoEmpresarial.trim().toLowerCase();
+        console.error(`[LOGIN] 🔍 Correo: "${correoNorm}"`);
 
-        res.json({
-            token,
-            mecanico: {
-                id: admin.id,
-                nombres: admin.nombres,
-                apellidos: admin.apellidos,
-                correoEmpresarial: admin.correoEmpresarial,
-                especialidad: 'Administración',
-                estadoLaboral: 'Disponible',
-                esAdmin: true,
-            },
-        });
-        return;
+        // Identificar el rol según el dominio del email
+        let rol: string = '';
+        if (correoNorm.includes('@finanzasmecanic.com')) {
+            rol = 'financiero';
+        } else if (correoNorm.includes('@inventariomecanic.com')) {
+            rol = 'inventario';
+        } else if (correoNorm.includes('@mecanic.com')) {
+            rol = 'mecanico'; // Aquí se busca Admin o Mecanico
+        } else if (correoNorm.includes('@gmail.com')) {
+            rol = 'cliente';
+        } else {
+            console.error('[LOGIN] ❌ Dominio de email no reconocido');
+            res.status(401).json({ message: 'Dominio de email no válido' });
+            return;
+        }
+
+        console.error(`[LOGIN] 📧 Rol identificado: ${rol}`);
+
+        // ===== ROL: FINANCIERO =====
+        if (rol === 'financiero') {
+            console.error(`[LOGIN] 🔍 Buscando PersonalFinanciero con email: "${correoNorm}"`);
+            const financiero = await prisma.personalFinanciero.findUnique({
+                where: { correoEmpresarial: correoNorm },
+            });
+
+            if (!financiero) {
+                console.error('[LOGIN] ❌ PersonalFinanciero NO encontrado');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            if (!financiero.cuentaActiva) {
+                console.error('[LOGIN] ❌ PersonalFinanciero cuenta INACTIVA');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            const passwordValida = await bcrypt.compare(contrasena, financiero.contrasena);
+            if (!passwordValida) {
+                console.error('[LOGIN] ❌ Contraseña INCORRECTA');
+                res.status(401).json({ message: 'Credenciales incorrectas' });
+                return;
+            }
+
+            const token = jwt.sign(
+                { id: financiero.id, correoEmpresarial: financiero.correoEmpresarial, rol: 'financiero' },
+                process.env.JWT_SECRET!,
+                { expiresIn: 28800 }
+            );
+
+            console.error('[LOGIN] ✅ LOGIN EXITOSO - PersonalFinanciero:', financiero.id);
+            res.json({
+                token,
+                usuario: {
+                    id: financiero.id,
+                    nombres: financiero.nombres,
+                    apellidos: financiero.apellidos,
+                    correoEmpresarial: financiero.correoEmpresarial,
+                    rol: 'financiero',
+                },
+            });
+            return;
+        }
+
+        // ===== ROL: INVENTARIO =====
+        if (rol === 'inventario') {
+            console.error(`[LOGIN] 🔍 Buscando PersonalInventario con email: "${correoNorm}"`);
+            const inventario = await prisma.personalInventario.findUnique({
+                where: { correoEmpresarial: correoNorm },
+            });
+
+            if (!inventario) {
+                console.error('[LOGIN] ❌ PersonalInventario NO encontrado');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            if (!inventario.cuentaActiva) {
+                console.error('[LOGIN] ❌ PersonalInventario cuenta INACTIVA');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            const passwordValida = await bcrypt.compare(contrasena, inventario.contrasena);
+            if (!passwordValida) {
+                console.error('[LOGIN] ❌ Contraseña INCORRECTA');
+                res.status(401).json({ message: 'Credenciales incorrectas' });
+                return;
+            }
+
+            const token = jwt.sign(
+                { id: inventario.id, correoEmpresarial: inventario.correoEmpresarial, rol: 'inventario' },
+                process.env.JWT_SECRET!,
+                { expiresIn: 28800 }
+            );
+
+            console.error('[LOGIN] ✅ LOGIN EXITOSO - PersonalInventario:', inventario.id);
+            res.json({
+                token,
+                usuario: {
+                    id: inventario.id,
+                    nombres: inventario.nombres,
+                    apellidos: inventario.apellidos,
+                    correoEmpresarial: inventario.correoEmpresarial,
+                    rol: 'inventario',
+                },
+            });
+            return;
+        }
+
+        // ===== ROL: MECANICO O ADMIN (@mecanic.com) =====
+        if (rol === 'mecanico') {
+            // Primero busca en Admin
+            console.error(`[LOGIN] 🔍 Buscando Admin con email: "${correoNorm}"`);
+            const admin = await prisma.admin.findUnique({
+                where: { correoEmpresarial: correoNorm },
+            });
+
+            if (admin) {
+                if (!admin.cuentaActiva) {
+                    console.error('[LOGIN] ❌ Admin cuenta INACTIVA');
+                    res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                    return;
+                }
+
+                const passwordValida = await bcrypt.compare(contrasena, admin.contrasena);
+                if (!passwordValida) {
+                    console.error('[LOGIN] ❌ Contraseña INCORRECTA');
+                    res.status(401).json({ message: 'Credenciales incorrectas' });
+                    return;
+                }
+
+                const token = jwt.sign(
+                    { id: admin.id, correoEmpresarial: admin.correoEmpresarial, rol: 'admin' },
+                    process.env.JWT_SECRET!,
+                    { expiresIn: 28800 }
+                );
+
+                console.error('[LOGIN] ✅ LOGIN EXITOSO - Admin:', admin.id);
+                res.json({
+                    token,
+                    usuario: {
+                        id: admin.id,
+                        nombres: admin.nombres,
+                        apellidos: admin.apellidos,
+                        correoEmpresarial: admin.correoEmpresarial,
+                        rol: 'admin',
+                    },
+                });
+                return;
+            }
+
+            // Si no es admin, busca en Mecanico
+            console.error(`[LOGIN] 🔍 Admin no encontrado. Buscando Mecanico con email: "${correoNorm}"`);
+            const mecanico = await prisma.mecanico.findUnique({
+                where: { correoEmpresarial: correoNorm },
+            });
+
+            if (!mecanico) {
+                console.error('[LOGIN] ❌ Mecanico NO encontrado');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            if (!mecanico.cuentaActiva) {
+                console.error('[LOGIN] ❌ Mecanico cuenta INACTIVA');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            const passwordValida = await bcrypt.compare(contrasena, mecanico.contrasena);
+            if (!passwordValida) {
+                console.error('[LOGIN] ❌ Contraseña INCORRECTA');
+                res.status(401).json({ message: 'Credenciales incorrectas' });
+                return;
+            }
+
+            const token = jwt.sign(
+                { id: mecanico.id, correoEmpresarial: mecanico.correoEmpresarial, rol: 'mecanico' },
+                process.env.JWT_SECRET!,
+                { expiresIn: 28800 }
+            );
+
+            console.error('[LOGIN] ✅ LOGIN EXITOSO - Mecanico:', mecanico.id);
+            res.json({
+                token,
+                usuario: {
+                    id: mecanico.id,
+                    nombres: mecanico.nombres,
+                    apellidos: mecanico.apellidos,
+                    correoEmpresarial: mecanico.correoEmpresarial,
+                    especialidad: mecanico.especialidad,
+                    rol: 'mecanico',
+                },
+            });
+            return;
+        }
+
+        // ===== ROL: CLIENTE (@gmail.com) =====
+        if (rol === 'cliente') {
+            console.error(`[LOGIN] 🔍 Buscando Cliente con email: "${correoNorm}"`);
+            const cliente = await prisma.cliente.findUnique({
+                where: { correo: correoNorm },
+            });
+
+            if (!cliente) {
+                console.error('[LOGIN] ❌ Cliente NO encontrado');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            if (!cliente.cuentaActiva) {
+                console.error('[LOGIN] ❌ Cliente cuenta INACTIVA');
+                res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
+                return;
+            }
+
+            const passwordValida = await bcrypt.compare(contrasena, cliente.contrasena);
+            if (!passwordValida) {
+                console.error('[LOGIN] ❌ Contraseña INCORRECTA');
+                res.status(401).json({ message: 'Credenciales incorrectas' });
+                return;
+            }
+
+            const token = jwt.sign(
+                { id: cliente.id, correo: cliente.correo, rol: 'cliente' },
+                process.env.JWT_SECRET!,
+                { expiresIn: 28800 }
+            );
+
+            console.error('[LOGIN] ✅ LOGIN EXITOSO - Cliente:', cliente.id);
+            res.json({
+                token,
+                usuario: {
+                    id: cliente.id,
+                    nombres: cliente.nombres,
+                    apellidos: cliente.apellidos,
+                    correo: cliente.correo,
+                    rol: 'cliente',
+                },
+            });
+            return;
+        }
+
+    } catch (error: any) {
+        console.error('[LOGIN] 🔴 ERROR CAPTURADO:', error?.message ?? error);
+        res.status(500).json({ message: 'Error al procesar login: ' + (error?.message ?? 'desconocido') });
     }
-
-    // 2. Si no es admin, buscar en la tabla Mecanico
-    const mecanico = await prisma.mecanico.findUnique({
-        where: { correoEmpresarial: correoNorm },
-    });
-
-    if (!mecanico || !mecanico.cuentaActiva) {
-        res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
-        return;
-    }
-
-    const passwordValida = await bcrypt.compare(contrasena, mecanico.contrasena);
-    if (!passwordValida) {
-        res.status(401).json({ message: 'Credenciales incorrectas o cuenta inactiva' });
-        return;
-    }
-
-    const token = jwt.sign(
-        { id: mecanico.id, correoEmpresarial: mecanico.correoEmpresarial, rol: 'mecanico' },
-        process.env.JWT_SECRET!,
-        { expiresIn: 28800 }
-    );
-
-    res.json({
-        token,
-        mecanico: {
-            id: mecanico.id,
-            nombres: mecanico.nombres,
-            apellidos: mecanico.apellidos,
-            correoEmpresarial: mecanico.correoEmpresarial,
-            especialidad: mecanico.especialidad,
-            estadoLaboral: mecanico.estadoLaboral,
-            esAdmin: false,
-        },
-    });
 }
 
 // Mapa en memoria para controlar intentos de reenvío por correo

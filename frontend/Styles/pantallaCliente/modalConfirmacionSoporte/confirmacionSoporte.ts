@@ -52,13 +52,12 @@ export default StyleSheet.create({
     color: '#F1F5F9',
   },
   buttonContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'space-between',
     marginTop: 24,
     gap: 12,
   },
   cancelButton: {
-    flex: 1,
     backgroundColor: '#334155',
     borderRadius: 8,
     paddingVertical: 12,
@@ -76,7 +75,6 @@ export default StyleSheet.create({
     color: '#CBD5E1',
   },
   sendButton: {
-    flex: 1,
     backgroundColor: '#3B82F6',
     borderRadius: 8,
     paddingVertical: 12,
@@ -92,5 +90,13 @@ export default StyleSheet.create({
   },
   sendButtonTextPressed: {
     color: '#E0E7FF',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 });

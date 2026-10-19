@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  # ===================================================================
+  # METABASE - Business Intelligence Dashboard
+  # ===================================================================
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase-mecaniccompany
+    restart: always
+    ports:
+      - "3001:3000"  # Acceso: http://localhost:3001
+    
+    # Mapeo para acceder al host desde Docker en Windows
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    
+    environment:
+      # Configuración de base de datos interna de Metabase (H2)
+      MB_DB_TYPE: h2
+      MB_DB_FILE: /metabase-data/metabase.db
+      
+      # Configuración regional
+      MB_SITE_LOCALE: es
+      MB_SITE_NAME: "MecanicCompany BI"
+      
+      # Configuración de memoria (ajustar según necesidad)
+      JAVA_OPTS: "-Xmx512m"
+    
+    volumes:
+      # Persistencia de datos de Metabase
+      - metabase-data:/metabase-data
+      
+      # Logs (opcional, descomentar si necesitas debug)
+      # - ./logs/metabase:/logs
+    
+    networks:
+      - mecaniccompany-network
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+# ===================================================================
+# VOLÚMENES PERSISTENTES
+# ===================================================================
+volumes:
+  metabase-data:
+    driver: local
+    name: metabase-mecaniccompany-data
+
+# ===================================================================
+# REDES
+# ===================================================================
+networks:
+  mecaniccompany-network:
+    driver: bridge
+    name: mecaniccompany-net
+
+# ===================================================================
+# INSTRUCCIONES DE USO
+# ===================================================================
+# 
+# 1. INICIAR METABASE:
+#    docker-compose up -d
+#
+# 2. VERIFICAR ESTADO:
+#    docker-compose ps
+#    docker-compose logs -f metabase
+#
+# 3. ACCEDER:
+#    Abrir navegador: http://localhost:3001
+#    Primera vez: Configurar usuario admin
+#
+# 4. DETENER:
+#    docker-compose down
+#
+# 5. DETENER Y BORRAR DATOS:
+#    docker-compose down -v
+#
+# 6. ACTUALIZAR METABASE:
+#    docker-compose pull
+#    docker-compose up -d
+#
+# 7. BACKUP DE DATOS:
+#    docker run --rm -v metabase-mecaniccompany-data:/data -v ${PWD}:/backup ubuntu tar czf /backup/metabase-backup.tar.gz /data
+#
+# 8. RESTAURAR BACKUP:
+#    docker run --rm -v metabase-mecaniccompany-data:/data -v ${PWD}:/backup ubuntu tar xzf /backup/metabase-backup.tar.gz -C /
+#
+# ===================================================================

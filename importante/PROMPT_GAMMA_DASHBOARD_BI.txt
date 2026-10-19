@@ -1,0 +1,192 @@
+Crea una presentación profesional de 10 diapositivas sobre el proyecto "Dashboard de Business Intelligence para MecanicCompany" dividida para 4 expositores con la siguiente estructura:
+
+═══════════════════════════════════════════════════════════
+📌 EXPOSITOR 1 - INTRODUCCIÓN Y CONTEXTO (3 diapositivas)
+═══════════════════════════════════════════════════════════
+
+DIAPOSITIVA 1 - PORTADA
+Título: Dashboard de Business Intelligence - MecanicCompany
+Subtítulo: Análisis de Datos para la Toma de Decisiones Estratégicas
+Fecha: Junio 2026
+
+DIAPOSITIVA 2 - CONTEXTO DEL PROYECTO
+Título: ¿Qué problema resolvemos?
+- MecanicCompany es una empresa de mantenimiento de vehículos
+- Actualmente tiene app móvil operacional (React Native + TypeScript + PostgreSQL)
+- NO tienen visibilidad de métricas financieras ni operacionales
+- Las decisiones se basan en intuición, no en datos
+- Necesitan conocer: ingresos reales, mecánicos más productivos, tendencias de crecimiento
+
+DIAPOSITIVA 3 - OBJETIVO DEL PROYECTO
+Título: ¿Qué vamos a crear?
+Objetivo Principal: Desarrollar un Dashboard Web de Business Intelligence independiente
+
+Características clave:
+- Sistema separado de la app móvil
+- Acceso web desde navegador (puerto 3001)
+- Solo para administradores y gerentes
+- Análisis de datos históricos de mantenimientos, mecánicos y clientes
+- Capacidades de análisis multidimensional con Drill Down y Roll Up
+
+═══════════════════════════════════════════════════════════
+📌 EXPOSITOR 2 - TECNOLOGÍA Y SOLUCIÓN (3 diapositivas)
+═══════════════════════════════════════════════════════════
+
+DIAPOSITIVA 4 - ARQUITECTURA DE LA SOLUCIÓN
+Título: Stack Tecnológico
+
+Mostrar diagrama simple:
+[Navegador Web] → [Metabase (Docker)] → [PostgreSQL (Base de Datos Existente)]
+
+Componentes:
+1. Metabase: Herramienta open source de BI
+2. Docker: Contenedorización para fácil instalación
+3. PostgreSQL: Base de datos actual (solo lectura)
+
+DIAPOSITIVA 5 - ¿POR QUÉ METABASE?
+Título: Justificación Tecnológica
+
+Comparación:
+| Criterio | Metabase | Alternativas |
+|----------|----------|--------------|
+| Costo | $0 (open source) | Power BI: $10/usuario/mes |
+| Tiempo implementación | 5 horas | Desarrollo custom: 20+ horas |
+| Mantenimiento | Actualizaciones automáticas | Mantener código propio |
+| Drill Down/Roll Up | Funcionalidad nativa | Programar desde cero |
+| Curva aprendizaje | Interfaz visual sin código | Aprender librerías de gráficos |
+
+DIAPOSITIVA 6 - MODELO ESTRELLA Y ANÁLISIS MULTIDIMENSIONAL
+Título: Arquitectura de Datos BI
+
+MODELO ESTRELLA (Star Schema):
+- Tabla de Hechos: Mantenimientos (métricas)
+- Dimensiones: Tiempo, Cliente, Vehículo, Mecánico, TipoServicio
+
+FUNCIONALIDAD DRILL DOWN:
+Ejemplo práctico:
+Vista Anual → Click → Mensual → Click → Diaria → Click → Servicio Individual
+
+Jerarquías implementadas:
+- Temporal: Año → Trimestre → Mes → Semana → Día
+- Servicio: Categoría → Tipo → Subtipo → Individual
+- Organizacional: Todos → Especialidad → Mecánico
+
+═══════════════════════════════════════════════════════════
+📌 EXPOSITOR 3 - DASHBOARDS Y MÉTRICAS (2 diapositivas)
+═══════════════════════════════════════════════════════════
+
+DIAPOSITIVA 7 - DASHBOARDS A IMPLEMENTAR
+Título: 4 Dashboards Principales
+
+1. VISIÓN GENERAL OPERACIONAL
+   - KPIs: Total mantenimientos, ingresos, ticket promedio
+   - Gráficos: Ingresos mensuales, top mecánicos, distribución de servicios
+
+2. PRODUCTIVIDAD DE MECÁNICOS
+   - Ranking de mecánicos por desempeño
+   - Análisis de eficiencia y tiempo de servicio
+
+3. ANÁLISIS FINANCIERO
+   - Márgenes de contribución
+   - Crecimiento mensual y proyecciones
+   - Embudo de conversión
+
+4. ANÁLISIS DE CLIENTES Y VEHÍCULOS
+   - Top marcas atendidas
+   - Clientes recurrentes
+   - Patrones de demanda
+
+DIAPOSITIVA 8 - MÉTRICAS Y KPIs
+Título: Principales Indicadores
+
+KPIs Operacionales:
+- Total mantenimientos: >50/mes
+- Tasa de conversión: >70%
+- Tiempo promedio de servicio: <3 horas
+
+KPIs Financieros:
+- Ingresos mensuales: >$50,000
+- Ticket promedio: >$1,000
+- Crecimiento MoM: >5%
+
+KPIs de Productividad:
+- Eficiencia por mecánico: >$500/hora
+- Tasa de ocupación: 75-85%
+
+═══════════════════════════════════════════════════════════
+📌 EXPOSITOR 4 - IMPLEMENTACIÓN Y CIERRE (2 diapositivas)
+═══════════════════════════════════════════════════════════
+
+DIAPOSITIVA 9 - PLAN DE IMPLEMENTACIÓN
+Título: Cronograma y Tecnología Docker
+
+DIAPOSITIVA 9 - PLAN DE IMPLEMENTACIÓN
+Título: Cronograma y Tecnología Docker
+
+¿POR QUÉ DOCKER?
+Con Docker (simplificado):
+```
+docker run -d -p 3001:3000 metabase/metabase
+```
+⏱️ Tiempo: 2 minutos
+
+Ventajas: Portabilidad, aislamiento, fácil instalación, reproducibilidad
+
+CRONOGRAMA - Tiempo total: 5 horas
+Semana 1:
+- Instalar Docker + Metabase (45 min)
+- Conectar a PostgreSQL (20 min)
+
+Semana 2-3:
+- Crear 4 dashboards (2 horas)
+- Configurar Drill Down/Roll Up (1 hora)
+
+Semana 4:
+- Pruebas, ajustes y capacitación (1.5 horas)
+
+DIAPOSITIVA 10 - BENEFICIOS Y CONCLUSIÓN
+DIAPOSITIVA 10 - BENEFICIOS Y CONCLUSIÓN
+Título: Impacto Esperado y Decisión Final
+
+BENEFICIOS CUANTITATIVOS:
+- ⏱️ 80% reducción en tiempo de reportes (2h → 10 min)
+- 📊 Visibilidad de 15+ KPIs en tiempo real
+- 💰 Ahorro: $0 costo vs $120/mes (Power BI)
+- 🎯 Identificación top 20% mecánicos productivos
+
+BENEFICIOS CUALITATIVOS:
+- Decisiones basadas en datos reales
+- Detección temprana de problemas operacionales
+- Cultura organizacional orientada a métricas
+- Análisis histórico y proyecciones
+
+CONCLUSIÓN - Decisión: METABASE
+✅ Costo: $0 (100% gratuito)
+✅ Tiempo: 5 horas de implementación
+✅ Facilidad: Interfaz visual sin código
+✅ Drill Down/Roll Up nativo
+✅ Escalabilidad sin costo adicional
+
+Próximo paso: Iniciar implementación
+
+═══════════════════════════════════════════════════════════
+RESUMEN DE DISTRIBUCIÓN:
+- Expositor 1: Diapositivas 1-3 (Introducción y contexto)
+- Expositor 2: Diapositivas 4-6 (Tecnología y solución)
+- Expositor 3: Diapositivas 7-8 (Dashboards y métricas)
+- Expositor 4: Diapositivas 9-10 (Implementación y cierre)
+═══════════════════════════════════════════════════════════
+
+---
+
+INSTRUCCIONES DE DISEÑO PARA GAMMA:
+- Usa tema profesional moderno (colores corporativos: azul, gris, blanco)
+- Incluye iconos relevantes en cada diapositiva
+- Crea tablas comparativas visualmente atractivas
+- Genera diagramas de flujo simples para arquitectura
+- Usa gráficos de ejemplo donde corresponda
+- Mantén texto conciso con bullets
+- Destaca números y métricas clave
+- Incluye imágenes conceptuales de dashboards si es posible
+- Total: 10 diapositivas divididas para 4 expositores
+- Marca visualmente las secciones de cada expositor con líneas o separadores

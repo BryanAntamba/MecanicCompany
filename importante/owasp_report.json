@@ -1,0 +1,43 @@
+{
+  "total": 5,
+  "by_type": {
+    "A02 - Crypto Failure": 5
+  },
+  "issues": [
+    {
+      "owasp": "A02 - Crypto Failure",
+      "file": "backend\\src\\server.ts",
+      "line": 7,
+      "issue": "Uso de HTTP inseguro",
+      "fix": "Cambiar a HTTPS"
+    },
+    {
+      "owasp": "A02 - Crypto Failure",
+      "file": "backend\\src\\server.ts",
+      "line": 8,
+      "issue": "Uso de HTTP inseguro",
+      "fix": "Cambiar a HTTPS"
+    },
+    {
+      "owasp": "A02 - Crypto Failure",
+      "file": "frontend\\utils\\api.ts",
+      "line": 6,
+      "issue": "Uso de HTTP inseguro",
+      "fix": "Cambiar a HTTPS"
+    },
+    {
+      "owasp": "A02 - Crypto Failure",
+      "file": "frontend\\utils\\api.ts",
+      "line": 7,
+      "issue": "Uso de HTTP inseguro",
+      "fix": "Cambiar a HTTPS"
+    },
+    {
+      "owasp": "A02 - Crypto Failure",
+      "file": "frontend\\utils\\api.ts",
+      "line": 9,
+      "issue": "Uso de HTTP inseguro",
+      "fix": "Cambiar a HTTPS"
+    }
+  ]
+}

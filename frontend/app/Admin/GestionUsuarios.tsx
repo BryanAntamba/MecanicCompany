@@ -1,42 +1,44 @@
 // GestionUsuarios.tsx
 // Pantalla de gestión de usuarios y mecánicos con filtros avanzados
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   Alert,
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import * as ScreenCapture from 'expo-screen-capture';
 import NavbarAdmin from '@/components/navbarAdmin/navbarAdmin';
-import styles from '@/Styles/pantallaAdmin/GestionUsuarios';
+import stylesBase from '@/Styles/pantallaAdmin/GestionUsuarios';
+import stylesWeb from '@/Styles/pantallaAdmin/GestionUsuarios.web';
 import { useAuth } from '@/context/AuthContext';
 import { BASE_URL } from '@/utils/api';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
 
-// Importar los 6 modales
-import RegistroMecanico from './modalesRegistros/registroMecanico';
-import RegistroAdministrador from './modalesRegistros/regsitroAministrador';
-import EditarMecanico from './modalesRegistros/EditarMecanico';
-import EditarAdministrador from './modalesRegistros/EditarAdministrador';
-import VisualizarPerfilMecanico from './modalesRegistros/visualizarPerfilMecanico';
-import VisualizarPerfilAdministrador from './modalesRegistros/visualizarPerfilAdministrador';
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
+
+// Importar modales de gestión de personal
+import RegistroPersonal from './modalesRegistros/registroPersonal';
+import EditarPersonal from './modalesRegistros/EditarPersonal';
+import VisualizarPerfilPersonal from './modalesRegistros/visualizarPerfilPersonal';
 
 // Importar modales de eliminación
-import EliminarMecanico from './modalesEliminacionDeRoles/eliminarMecanico';
-import EliminarAdministrador from './modalesEliminacionDeRoles/eliminarAdministrador';
+import EliminarPersonal from './modalesEliminacionDeRoles/eliminarPersonal';
 import EliminacionExitosa from './modalesEliminacionDeRoles/modalElimiancionConfirmada/eliminacionExitosa';
 
 // Tipos
 type EstadoConexion = 'LÍNEA' | 'DESCONECTADO' | 'SUSPENDIDO';
-type Rol = 'Mecánico' | 'Administrador';
+type Rol = 'Mecánico' | 'Inventario' | 'Financiero' | 'Administrador';
 
 interface Usuario {
   id: string;
@@ -56,14 +58,21 @@ interface Usuario {
   especialidad?: string;
   anosExperiencia?: number;
   fotoPerfil?: string | null;
+  tipoPersonal?: string; // Mecánico, Inventario, Financiero, Administrador
 }
 
 export default function GestionUsuariosScreen() {
   const router = useRouter();
   const { token, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -71,8 +80,10 @@ export default function GestionUsuariosScreen() {
     // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
   }, []);
 
-  // BackHandler: cierra sesión y app
+  // BackHandler: cierra sesión y app (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       logout();
       BackHandler.exitApp();
@@ -107,71 +118,129 @@ export default function GestionUsuariosScreen() {
   });
 
   // Estados de modales de gestión
-  const [modalRegistroMecanicoVisible, setModalRegistroMecanicoVisible] = useState(false);
-  const [modalRegistroAdminVisible, setModalRegistroAdminVisible] = useState(false);
-  const [modalEditarMecanicoVisible, setModalEditarMecanicoVisible] = useState(false);
-  const [modalEditarAdminVisible, setModalEditarAdminVisible] = useState(false);
-  const [modalPerfilMecanicoVisible, setModalPerfilMecanicoVisible] = useState(false);
-  const [modalPerfilAdminVisible, setModalPerfilAdminVisible] = useState(false);
+  const [modalRegistroPersonalVisible, setModalRegistroPersonalVisible] = useState(false);
+  const [modalEditarPersonalVisible, setModalEditarPersonalVisible] = useState(false);
+  const [modalPerfilPersonalVisible, setModalPerfilPersonalVisible] = useState(false);
 
   // Estados de modales de eliminación
-  const [modalEliminarMecanicoVisible, setModalEliminarMecanicoVisible] = useState(false);
-  const [modalEliminarAdminVisible, setModalEliminarAdminVisible] = useState(false);
+  const [modalEliminarPersonalVisible, setModalEliminarPersonalVisible] = useState(false);
   const [modalEliminacionExitosaVisible, setModalEliminacionExitosaVisible] = useState(false);
-  const [usuarioEliminado, setUsuarioEliminado] = useState<{ nombre: string; rol: 'Mecánico' | 'Administrador' } | null>(null);
+  const [usuarioEliminado, setUsuarioEliminado] = useState<{ nombre: string; rol: Rol } | null>(null);
 
   const [usuarioSeleccionado, setUsuarioSeleccionado] = useState<Usuario | null>(null);
 
   // Cargar usuarios desde el backend
-  useEffect(() => {
+  const cargarUsuarios = useCallback(async () => {
     if (!token) return;
     
-    const cargarUsuarios = async () => {
-      try {
-        // Cargar mecánicos
-        const respMecanicos = await fetch(`${BASE_URL}/mecanicos`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const mecanicos = await respMecanicos.json();
+    setCargando(true);
+    try {
+      // Cargar todos los roles en paralelo
+      const [respMecanicos, respFinanciero, respInventario, respAdmin] = await Promise.all([
+        fetch(`${BASE_URL}/mecanicos`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${BASE_URL}/personal-financiero`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${BASE_URL}/personal-inventario`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${BASE_URL}/admin`, { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
 
-        // Cargar administradores (cuando el endpoint esté listo)
-        // const respAdmins = await fetch(`${BASE_URL}/admin`, {
-        //   headers: { Authorization: `Bearer ${token}` },
-        // });
-        // const admins = await respAdmins.json();
-
-        // Convertir a formato Usuario
-        const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => ({
-          id: m.id,
-          nombres: m.nombres,
-          segundoNombre: m.segundoNombre,
-          apellidos: m.apellidos,
-          segundoApellido: m.segundoApellido,
-          edad: m.edad,
-          telefono: m.telefono,
-          correo: m.correo,
-          correoEmpresarial: m.correoEmpresarial,
-          estadoConexion: m.estadoConexion || 'DESCONECTADO',
-          cuentaActiva: m.cuentaActiva,
-          createdAt: m.createdAt,
-          rol: 'Mecánico' as Rol,
-          especialidad: m.especialidad,
-          anosExperiencia: m.anosExperiencia,
-          fotoPerfil: m.fotoPerfil,
-        }));
-
-        // const usuariosAdmins: Usuario[] = admins.map((a: any) => ({ ... }));
-
-        setUsuarios([...usuariosMecanicos]); // Después: [...usuariosMecanicos, ...usuariosAdmins]
-      } catch (error) {
-        Alert.alert('Error', 'No se pudieron cargar los usuarios.');
-      } finally {
-        setCargando(false);
+      if (!respMecanicos.ok || !respFinanciero.ok || !respInventario.ok || !respAdmin.ok) {
+        throw new Error(`Error al cargar datos del servidor`);
       }
-    };
 
-    cargarUsuarios();
+      const mecanicos = await respMecanicos.json();
+      const financiero = await respFinanciero.json();
+      const inventario = await respInventario.json();
+      const admins = await respAdmin.json();
+
+      // Convertir Mecánicos
+      const usuariosMecanicos: Usuario[] = mecanicos.map((m: any) => ({
+        id: m.id,
+        nombres: m.nombres,
+        apellidos: m.apellidos,
+        edad: m.edad || 0,
+        telefono: m.telefono,
+        correo: m.correo,
+        correoEmpresarial: m.correoEmpresarial,
+        estadoConexion: m.estadoLaboral === 'Disponible' ? 'LÍNEA' : 'DESCONECTADO' as EstadoConexion,
+        cuentaActiva: m.cuentaActiva ?? true,
+        createdAt: m.createdAt,
+        rol: 'Mecánico' as Rol,
+        especialidad: m.especialidad,
+        anosExperiencia: m.anosExperiencia || 0,
+        fotoPerfil: m.fotoPerfil,
+        tipoPersonal: 'Mecánico',
+      }));
+
+      // Convertir Personal Financiero
+      const usuariosFinanciero: Usuario[] = financiero.map((f: any) => ({
+        id: f.id,
+        nombres: f.nombres,
+        apellidos: f.apellidos,
+        edad: 0,
+        telefono: f.telefono,
+        correo: f.correoEmpresarial,
+        correoEmpresarial: f.correoEmpresarial,
+        estadoConexion: f.cuentaActiva ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+        cuentaActiva: f.cuentaActiva ?? true,
+        createdAt: f.createdAt,
+        rol: 'Financiero' as Rol,
+        especialidad: 'Financiero',
+        fotoPerfil: null,
+        tipoPersonal: 'Financiero',
+      }));
+
+      // Convertir Personal Inventario
+      const usuariosInventario: Usuario[] = inventario.map((i: any) => ({
+        id: i.id,
+        nombres: i.nombres,
+        apellidos: i.apellidos,
+        edad: 0,
+        telefono: i.telefono,
+        correo: i.correoEmpresarial,
+        correoEmpresarial: i.correoEmpresarial,
+        estadoConexion: i.cuentaActiva ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+        cuentaActiva: i.cuentaActiva ?? true,
+        createdAt: i.createdAt,
+        rol: 'Inventario' as Rol,
+        especialidad: 'Inventario',
+        fotoPerfil: null,
+        tipoPersonal: 'Inventario',
+      }));
+
+      // Convertir Administradores
+      const usuariosAdmin: Usuario[] = admins.map((a: any) => ({
+        id: a.id,
+        nombres: a.nombres,
+        apellidos: a.apellidos,
+        edad: a.edad || 0,
+        telefono: a.telefono,
+        correo: a.correo,
+        correoEmpresarial: a.correoEmpresarial,
+        estadoConexion: a.cuentaActiva ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+        cuentaActiva: a.cuentaActiva ?? true,
+        createdAt: a.createdAt,
+        rol: 'Administrador' as Rol,
+        especialidad: 'Administración',
+        fotoPerfil: null,
+        tipoPersonal: 'Administrador',
+      }));
+
+      // Combinar todos los usuarios
+      setUsuarios([...usuariosMecanicos, ...usuariosFinanciero, ...usuariosInventario, ...usuariosAdmin]);
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+      Alert.alert('Error', 'Error al cargar los usuarios. Verifica que el backend esté activo.');
+    } finally {
+      setCargando(false);
+    }
   }, [token]);
+
+  // Recargar usuarios cuando la pantalla gana foco
+  useFocusEffect(
+    useCallback(() => {
+      cargarUsuarios();
+    }, [cargarUsuarios])
+  );
 
   // Funciones auxiliares
   const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
@@ -210,7 +279,7 @@ export default function GestionUsuariosScreen() {
       }
 
       // Filtro de rol
-      const coincideRol = filtroRol === 'TODOS' || u.rol === filtroRol;
+      const coincideRol = filtroRol === 'TODOS' || u.tipoPersonal === filtroRol;
 
       // Filtro de fechas
       let coincideFecha = true;
@@ -241,8 +310,10 @@ export default function GestionUsuariosScreen() {
 
   // Calcular totales de TODOS los usuarios (no solo filtrados)
   const totalUsuarios = usuarios.length;
-  const totalMecanicos = usuarios.filter((u) => u.rol === 'Mecánico').length;
-  const totalAdmins = usuarios.filter((u) => u.rol === 'Administrador').length;
+  const totalMecanicos = usuarios.filter((u) => u.tipoPersonal === 'Mecánico').length;
+  const totalInventario = usuarios.filter((u) => u.tipoPersonal === 'Inventario').length;
+  const totalFinanciero = usuarios.filter((u) => u.tipoPersonal === 'Financiero').length;
+  const totalAdmins = usuarios.filter((u) => u.tipoPersonal === 'Administrador').length;
   // En Línea: solo usuarios activos con estado LÍNEA
   const totalEnLinea = usuarios.filter((u) => u.estadoConexion === 'LÍNEA' && u.cuentaActiva).length;
   // Desconectados: solo usuarios activos con estado DESCONECTADO
@@ -253,41 +324,53 @@ export default function GestionUsuariosScreen() {
   // Handlers de modales
   const handleAbrirPerfil = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalPerfilMecanicoVisible(true);
-    } else {
-      setModalPerfilAdminVisible(true);
-    }
+    setModalPerfilPersonalVisible(true);
   };
 
   const handleAbrirEditar = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalEditarMecanicoVisible(true);
-    } else {
-      setModalEditarAdminVisible(true);
-    }
+    setModalEditarPersonalVisible(true);
   };
 
   const handleEliminar = (usuario: Usuario) => {
     setUsuarioSeleccionado(usuario);
-    if (usuario.rol === 'Mecánico') {
-      setModalEliminarMecanicoVisible(true);
-    } else {
-      setModalEliminarAdminVisible(true);
-    }
+    setModalEliminarPersonalVisible(true);
   };
 
   const handleConfirmarEliminacion = async () => {
     if (!usuarioSeleccionado) return;
 
     try {
-      const endpoint = usuarioSeleccionado.rol === 'Mecánico' ? '/mecanicos' : '/admin';
+      // Determinar endpoint según tipoPersonal
+      let endpoint = '';
+      switch (usuarioSeleccionado.tipoPersonal) {
+        case 'Mecánico':
+          endpoint = '/mecanicos';
+          break;
+        case 'Financiero':
+          endpoint = '/personal-financiero';
+          break;
+        case 'Inventario':
+          endpoint = '/personal-inventario';
+          break;
+        case 'Administrador':
+          endpoint = '/admin';
+          break;
+        default:
+          throw new Error('Rol desconocido');
+      }
+
+      console.log(`[ELIMINAR] Eliminando ${usuarioSeleccionado.tipoPersonal} en ${endpoint}`);
+      
       const resp = await fetch(`${BASE_URL}${endpoint}/${usuarioSeleccionado.id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!resp.ok) throw new Error();
+      
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al eliminar');
+      }
       
       // Guardar info del usuario eliminado
       setUsuarioEliminado({
@@ -299,133 +382,170 @@ export default function GestionUsuariosScreen() {
       setUsuarios((prev) => prev.filter((u) => u.id !== usuarioSeleccionado.id));
       
       // Cerrar modal de confirmación y abrir modal de éxito
-      setModalEliminarMecanicoVisible(false);
-      setModalEliminarAdminVisible(false);
+      setModalEliminarPersonalVisible(false);
       setModalEliminacionExitosaVisible(true);
-    } catch {
-      Alert.alert('Error', 'No se pudo eliminar el usuario.');
+    } catch (error: any) {
+      console.error('[ELIMINAR ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo eliminar el usuario.');
     }
   };
 
   const handleToggleCuenta = async (usuario: Usuario) => {
     try {
-      const endpoint = usuario.rol === 'Mecánico' ? '/mecanicos' : '/admin';
+      // Determinar endpoint según tipoPersonal
+      let endpoint = '';
+      switch (usuario.tipoPersonal) {
+        case 'Mecánico':
+          endpoint = '/mecanicos';
+          break;
+        case 'Financiero':
+          endpoint = '/personal-financiero';
+          break;
+        case 'Inventario':
+          endpoint = '/personal-inventario';
+          break;
+        case 'Administrador':
+          endpoint = '/admin';
+          break;
+        default:
+          throw new Error('Rol desconocido');
+      }
+
+      console.log(`[TOGGLE CUENTA] ${usuario.tipoPersonal} - Nueva cuenta activa: ${!usuario.cuentaActiva}`);
+      
       const resp = await fetch(`${BASE_URL}${endpoint}/${usuario.id}/estado`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ cuentaActiva: !usuario.cuentaActiva }),
       });
-      if (!resp.ok) throw new Error();
+      
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al cambiar estado');
+      }
+      
       setUsuarios((prev) =>
         prev.map((u) => (u.id === usuario.id ? { ...u, cuentaActiva: !u.cuentaActiva } : u))
       );
-    } catch {
-      Alert.alert('Error', 'No se pudo cambiar el estado de la cuenta.');
+      
+      Alert.alert(
+        'Éxito',
+        `Cuenta ${!usuario.cuentaActiva ? 'activada' : 'desactivada'} correctamente.`
+      );
+    } catch (error: any) {
+      console.error('[TOGGLE CUENTA ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo cambiar el estado de la cuenta.');
     }
   };
 
-  const handleSuccessRegistroMecanico = (mecanico: any) => {
+  const handleSuccessRegistroPersonal = (personal: any) => {
+    // Determinar el rol basado en el tipoPersonal
+    const tipoPersonal = personal.tipoPersonal || 'Mecánico';
+    let rol: Rol = 'Mecánico';
+    if (tipoPersonal === 'Administrador') {
+      rol = 'Administrador';
+    }
+    
     const nuevoUsuario: Usuario = {
-      id: mecanico.id,
-      nombres: mecanico.nombres,
-      segundoNombre: mecanico.segundoNombre,
-      apellidos: mecanico.apellidos,
-      segundoApellido: mecanico.segundoApellido,
-      edad: mecanico.edad,
-      telefono: mecanico.telefono,
-      correo: mecanico.correo,
-      correoEmpresarial: mecanico.correoEmpresarial,
-      estadoConexion: mecanico.estadoConexion || 'DESCONECTADO',
-      cuentaActiva: mecanico.cuentaActiva,
-      createdAt: mecanico.createdAt,
-      rol: 'Mecánico',
-      especialidad: mecanico.especialidad,
-      anosExperiencia: mecanico.anosExperiencia,
-      fotoPerfil: mecanico.fotoPerfil,
-    };
-    setUsuarios((prev) => [nuevoUsuario, ...prev]);
-  };
-
-  const handleSuccessRegistroAdmin = (admin: any) => {
-    const nuevoUsuario: Usuario = {
-      id: admin.id,
-      nombres: admin.nombres,
-      segundoNombre: admin.segundoNombre,
-      apellidos: admin.apellidos,
-      segundoApellido: admin.segundoApellido,
-      edad: admin.edad,
-      telefono: admin.telefono,
-      correo: admin.correo,
-      correoEmpresarial: admin.correoEmpresarial,
-      estadoConexion: admin.estadoConexion || 'DESCONECTADO',
-      cuentaActiva: admin.cuentaActiva,
-      createdAt: admin.createdAt,
-      rol: 'Administrador',
+      id: personal.id,
+      nombres: personal.nombres,
+      segundoNombre: personal.segundoNombre,
+      apellidos: personal.apellidos,
+      segundoApellido: personal.segundoApellido,
+      edad: personal.edad,
+      telefono: personal.telefono,
+      correo: personal.correo,
+      correoEmpresarial: personal.correoEmpresarial,
+      estadoConexion: personal.estadoConexion || 'DESCONECTADO',
+      cuentaActiva: personal.cuentaActiva,
+      createdAt: personal.createdAt,
+      rol: rol,
+      especialidad: tipoPersonal === 'Mecánico' ? personal.especialidad : tipoPersonal,
+      anosExperiencia: personal.anosExperiencia || 0,
+      fotoPerfil: personal.fotoPerfil,
+      tipoPersonal: tipoPersonal,
     };
     setUsuarios((prev) => [nuevoUsuario, ...prev]);
   };
 
   const handleSuccessEditar = (usuarioActualizado: any) => {
+    // Determinar el rol basado en el tipoPersonal
+    const tipoPersonal = usuarioActualizado.tipoPersonal || 'Mecánico';
+    let rol: Rol = 'Mecánico';
+    if (tipoPersonal === 'Administrador') {
+      rol = 'Administrador';
+    } else if (tipoPersonal === 'Financiero') {
+      rol = 'Financiero';
+    } else if (tipoPersonal === 'Inventario') {
+      rol = 'Inventario';
+    }
+    
+    // Construir el usuario actualizado con todos los campos
+    const usuarioMejorado = {
+      ...usuarioActualizado,
+      nombres: usuarioActualizado.nombres,
+      segundoNombre: usuarioActualizado.segundoNombre,
+      apellidos: usuarioActualizado.apellidos,
+      segundoApellido: usuarioActualizado.segundoApellido,
+      edad: usuarioActualizado.edad,
+      telefono: usuarioActualizado.telefono,
+      correo: usuarioActualizado.correo,
+      correoEmpresarial: usuarioActualizado.correoEmpresarial,
+      cuentaActiva: usuarioActualizado.cuentaActiva,
+      rol: rol,
+      especialidad: tipoPersonal === 'Mecánico' ? usuarioActualizado.especialidad : tipoPersonal,
+      anosExperiencia: usuarioActualizado.anosExperiencia || 0,
+      fotoPerfil: usuarioActualizado.fotoPerfil,
+      tipoPersonal: tipoPersonal,
+    };
+    
+    // Actualizar la lista de usuarios
     setUsuarios((prev) =>
       prev.map((u) =>
-        u.id === usuarioActualizado.id
-          ? {
-              ...u,
-              nombres: usuarioActualizado.nombres,
-              segundoNombre: usuarioActualizado.segundoNombre,
-              apellidos: usuarioActualizado.apellidos,
-              segundoApellido: usuarioActualizado.segundoApellido,
-              edad: usuarioActualizado.edad,
-              telefono: usuarioActualizado.telefono,
-              correo: usuarioActualizado.correo,
-              correoEmpresarial: usuarioActualizado.correoEmpresarial,
-              cuentaActiva: usuarioActualizado.cuentaActiva,
-              especialidad: usuarioActualizado.especialidad,
-              anosExperiencia: usuarioActualizado.anosExperiencia,
-              fotoPerfil: usuarioActualizado.fotoPerfil,
-            }
-          : u
+        u.id === usuarioActualizado.id ? usuarioMejorado : u
       )
     );
+    
+    // Actualizar también usuarioSeleccionado para que la tarjeta refleje los cambios
+    setUsuarioSeleccionado(usuarioMejorado);
   };
 
   const handleSignOut = () => {
+    logout();
     router.replace('/(auth)/login?fromLogout=true' as any);
   };
 
   // RENDER
   return (
-    <View style={styles.page}>
-      <NavbarAdmin onSignOut={handleSignOut} />
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <NavbarAdmin onSignOut={handleSignOut} />
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
         {/* TÍTULO */}
-        <Text style={styles.screenTitle}>GESTIÓN DE ADMINISTRADORES Y MECÁNICOS</Text>
+        <Text style={styles.screenTitle}>GESTIÓN DE PERSONAL</Text>
         <Text style={styles.screenSubtitle}>
-          Administra mecánicos y administradores del sistema con filtros avanzados
+          Administra el personal del sistema con filtros avanzados
         </Text>
 
         {/* BOTONES DE REGISTRO */}
         <View style={styles.buttonsRow}>
           <Pressable
-            onPress={() => setModalRegistroMecanicoVisible(true)}
+            onPress={() => setModalRegistroPersonalVisible(true)}
             style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
           >
             {({ pressed }) => (
-              <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-                REGISTRO DE MECÁNICO
-              </Text>
-            )}
-          </Pressable>
-
-          <Pressable
-            onPress={() => setModalRegistroAdminVisible(true)}
-            style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
-          >
-            {({ pressed }) => (
-              <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-                REGISTRO DE ADMINISTRADOR
-              </Text>
+              <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                <FontAwesome 
+                  name="user-plus" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'}
+                />
+                <View style={{ width: 10 }} />
+                <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
+                  REGISTRAR PERSONAL
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>
@@ -445,95 +565,127 @@ export default function GestionUsuariosScreen() {
             />
           </View>
 
-          {/* Orden A-Z / Z-A - Ancho completo */}
-          <Text style={styles.filterLabel}>Orden</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {ordenDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['A-Z', 'Z-A'] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
-                  onPress={() => {
-                    setOrdenAZ(option);
-                    setOrdenDropdownOpen(false);
-                  }}
+          {/* Fila de filtros: Orden, Estado y Tipo de Personal */}
+          {/* Fila 1: Orden y Estado lado a lado */}
+          <View style={[
+            Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+          ]}>
+            {/* Filtro Orden */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Orden</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setOrdenDropdownOpen((v) => !v);
+                setEstadoDropdownOpen(false);
+                setRolDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {ordenDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['A-Z', 'Z-A'] as const).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setOrdenAZ(option);
+                        setOrdenDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{option}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+
+            {/* Filtro Estado */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Estado</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setEstadoDropdownOpen((v) => !v);
+                setOrdenDropdownOpen(false);
+                setRolDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>
+                  {filtroEstado === 'TODOS' ? 'Todos' : 
+                   filtroEstado === 'LÍNEA' ? 'En línea' :
+                   filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
+                </Text>
+                <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {estadoDropdownOpen && (
+                <ScrollView 
+                  style={styles.dropdownList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
                 >
-                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
-                  <Text style={styles.dropdownItemText}>{option}</Text>
-                </Pressable>
-              ))}
+                  {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
+                    const displayText = option === 'TODOS' ? 'Todos' : 
+                                       option === 'LÍNEA' ? 'En línea' :
+                                       option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
+                    return (
+                      <Pressable
+                        key={option}
+                        style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setFiltroEstado(option);
+                          setEstadoDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
+                        <Text style={styles.dropdownItemText}>{displayText}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
             </View>
-          )}
+          </View>
 
-          {/* Estado de conexión - Ancho completo */}
-          <Text style={styles.filterLabel}>Estado</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setEstadoDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroEstado === 'TODOS' ? 'Todos' : 
-               filtroEstado === 'LÍNEA' ? 'En línea' :
-               filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {estadoDropdownOpen && (
-            <ScrollView 
-              style={styles.dropdownList}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={true}
-            >
-              {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : 
-                                   option === 'LÍNEA' ? 'En línea' :
-                                   option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroEstado(option);
-                      setEstadoDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
-
-          {/* Rol - Ancho completo */}
-          <Text style={styles.filterLabel}>Rol</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setRolDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroRol === 'TODOS' ? 'Todos' : filtroRol}
-            </Text>
-            <Text style={styles.dropdownArrow}>{rolDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {rolDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['TODOS', 'Mecánico', 'Administrador'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : option;
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroRol === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroRol(option);
-                      setRolDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroRol === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
+          {/* Filtro Tipo de Personal (fila separada) */}
+          <View>
+            <Text style={styles.filterLabel}>Tipo de Personal</Text>
+            <Pressable style={styles.filterDropdown} onPress={() => {
+              setRolDropdownOpen((v) => !v);
+              setOrdenDropdownOpen(false);
+              setEstadoDropdownOpen(false);
+            }}>
+              <Text style={styles.filterDropdownText}>
+                {filtroRol === 'TODOS' ? 'Todos' : filtroRol}
+              </Text>
+              <Text style={styles.dropdownArrow}>{rolDropdownOpen ? '▲' : '▼'}</Text>
+            </Pressable>
+            {rolDropdownOpen && (
+              <ScrollView 
+                style={styles.dropdownList}
+                nestedScrollEnabled={true}
+                showsVerticalScrollIndicator={true}
+              >
+                {(['TODOS', 'Mecánico', 'Inventario', 'Financiero', 'Administrador'] as const).map((option) => {
+                  const displayText = option === 'TODOS' ? 'Todos' : option;
+                  return (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, filtroRol === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setFiltroRol(option);
+                        setRolDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{filtroRol === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{displayText}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            )}
+          </View>
 
           {/* Rango de fechas */}
           <Text style={styles.filterLabel}>Rango de Fechas de Registro</Text>
@@ -576,6 +728,14 @@ export default function GestionUsuariosScreen() {
             <Text style={styles.summaryLabel}>Mecánicos</Text>
           </View>
           <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalInventario}</Text>
+            <Text style={styles.summaryLabel}>Inventario</Text>
+          </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalFinanciero}</Text>
+            <Text style={styles.summaryLabel}>Financiero</Text>
+          </View>
+          <View style={styles.summaryCard}>
             <Text style={styles.summaryNumber}>{totalAdmins}</Text>
             <Text style={styles.summaryLabel}>Administradores</Text>
           </View>
@@ -606,9 +766,26 @@ export default function GestionUsuariosScreen() {
         )}
 
         {/* LISTA DE USUARIOS */}
-        <View style={styles.usuariosContainer}>
+        <View style={[
+          styles.usuariosContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
           {usuariosFiltrados.map((usuario) => (
-            <View key={usuario.id} style={styles.userCard}>
+            <View 
+              key={usuario.id} 
+              style={[
+                styles.userCard,
+                Platform.OS === 'web' && !isSmallScreen && { 
+                  flex: 1, 
+                  minWidth: 300, 
+                  maxWidth: 'calc(50% - 8px)' 
+                },
+                Platform.OS === 'web' && isSmallScreen && { 
+                  width: '100%',
+                  maxWidth: '100%'
+                }
+              ]}
+            >
               {/* Foto de perfil o placeholder */}
               {usuario.fotoPerfil ? (
                 <Image source={{ uri: usuario.fotoPerfil }} style={styles.userFoto} contentFit="cover" />
@@ -637,7 +814,8 @@ export default function GestionUsuariosScreen() {
                   {usuario.rol === 'Administrador' ? usuario.correoEmpresarial : usuario.correo}
                 </Text>
                 
-                {usuario.rol === 'Mecánico' && usuario.especialidad && (
+                {/* Mostrar especialidad según el tipo de personal */}
+                {usuario.especialidad && (
                   <Text style={styles.userMeta} numberOfLines={1}>
                     {usuario.especialidad}
                   </Text>
@@ -657,18 +835,23 @@ export default function GestionUsuariosScreen() {
                     <Text style={styles.badgeText}>{usuario.estadoConexion}</Text>
                   </View>
 
-                  {/* Badge de Rol */}
+                  {/* Badge de Rol - Muestra el tipoPersonal real */}
                   <View
                     style={[
                       styles.badge,
-                      usuario.rol === 'Mecánico' ? styles.badgeRolMecanico : styles.badgeRolAdmin,
+                      usuario.tipoPersonal === 'Inventario' && styles.badgeRolInventario,
+                      usuario.tipoPersonal === 'Financiero' && styles.badgeRolFinanciero,
+                      usuario.tipoPersonal === 'Administrador' && styles.badgeRolAdmin,
+                      (!usuario.tipoPersonal || usuario.tipoPersonal === 'Mecánico') && styles.badgeRolMecanico,
                     ]}
                   >
-                    <Text style={styles.badgeText}>{usuario.rol.toUpperCase()}</Text>
+                    <Text style={styles.badgeText}>
+                      {(usuario.tipoPersonal || 'Mecánico').toUpperCase()}
+                    </Text>
                   </View>
                 </View>
 
-                {/* Botón principal: VER PERFIL */}
+                {/* Botón principal: PERFIL */}
                 <Pressable
                   onPress={() => handleAbrirPerfil(usuario)}
                   style={({ pressed }) => [
@@ -677,14 +860,22 @@ export default function GestionUsuariosScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnPerfilText,
-                        pressed && styles.btnPerfilTextPressed,
-                      ]}
-                    >
-                      VER PERFIL
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="user" 
+                        size={16} 
+                        color={pressed ? '#FFFFFF' : '#000000'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnPerfilText,
+                          pressed && styles.btnPerfilTextPressed,
+                        ]}
+                      >
+                        PERFIL
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -699,14 +890,22 @@ export default function GestionUsuariosScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      EDITAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="edit" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        EDITAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -720,14 +919,22 @@ export default function GestionUsuariosScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      ELIMINAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="trash" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        ELIMINAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -741,14 +948,22 @@ export default function GestionUsuariosScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      {usuario.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name={usuario.cuentaActiva ? 'ban' : 'check-circle'} 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        {usuario.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -758,60 +973,32 @@ export default function GestionUsuariosScreen() {
       </ScrollView>
 
       {/* MODALES DE GESTIÓN */}
-      <RegistroMecanico
-        visible={modalRegistroMecanicoVisible}
-        onClose={() => setModalRegistroMecanicoVisible(false)}
-        onSuccess={handleSuccessRegistroMecanico}
+      <RegistroPersonal
+        visible={modalRegistroPersonalVisible}
+        onClose={() => setModalRegistroPersonalVisible(false)}
+        onSuccess={handleSuccessRegistroPersonal}
         token={token || ''}
       />
 
-      <RegistroAdministrador
-        visible={modalRegistroAdminVisible}
-        onClose={() => setModalRegistroAdminVisible(false)}
-        onSuccess={handleSuccessRegistroAdmin}
-        token={token || ''}
-      />
-
-      <EditarMecanico
-        visible={modalEditarMecanicoVisible}
+      <EditarPersonal
+        visible={modalEditarPersonalVisible}
         mecanico={usuarioSeleccionado}
-        onClose={() => setModalEditarMecanicoVisible(false)}
+        onClose={() => setModalEditarPersonalVisible(false)}
         onSuccess={handleSuccessEditar}
         token={token || ''}
       />
 
-      <EditarAdministrador
-        visible={modalEditarAdminVisible}
-        admin={usuarioSeleccionado}
-        onClose={() => setModalEditarAdminVisible(false)}
-        onSuccess={handleSuccessEditar}
-        token={token || ''}
-      />
-
-      <VisualizarPerfilMecanico
-        visible={modalPerfilMecanicoVisible}
+      <VisualizarPerfilPersonal
+        visible={modalPerfilPersonalVisible}
         mecanico={usuarioSeleccionado}
-        onClose={() => setModalPerfilMecanicoVisible(false)}
-      />
-
-      <VisualizarPerfilAdministrador
-        visible={modalPerfilAdminVisible}
-        admin={usuarioSeleccionado}
-        onClose={() => setModalPerfilAdminVisible(false)}
+        onClose={() => setModalPerfilPersonalVisible(false)}
       />
 
       {/* MODALES DE ELIMINACIÓN */}
-      <EliminarMecanico
-        visible={modalEliminarMecanicoVisible}
-        mecanico={usuarioSeleccionado}
-        onCancelar={() => setModalEliminarMecanicoVisible(false)}
-        onConfirmar={handleConfirmarEliminacion}
-      />
-
-      <EliminarAdministrador
-        visible={modalEliminarAdminVisible}
-        administrador={usuarioSeleccionado}
-        onCancelar={() => setModalEliminarAdminVisible(false)}
+      <EliminarPersonal
+        visible={modalEliminarPersonalVisible}
+        personal={usuarioSeleccionado}
+        onCancelar={() => setModalEliminarPersonalVisible(false)}
         onConfirmar={handleConfirmarEliminacion}
       />
 
@@ -979,6 +1166,7 @@ export default function GestionUsuariosScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

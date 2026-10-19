@@ -226,36 +226,47 @@ export default StyleSheet.create({
   badgeCompletado: {
     backgroundColor: '#10B981', // Verde
   },
+  badgeRechazado: {
+    backgroundColor: '#DC2626', // Rojo oscuro
+  },
 
   // Botones de acción
   btnPrimary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#455A64',
     borderRadius: 6,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 8,
   },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
   btnPrimaryPressed: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#37474F',
   },
   btnPrimaryText: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#000000',
+    color: '#FFFFFF',
     letterSpacing: 1,
   },
   btnPrimaryTextPressed: {
-    color: '#FFFFFF',
+    color: '#F1F5F9',
   },
   btnSecondary: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#1976D2',
     borderRadius: 6,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 8,
   },
   btnSecondaryPressed: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#1565C0',
   },
   btnSecondaryText: {
     fontSize: 15,
@@ -267,15 +278,35 @@ export default StyleSheet.create({
   btnSecondaryTextPressed: {
     color: '#F1F5F9',
   },
+  btnTerciary: {
+    backgroundColor: '#7CB342',
+    borderRadius: 6,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  btnTerciaryPressed: {
+    backgroundColor: '#689F38',
+  },
+  btnTerciaryText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  btnTerciaryTextPressed: {
+    color: '#F1F5F9',
+  },
   btnDelete: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#F44336',
     borderRadius: 6,
     paddingVertical: 12,
     alignItems: 'center',
     marginBottom: 8,
   },
   btnDeletePressed: {
-    backgroundColor: '#DC2626',
+    backgroundColor: '#E53935',
   },
   btnDeleteText: {
     fontSize: 15,
@@ -289,7 +320,7 @@ export default StyleSheet.create({
 
   // Botón Enviar Factura
   btnEnviarReporte: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#FF6F00',
     borderRadius: 6,
     paddingVertical: 12,
     alignItems: 'center',
@@ -300,7 +331,7 @@ export default StyleSheet.create({
     opacity: 0.6,
   },
   btnEnviarReportePressed: {
-    backgroundColor: '#059669',
+    backgroundColor: '#E65100',
   },
   btnEnviarReporteText: {
     fontSize: 15,
@@ -312,6 +343,68 @@ export default StyleSheet.create({
     color: '#64748B',
   },
   btnEnviarReporteTextPressed: {
+    color: '#F1F5F9',
+  },
+
+  // Botón Generar Autorización
+  btnGenerarAutorizacion: {
+    backgroundColor: '#7B1FA2',
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  btnGenerarAutorizacionPressed: {
+    backgroundColor: '#6A1B9A',
+  },
+  btnGenerarAutorizacionText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  btnGenerarAutorizacionTextPressed: {
+    color: '#F1F5F9',
+  },
+
+  btnTerciary: {
+    backgroundColor: '#7CB342',
+    borderRadius: 6,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  btnTerciaryPressed: {
+    backgroundColor: '#689F38',
+  },
+  btnTerciaryText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  btnTerciaryTextPressed: {
+    color: '#F1F5F9',
+  },
+
+  btnRechazar: {
+    backgroundColor: '#C62828',
+    borderRadius: 6,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  btnRechazarPressed: {
+    backgroundColor: '#AD1D07',
+  },
+  btnRechazarText: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  btnRechazarTextPressed: {
     color: '#F1F5F9',
   },
 
@@ -593,13 +686,6 @@ export default StyleSheet.create({
     borderRadius: 40,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  sendModalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 16,
   },
   sendModalBody: {
     fontSize: 14,

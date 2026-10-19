@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama de Casos de Uso - MecanicCompany</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 1400px;
+            width: 100%;
+            padding: 40px;
+            overflow-x: auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            color: #999;
+            font-style: italic;
+        }
+
+        .diagram-wrapper {
+            background: #f9f9f9;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            min-height: 600px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-download {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-download:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-download:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-info {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #1976d2;
+        }
+
+        .btn-info:hover {
+            background: #1976d2;
+            color: white;
+        }
+
+        .legend {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .legend h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .legend-item {
+            background: white;
+            padding: 12px;
+            border-radius: 6px;
+            border-left: 3px solid #667eea;
+        }
+
+        .legend-item strong {
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .legend-item em {
+            color: #666;
+            font-size: 13px;
+            display: block;
+        }
+
+        .info-section {
+            background: #fff3e0;
+            border-left: 4px solid #f57c00;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .info-section strong {
+            color: #f57c00;
+        }
+
+        .actors-section {
+            margin-top: 30px;
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .actors-section h3 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .actors-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .actor-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border-top: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .actor-card h4 {
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .actor-card p {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .count-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            font-size: 12px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .diagram-wrapper {
+                min-height: 400px;
+                padding: 10px;
+            }
+
+            .legend-items {
+                grid-template-columns: 1fr;
+            }
+
+            .actors-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .highlight {
+            background: #fffacd;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Diagrama de Casos de Uso</h1>
+            <p><strong>MecanicCompany</strong></p>
+            <p class="subtitle">Sistema de Gestión de Mantenimiento Vehicular</p>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-download" onclick="descargarDiagrama()">⬇️ Descargar Diagrama</button>
+            <a href="explicacion_diagrama_casos_uso.html" class="btn btn-info">ℹ️ Ver Explicación Completa</a>
+        </div>
+
+        <div class="info-section">
+            <strong>💡 Nota:</strong> Este diagrama muestra todos los casos de uso del sistema MecanicCompany, organizados por <strong>5 actores principales</strong>. 
+            El diagrama incluye <strong>50 casos de uso</strong> divididos en funcionalidades específicas para cada rol de usuario. 
+            Las líneas punteadas indican relaciones de <<include>> (inclusión) y <<extend>> (extensión).
+        </div>
+
+        <div class="diagram-wrapper">
+            <div class="mermaid" id="diagram">
+graph TB
+    subgraph Cliente["👥 CLIENTE"]
+        UC001["UC001: Registrarse"]
+        UC002["UC002: Iniciar Sesión"]
+        UC003["UC003: Solicitar Mantenimiento"]
+        UC004["UC004: Ver Estado Solicitud"]
+        UC005["UC005: Ver Historial"]
+        UC006["UC006: Descargar Reporte"]
+        UC007["UC007: Calificar Servicio"]
+        UC008["UC008: Recuperar Contraseña"]
+    end
+
+    subgraph Mecanico["🔧 MECÁNICO"]
+        UC010["UC010: Iniciar Sesión"]
+        UC011["UC011: Ver Solicitudes"]
+        UC012["UC012: Aceptar Solicitud"]
+        UC013["UC013: Registrar Mantenimiento"]
+        UC014["UC014: Capturar Fotos"]
+        UC015["UC015: Registrar Repuestos"]
+        UC016["UC016: Calcular Costos"]
+        UC017["UC017: Cambiar Estado"]
+        UC018["UC018: Enviar Reporte"]
+        UC019["UC019: Ver Historial Trabajos"]
+        UC020["UC020: Rechazar Solicitud"]
+        UC021["UC021: Recuperar Contraseña"]
+    end
+
+    subgraph Inventario["📦 PERSONAL INVENTARIO"]
+        UC022["UC022: Iniciar Sesión"]
+        UC023["UC023: Ver Inventario"]
+        UC024["UC024: Registrar Producto"]
+        UC025["UC025: Actualizar Stock"]
+        UC026["UC026: Buscar Producto"]
+        UC027["UC027: Ver Bajo Stock"]
+        UC028["UC028: Crear Orden Compra"]
+        UC029["UC029: Recuperar Contraseña"]
+    end
+
+    subgraph Financiero["💰 PERSONAL FINANCIERO"]
+        UC030["UC030: Iniciar Sesión"]
+        UC031["UC031: Ver Solicitudes Completadas"]
+        UC032["UC032: Crear Factura"]
+        UC033["UC033: Registrar Pago"]
+        UC034["UC034: Ver Historial Pagos"]
+        UC035["UC035: Generar Reportes"]
+        UC036["UC036: Ver Cuentas por Cobrar"]
+        UC037["UC037: Recuperar Contraseña"]
+    end
+
+    subgraph Admin["⚙️ ADMINISTRADOR"]
+        UC038["UC038: Iniciar Sesión"]
+        UC039["UC039: Gestionar Usuarios"]
+        UC040["UC040: Ver Reportes Sistema"]
+        UC041["UC041: Cambiar Estado Cuentas"]
+        UC042["UC042: Ver Auditoría"]
+        UC043["UC043: Configurar Sistema"]
+        UC044["UC044: Ver Estadísticas"]
+        UC045["UC045: Recuperar Contraseña"]
+    end
+
+    subgraph Sistema["🔐 CASOS DE USO COMPARTIDOS"]
+        UC046["UC046: Autenticar Usuario"]
+        UC047["UC047: Validar Datos"]
+        UC048["UC048: Enviar Email"]
+        UC049["UC049: Registrar Auditoría"]
+        UC050["UC050: Almacenar Fotos"]
+    end
+
+    %% Relaciones Cliente
+    UC002 -.include.-> UC046
+    UC003 -.include.-> UC047
+    UC003 -.include.-> UC049
+    UC006 -.include.-> UC050
+    UC008 -.include.-> UC048
+
+    %% Relaciones Mecánico
+    UC010 -.include.-> UC046
+    UC012 -.include.-> UC049
+    UC013 -.include.-> UC047
+    UC014 -.include.-> UC050
+    UC015 -.include.-> UC047
+    UC018 -.include.-> UC048
+    UC018 -.include.-> UC049
+    UC013 -.include.-> UC015
+    UC013 -.include.-> UC016
+    UC017 -.include.-> UC049
+    UC021 -.include.-> UC048
+
+    %% Relaciones Inventario
+    UC022 -.include.-> UC046
+    UC024 -.include.-> UC047
+    UC024 -.include.-> UC049
+    UC025 -.include.-> UC049
+    UC026 -.include.-> UC047
+    UC028 -.include.-> UC049
+    UC029 -.include.-> UC048
+
+    %% Relaciones Financiero
+    UC030 -.include.-> UC046
+    UC032 -.include.-> UC047
+    UC032 -.include.-> UC049
+    UC033 -.include.-> UC047
+    UC033 -.include.-> UC049
+    UC035 -.include.-> UC049
+    UC037 -.include.-> UC048
+
+    %% Relaciones Admin
+    UC038 -.include.-> UC046
+    UC039 -.include.-> UC047
+    UC039 -.include.-> UC049
+    UC041 -.include.-> UC049
+    UC043 -.include.-> UC049
+    UC045 -.include.-> UC048
+
+    style Cliente fill:#e3f2fd,stroke:#1976d2,stroke-width:3px,color:#000
+    style Mecanico fill:#f3e5f5,stroke:#7b1fa2,stroke-width:3px,color:#000
+    style Inventario fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    style Financiero fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px,color:#000
+    style Admin fill:#fce4ec,stroke:#c2185b,stroke-width:3px,color:#000
+    style Sistema fill:#f1f1f1,stroke:#616161,stroke-width:2px,color:#000
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>📋 Leyenda y Descripción</h3>
+            <div class="legend-items">
+                <div class="legend-item">
+                    <strong>UC (Caso de Uso)</strong>
+                    <em>Representa una acción o funcionalidad específica del sistema</em>
+                </div>
+                <div class="legend-item">
+                    <strong>Actor</strong>
+                    <em>Rol de usuario que interactúa con el sistema: Cliente, Mecánico, etc.</em>
+                </div>
+                <div class="legend-item">
+                    <strong><<include>></strong>
+                    <em>Relación de inclusión: un caso de uso incluye otro obligatoriamente</em>
+                </div>
+                <div class="legend-item">
+                    <strong><<extend>></strong>
+                    <em>Relación de extensión: un caso de uso extiende otro opcionalmente</em>
+                </div>
+                <div class="legend-item">
+                    <strong>Casos Compartidos</strong>
+                    <em>Funcionalidades reutilizadas por múltiples actores (autenticación, validación, etc.)</em>
+                </div>
+                <div class="legend-item">
+                    <strong>Total: 50 Casos de Uso</strong>
+                    <em>Distribuidos entre 5 actores principales y servicios compartidos</em>
+                </div>
+            </div>
+        </div>
+
+        <div class="actors-section">
+            <h3>👥 Resumen de Actores y Funcionalidades</h3>
+            <div class="actors-grid">
+                <div class="actor-card">
+                    <h4>👥 Cliente</h4>
+                    <p>Usuario final que solicita servicios de mantenimiento vehicular. Puede registrarse, ver estado de solicitudes, descargar reportes y calificar servicios.</p>
+                    <br><span class="count-badge">8 casos de uso</span>
+                </div>
+                <div class="actor-card">
+                    <h4>🔧 Mecánico</h4>
+                    <p>Profesional que realiza el mantenimiento. Recibe solicitudes, registra trabajos realizados, captura fotos y genera reportes para el cliente.</p>
+                    <br><span class="count-badge">12 casos de uso</span>
+                </div>
+                <div class="actor-card">
+                    <h4>📦 Personal Inventario</h4>
+                    <p>Encargado de gestionar productos y repuestos. Controla stock, registra nuevos productos y crea órdenes de compra cuando es necesario.</p>
+                    <br><span class="count-badge">8 casos de uso</span>
+                </div>
+                <div class="actor-card">
+                    <h4>💰 Personal Financiero</h4>
+                    <p>Responsable de facturación y pagos. Crea facturas, registra pagos, ve historial de transacciones y genera reportes financieros.</p>
+                    <br><span class="count-badge">8 casos de uso</span>
+                </div>
+                <div class="actor-card">
+                    <h4>⚙️ Administrador</h4>
+                    <p>Gestor del sistema con máximos permisos. Administra usuarios, ve reportes del sistema, auditoría y configura parámetros generales.</p>
+                    <br><span class="count-badge">8 casos de uso</span>
+                </div>
+                <div class="actor-card">
+                    <h4>🔐 Sistema (Compartido)</h4>
+                    <p>Servicios internos reutilizados por múltiples actores: autenticación, validación de datos, envío de emails, auditoría y almacenamiento.</p>
+                    <br><span class="count-badge">6 casos de uso</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <strong>📌 Flujo Principal del Sistema:</strong><br><br>
+            1. <strong>Registro e Inicio de Sesión:</strong> Todos los actores se autentican en el sistema con credenciales validadas.<br>
+            2. <strong>Solicitud de Servicio:</strong> El cliente solicita mantenimiento, y el mecánico lo recibe.<br>
+            3. <strong>Ejecución:</strong> El mecánico registra el mantenimiento, captura fotos y utiliza repuestos del inventario.<br>
+            4. <strong>Facturación:</strong> Personal financiero crea la factura basada en el mantenimiento completado.<br>
+            5. <strong>Reporte:</strong> El cliente recibe el reporte por email con fotos, costos y detalles del trabajo realizado.<br>
+            6. <strong>Administración:</strong> El administrador supervisa todo el proceso a través de auditoría y reportes del sistema.
+        </div>
+
+    </div>
+
+    <footer>
+        <p>MecanicCompany © 2026 | Diagrama de Casos de Uso - Sistema de Gestión de Mantenimiento Vehicular</p>
+    </footer>
+
+    <script>
+        // Renderizar Mermaid
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+        mermaid.contentLoaded();
+
+        // Función para descargar el diagrama como PNG
+        function descargarDiagrama() {
+            const diagramWrapper = document.querySelector('.diagram-wrapper');
+            
+            if (!diagramWrapper) {
+                alert('El diagrama no se encuentra. Por favor, recarga la página.');
+                return;
+            }
+
+            // Mostrar indicador de carga
+            const btnDescargar = event.target;
+            const textoOriginal = btnDescargar.textContent;
+            btnDescargar.textContent = '⏳ Descargando...';
+            btnDescargar.disabled = true;
+
+            // Usar html2canvas para capturar el diagrama como imagen
+            html2canvas(diagramWrapper, {
+                backgroundColor: '#ffffff',
+                scale: 2,
+                logging: false,
+                useCORS: true,
+                allowTaint: true
+            }).then(canvas => {
+                // Crear enlace de descarga
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL('image/png');
+                link.download = 'diagrama_casos_uso_mecaniccompany.png';
+                link.click();
+
+                // Restaurar botón
+                btnDescargar.textContent = textoOriginal;
+                btnDescargar.disabled = false;
+            }).catch(error => {
+                console.error('Error al descargar:', error);
+                alert('Error al descargar el diagrama. Por favor, intenta de nuevo.');
+                
+                // Restaurar botón
+                btnDescargar.textContent = textoOriginal;
+                btnDescargar.disabled = false;
+            });
+        }
+
+        // Prevenir que el diagrama se corte
+        document.addEventListener('DOMContentLoaded', function() {
+            const diagramWrapper = document.querySelector('.diagram-wrapper');
+            const diagram = document.querySelector('.mermaid');
+            
+            if (diagram) {
+                const observer = new MutationObserver(function() {
+                    const svg = diagram.querySelector('svg');
+                    if (svg) {
+                        svg.style.maxWidth = '100%';
+                        svg.style.height = 'auto';
+                        diagramWrapper.style.minHeight = (svg.getBoundingClientRect().height + 40) + 'px';
+                        observer.disconnect();
+                    }
+                });
+
+                observer.observe(diagram, { childList: true, subtree: true });
+            }
+        });
+    </script>
+</body>
+</html>

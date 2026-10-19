@@ -25,7 +25,6 @@ import {
   validarConfirmarContrasena,
 } from '@/utils/validaciones';
 import { BASE_URL } from '@/utils/api';
-import { agregarUsuario } from '@/utils/datosSimulados';
 
 type FormState = {
   nombres: string;
@@ -91,8 +90,10 @@ export default function RegistrarCliente({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -219,44 +220,64 @@ export default function RegistrarCliente({
     const [dia, mes, anio] = form.fechaNacimiento.split('/').map(Number);
     const fechaDate = new Date(anio, mes - 1, dia);
 
-    // Construir nombre completo
-    const nombreCompleto = [
-      form.nombres.trim(),
-      form.segundoNombre.trim(),
-      form.apellidos.trim(),
-      form.segundoApellido.trim(),
-    ]
-      .filter(Boolean)
-      .join(' ');
+    try {
+      // Preparar payload
+      const payload: any = {
+        nombres: form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        segundoNombre: form.segundoNombre.trim() || null,
+        segundoApellido: form.segundoApellido.trim() || null,
+        telefono: form.telefono.trim() || null,
+        correo: form.correo.trim().toLowerCase(),
+        fechaNacimiento: fechaDate,
+        contrasena: form.contraseña.trim(),
+      };
 
-    // Agregar a datos simulados
-    const nuevoUsuario = {
-      nombre: form.nombres.trim(),
-      segundoNombre: form.segundoNombre.trim() || undefined,
-      apellido: form.apellidos.trim(),
-      segundoApellido: form.segundoApellido.trim() || undefined,
-      fechaNacimiento: fechaDate,
-      telefono: form.telefono.trim(),
-      correo: form.correo.trim().toLowerCase(),
-      contrasena: form.contraseña.trim(),
-    };
+      console.log(`[REGISTRO CLIENTE] Enviando a /auth/cliente/registro`, payload);
 
-    agregarUsuario(nuevoUsuario);
+      const resp = await fetch(`${BASE_URL}/auth/cliente/registro`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // Crear cliente para retornar
-    const clienteCreado = {
-      id: `cliente-${Date.now()}`,
-      nombreCompleto,
-      correo: form.correo.trim().toLowerCase(),
-      telefono: form.telefono.trim(),
-      fechaNacimiento: fechaDate,
-      estadoConexion: 'DESCONECTADO' as const,
-      cuentaActiva: true,
-      createdAt: new Date().toISOString(),
-    };
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al registrar cliente');
+      }
 
-    onSuccess(clienteCreado);
-    onClose();
+      const clienteCreado = await resp.json();
+      console.log(`[REGISTRO CLIENTE SUCCESS]`, clienteCreado);
+
+      // Retornar cliente con formato compatible
+      const nombreCompleto = [
+        form.nombres.trim(),
+        form.segundoNombre.trim(),
+        form.apellidos.trim(),
+        form.segundoApellido.trim(),
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      onSuccess({
+        id: clienteCreado.clienteId,
+        nombreCompleto,
+        correo: form.correo.trim().toLowerCase(),
+        telefono: form.telefono.trim(),
+        fechaNacimiento: fechaDate,
+        estadoConexion: 'DESCONECTADO' as const,
+        cuentaActiva: false, // Debe verificar email
+        createdAt: new Date().toISOString(),
+      });
+      
+      Alert.alert('Éxito', 'Cliente registrado. Por favor verifica tu correo para activar la cuenta.');
+      onClose();
+    } catch (error: any) {
+      console.error('[REGISTRO CLIENTE ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo registrar el cliente.');
+    }
   };
 
   return (
@@ -439,9 +460,17 @@ export default function RegistrarCliente({
               style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  GUARDAR USUARIO
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="user-plus" 
+                    size={18} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 10 }} />
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    GUARDAR USUARIO
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

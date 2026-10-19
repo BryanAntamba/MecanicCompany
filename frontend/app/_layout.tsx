@@ -3,6 +3,8 @@
 // Define el proveedor de tema, el navegador Stack raíz y la barra de estado.
 // Todas las pantallas de la app están anidadas dentro de este layout.
 
+// Suprime warnings conocidos de React Native Web
+import '../suppress-warnings';
 
 // DarkTheme: tema oscuro de React Navigation (fondos oscuros, textos claros)
 // DefaultTheme: tema claro de React Navigation (fondos claros, textos oscuros)
@@ -63,26 +65,17 @@ export default function RootLayout() {
           {/* Grupo (auth): agrupa todas las pantallas de autenticación. */}
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
 
-          {/* Pantalla de login: acceso oculto activado con 10 taps en el logo. */}
-          <Stack.Screen name="(auth)/login" options={{ headerShown: false }} />
-
-          {/* Pantalla de restablecimiento de contraseña: paso 1 del flujo de recuperación. */}
-          <Stack.Screen name="(auth)/restablecimientoPassword" options={{ headerShown: false }} />
-
-          {/* Pantalla de código de verificación: paso 2 del flujo de recuperación. */}
-          <Stack.Screen name="(auth)/codigoVerificacion" options={{ headerShown: false }} />
-
-          {/* Pantalla de cambio de contraseña: paso final del flujo de recuperación. */}
-          <Stack.Screen name="(auth)/cambiarPassword" options={{ headerShown: false }} />
-
           {/* Grupo Admin: panel de administración. Solo accesible para esAdmin=true */}
           <Stack.Screen name="Admin" options={{ headerShown: false }} />
 
           {/* Grupo SeccionMecanico: panel del mecánico. Solo accesible con token válido */}
           <Stack.Screen name="SeccionMecanico" options={{ headerShown: false, gestureEnabled: false }} />
 
-          {/* Pantalla modal genérica */}
-          <Stack.Screen name="modal" options={{ presentation: 'modal', title: 'Modal' }} />
+          {/* Grupo SeccionFinanciero: panel financiero */}
+          <Stack.Screen name="SeccionFinanciero" options={{ headerShown: false }} />
+
+          {/* Grupo pantallaInventario: gestión de inventario */}
+          <Stack.Screen name="pantallaInventario" options={{ headerShown: false }} />
 
         </Stack>
 

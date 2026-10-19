@@ -1,0 +1,68 @@
+Estructura: Titulo del proyecto
+
+
+Estructura
+PORTADA:
+Titulo: Auditoria de concreta de seguridad
+Nombre de empresa o cliente que resive auditoria
+Nombre de auditor
+fecha
+version de documento (Cuando realiza auditoria cambiar de versionamiento)
+Nivel de confidencialidad (Uso interno etc etc)
+
+
+
+INFORMACION GENERAL:
+Nombre de proyecto.
+Cliente
+
+.objetivo general y específicos: (Porque creamos esa aplicación y los objetivos empiezan con vervo y tienen que ser medibles).
+Alcance que va tener el aplicativo(Pre eliminar): Se define de forma inicial que parte del sistema se va evaluar de la auditoria, que nomas seva auditar, que no seva auditar, hasta donde van a llegar las pruebas, y que sistemas estan incluidos y que limites existen. (ejemplo: la aplicacion esta creada de tal herramientas, la api fue consumida la api oesta generada en backend, base de datos se genera en un punto de supabase)
+
+.funcionalidad del alcance: Como funciona autenticacion y registro de usuarios, como es el manejo de las sesiones,  que pais hicimos el consumo, cual de las apis que consumimos cual es el porcentaje de seguridad que se maneja, cual es el panel del usuarios, que rol y permisos tienen, el manejo de datos ensibles.
+¿Que entornos estan includidos?: Ambientes de produccion (teneres varios entornos de produccion) para realizar diferentes tipos de pruebas.
+
+.Las reglas de compromiso (Roles): Define como se va a realizar la auditoria de manera segura controlada y autorizadas, en esta no se escribe vulnerabilidades si no simplemente limites y permisos y condiciones de las pruebas. ¿Para que me sirve esto?: que esta permitido probar, que esta proivido probar, como se ejecutas las pruebas, que impacto puede generar esas pruebas, como se maneja la información sensible y que se tiene que hacer en caso de incidentes. (Cuando se maneja este tipo de reglas de compromiso se tiene que realizar un versiona miento del sistema y realizar las pruebas con ese versiona miento), necesitamos un versiona miento 1 y el version 1.1 sera versiona miento de pruebas (Aquí se puede realizar la cantidad de pruebas que necesitemos). Para eso tenemos que tener autorización formal, entonces el cliente explica todas las pruebas que se realizara como se realizara y eso tenemos que realizar un consentimiento de que vamos a utilizar para el aplicativo. (Autorizaciones, equipo participante, cronograma, riesgos operacionales, comunicación, los entregables, metodología inicial, clasificación inicial y las aprobaciones)
+
+.Tipos de pruebas: Se hace un analisis de que requerimientos funcionales y no funcionales se esta manejando donde el auditor se encarga de realizar las pruebas ya sea tokens, apis, frontend, cual dependencias se maneja, que version de dependencias se uso, analisis de trafico, milisegundos de demora etc, etc.
+
+.Reglas de compromiso
+
+
+.Autorizaciones: Se define con un permiso formal para poder ejecutar y sirve para quesea la auditoria legal y autorizada legal, cual es el equipo responsable de auditoria, cuales son las constancia de aprobación formal, definir quien puede tomar decisiones en toda la auditoria, y evitar cualquier malos entendidos (El auditor evalua esos puntos que estan y se verifica en la app que se apruebe y listo nada mas).
+
+
+.Definicion del Alcance: (solo redactar de manera general: el objetivo, que aplicaciones utilice que plataformas incluidas, componentes, hambientes no autorizados, tipos de pruebas generarias) Una breve redacción hasta donde puede llegar el proyecto, que es lo que tiene mi proyecto y hacia donde va, es lo que busca la auditoria el objetivo de la auditoria en palabras, las plataformas incluidas definen a los sistemas operativos ya sea Android o IOS y componentes incluidos se define todo lo que esta permitido, login etc, componentes excluidos lo que hemos generado fuera del alcance, ambientes autorizados define donde podemos probar a nivel producción, y desarrollo.
+
+.Recolección de información: Colocamos que es la aplicación para que sirve como funciona, que tecnología usa, que componentes instalamos y no instalamos, que servicio de esquema utiliza y que puede atacar un drop (se genera un tipo de arquitectura: pj: información general: que tipo de arquitectura estamos haciendo, tecnología en manejo de plataformas, versiones, APIS, demonios, subdominios, permisos móviles, autenticación, almacenamiento local, servicio local, que tipo de servicio iCloud, que tipo de trafico de red tiene, cual es la infraestructura del backend, que configuraciones visibles podemos ver, manejo de los logs y diferentes tipos de variables insiden si en este caso se tiene) eso se tiene que llenar en esa parte, el tipo arquitectura debe identificar cual es mi frontend cual es mi backend, que tipo de apis uso, si se lo hace de manera de iCloud, o una base de datos, o una de micro servicios, en palabras arquitectura lógica que se utilizara, y para que tipo de plataforma esta (Android o IOS y que versión esta para utilizar)
+
+.Metodologias: (metodología de seguridad utilizada y explicar el porque es escojio y explicar cada capa que se realizo) como se realizo la auditoria, que estándares se siguieron, que pruebas se ejecutaron, y que herramientas se ejecutaron, tiene que ser explicado de manera general.
+
+.Enfoque de auditoria: Cuando hacemos un enfoque de auditoria existen varios enfoques (caja negra, caja gris, caja blanca), la caja negra es un enfoque el cual no es utiliza el código, la caja gris es un asceso parcial a diferentes tipos de modulos que voy a tener en mi sistema, y la caja blanca es un asceso completo al backen a la infraestructura a la arquitectura y de mas.
+
+.Reconocimiento: se coloca el mapeo de la aplicación móvil, ya que el objetivo es: que componentes estoy utilizando, como interactua mi aplicación y que puede ser atacado (explicar que nomas puede ser atacado) caso contrario si no existe un tal motivo solo colocar un: N/A no aplica.
+
+.Análisis estatico: Aquí es donde solo se va a revisar a la aplicación si necesidad de ejecutarlo (aquí es donde el auditor ve como se ve: código, configuración, librerías,manejo de seguridades, permisos almacenamiento y la lógica de seguridad que se esta utilizando)
+
+.Análisis dinamico: Es donde se ejecuta el aplicativo y se empieza a visualizar (que tipo de traficos de redes tiene, como funciona la autenticación, las sesiones, el almacenamiento que vulnerabilidades aparece en la ejecución, como se comporta la aplicación que tipo de milisegundos se demora en generar un usuario, cuanto tiempo se demora en llegar al correo electrónico para el proceso de restablecer la contraseña, etc).
+
+.Auditoria del backend/APIS: aquí son las respeustas (Las apis son seguras, los usuarios pueden ascender con información agena, la autenticación funciona correctamente, existe vulnerabilidades explotables) si las apis son seguras pueden asceder a información agena, si la autenticación funciona correctamente que tipo de autenticación tengo y si existe un tipo de vulnerabilidad. 
+
+.Auditoria de código: Aquí veo si el código es seguro, revisar si mi código es seguro, si la arquitectura esta correcta, existe vulnerabilidades lógicas o si existe script o consulta dentro de mi código y si la aplicación tiene las buenas practicas (Usar siempre el HTTPS, utilizar el SSL, no guardar token en texto plano si no cifrado, validación en entrada de usuario y siempre tener todo con permiso).
+
+.Auditoria del performance: Aquí se identifica si esta lento mi aplicativo móvil o si tiene una gran catidad de consumo de recursos, si tenemos problemas en la memoria, si existe cuello de botella al ingresar datos, cual es el tiempo de respuesta, tipos de bloqueos (responder con la verdad en cada punto)
+
+.Auditoria del frontend UI/UX: ¿la aplicación es fácil de usar para todos los clientes?, ¿La interfaz es consistente?, ¿Los usuarios entienden los flujo?, ¿Existen problemas visuales o funcionales? (tenemos que hacer encuentas, toca realizar al porcentajes en el que se valla a trabajar, en este caso solo 5 encuentas colocar aqui: capturas de las encuestas creadas el forms)
+
+.Auditoria del cumplimiento de las aplciaciones moviles: ¿Las aplciaciones cumplen con las ¿Cumple con los estandares de seguridad? o existen riegos rivales o regulatorios (el regularidades son: cuales son las leyes que se esta aparando a nivel del ecuador si nos permite o nos permite generar la aplciacion, la ley en la seguridad y proteccion de los datos)
+
+.El Compílense
+
+.validación de hallazgos: Aqui es donde se genera un tipo de vulnerabilidad real que realmente esta dando problemas y eso es en el manejo de en caliente.
+
+.Matriz de riesgos: Aqui permite para clasificar que vulnerabilidades son mas criticas, que areas tienen que corregirse primero, cual es el impacto del negocio y cual es el nivel de exposicion
+
+.Recomendaciones: Realizar tres recomendaciones
+
+
+SOLO REDACCION CADA PUNTO

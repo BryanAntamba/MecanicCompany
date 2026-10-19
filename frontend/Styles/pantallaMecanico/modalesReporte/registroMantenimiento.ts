@@ -299,6 +299,12 @@ export default StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: 'bold',
   },
+  calendarCellDisabled: {
+    opacity: 0.3,
+  },
+  calendarCellDisabledText: {
+    color: '#64748B',
+  },
   calendarCloseBtn: {
     backgroundColor: '#FFFFFF',
     borderRadius: 8,
@@ -329,5 +335,269 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#F1F5F9',
+  },
+  // ========== ESTILOS SISTEMA DE REPUESTOS ==========
+  sectionSubtitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  searchButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  searchButton: {
+    flex: 1,
+    backgroundColor: '#3B82F6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  searchButtonPressed: {
+    backgroundColor: '#2563EB',
+  },
+  searchButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  searchButtonTextPressed: {
+    color: '#F1F5F9',
+  },
+  clearButton: {
+    flex: 1,
+    backgroundColor: '#475569',
+    borderRadius: 8,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  clearButtonPressed: {
+    backgroundColor: '#334155',
+  },
+  clearButtonText: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  clearButtonTextPressed: {
+    color: '#CBD5E1',
+  },
+  dropdownDisabled: {
+    opacity: 0.5,
+  },
+  dropdownTextDisabled: {
+    color: '#64748B',
+  },
+  // Estilos de tarjetas de productos
+  productCard: {
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+  },
+  productName: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginBottom: 8,
+  },
+  productDetail: {
+    fontSize: 14,
+    color: '#94A3B8',
+    marginBottom: 4,
+  },
+  productCompatibility: {
+    fontSize: 13,
+    color: '#64748B',
+    marginLeft: 8,
+    marginTop: 2,
+  },
+  productStock: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    marginTop: 8,
+  },
+  productPrice: {
+    fontSize: 16,
+    color: '#3B82F6',
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  addProductButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 8,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  addProductButtonPressed: {
+    backgroundColor: '#059669',
+  },
+  addProductButtonDisabled: {
+    backgroundColor: '#475569',
+    opacity: 0.5,
+  },
+  addProductButtonText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    letterSpacing: 1,
+  },
+  addProductButtonTextPressed: {
+    color: '#F1F5F9',
+  },
+  addProductButtonTextDisabled: {
+    color: '#94A3B8',
+  },
+  // Estilos de lista de repuestos seleccionados (diseño de tarjetas)
+  repuestosTable: {
+    backgroundColor: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#334155',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 8,
+  },
+  repuestoItem: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E293B',
+  },
+  repuestoHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
+  repuestoInfo: {
+    flex: 1,
+    paddingRight: 12,
+  },
+  repuestoNombre: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    marginBottom: 4,
+  },
+  repuestoMarca: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  deleteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#1E293B',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  repuestoPriceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  precioContainer: {
+    alignItems: 'flex-start',
+  },
+  subtotalContainer: {
+    alignItems: 'flex-end',
+  },
+  repuestoLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+    letterSpacing: 0.5,
+  },
+  cantidadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#0A0F1A',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    gap: 12,
+  },
+  cantidadLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+  },
+  quantitySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#1E293B',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+  },
+  quantityButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: '#334155',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  quantityButtonPressed: {
+    backgroundColor: '#475569',
+  },
+  quantityButtonText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    lineHeight: 20,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#F1F5F9',
+    minWidth: 32,
+    textAlign: 'center',
+  },
+  repuestoPrecio: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#3B82F6',
+  },
+  repuestoSubtotal: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#10B981',
+  },
+  repuestosTableFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#1E293B',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderTopWidth: 2,
+    borderTopColor: '#10B981',
+  },
+  repuestosTableFooterLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#F1F5F9',
+  },
+  repuestosTableFooterValue: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#10B981',
   },
 });

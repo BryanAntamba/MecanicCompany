@@ -3,7 +3,7 @@
 // Diseño basado en reporteExitoso.tsx
 
 import { useEffect } from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import { Modal, Platform, Pressable, Text, View } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import styles from '../../../Styles/pantallaMecanico/modalesHistorial/reenvioReporte';
@@ -21,8 +21,10 @@ export default function ReenvioReporte({
   correoCliente,
   onCerrar,
 }: ReenvioReporteProps) {
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -42,11 +44,11 @@ export default function ReenvioReporte({
           </View>
 
           {/* Título */}
-          <Text style={styles.title}>Factura Reenviada</Text>
+          <Text style={styles.title}>Reporte Reenviado</Text>
 
           {/* Mensaje */}
           <Text style={styles.message}>
-            La factura fue reenviada al usuario:
+            El Reporte fue reenviado al usuario:
           </Text>
 
           <Text style={styles.nombreDestacado}>{nombreCliente}</Text>
@@ -64,9 +66,12 @@ export default function ReenvioReporte({
             ]}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                <FontAwesome name="times-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

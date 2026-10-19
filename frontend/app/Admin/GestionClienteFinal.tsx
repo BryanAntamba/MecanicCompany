@@ -6,21 +6,25 @@ import {
   Alert,
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import NavbarAdmin from '@/components/navbarAdmin/navbarAdmin';
-import styles from '@/Styles/pantallaAdmin/GestionClienteFinal';
+import stylesBase from '@/Styles/pantallaAdmin/GestionClienteFinal';
+import stylesWeb from '@/Styles/pantallaAdmin/GestionClienteFinal.web';
 import { useAuth } from '@/context/AuthContext';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { BASE_URL } from '@/utils/api';
-import { obtenerUsuarios, UsuarioRegistrado } from '@/utils/datosSimulados';
 
 // Importar modales
 import RegistrarCliente from '@/app/Admin/modalesClienteFinal/RegistrarCliente';
@@ -48,9 +52,15 @@ interface Cliente {
 export default function GestionClienteFinalScreen() {
   const router = useRouter();
   const { token, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -58,8 +68,10 @@ export default function GestionClienteFinalScreen() {
     // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
   }, []);
 
-  // BackHandler: navega a GestionUsuarios al presionar back
+  // BackHandler: navega a GestionUsuarios al presionar back (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.push('/Admin/GestionUsuarios' as any);
       return true;
@@ -102,45 +114,57 @@ export default function GestionClienteFinalScreen() {
   const [modalEliminacionExitosaVisible, setModalEliminacionExitosaVisible] = useState(false);
   const [clienteEliminado, setClienteEliminado] = useState<{ nombre: string; rol: 'Usuario' } | null>(null);
 
-  // Cargar clientes desde datos simulados
-  useEffect(() => {
-    const cargarClientesSimulados = () => {
-      try {
-        const usuariosSimulados = obtenerUsuarios();
-        
-        // Convertir usuarios simulados al formato Cliente
-        const clientesData: Cliente[] = usuariosSimulados.map((u, index) => {
-          const nombreCompleto = [
-            u.nombre,
-            u.segundoNombre,
-            u.apellido,
-            u.segundoApellido,
-          ]
-            .filter(Boolean)
-            .join(' ');
+  // Cargar clientes desde el backend
+  const cargarClientes = async () => {
+    if (!token) return;
+    
+    setCargando(true);
+    try {
+      const resp = await fetch(`${BASE_URL}/clientes`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-          return {
-            id: `cliente-${index + 1}`,
-            nombreCompleto,
-            correo: u.correo,
-            telefono: u.telefono,
-            fechaNacimiento: u.fechaNacimiento,
-            estadoConexion: index % 3 === 0 ? 'LÍNEA' : 'DESCONECTADO', // Simulado
-            cuentaActiva: true,
-            createdAt: new Date(2024, 0, index + 1).toISOString(), // Simulado
-          };
-        });
-
-        setClientes(clientesData);
-      } catch (error) {
-        Alert.alert('Error', 'No se pudieron cargar los clientes.');
-      } finally {
-        setCargando(false);
+      if (!resp.ok) {
+        throw new Error('Error al cargar clientes del servidor');
       }
-    };
 
-    cargarClientesSimulados();
-  }, []);
+      const clientesData = await resp.json();
+
+      // Convertir respuesta del backend al formato Cliente
+      const clientesFormateados: Cliente[] = clientesData.map((c: any) => {
+        const nombreCompleto = [
+          c.nombres,
+          c.segundoNombre,
+          c.apellidos,
+          c.segundoApellido,
+        ]
+          .filter(Boolean)
+          .join(' ');
+
+        return {
+          id: c.id,
+          nombreCompleto,
+          correo: c.correo || c.correoEmpresarial || '',
+          telefono: c.telefono,
+          fechaNacimiento: c.fechaNacimiento,
+          estadoConexion: c.cuentaActiva ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+          cuentaActiva: c.cuentaActiva ?? true,
+          createdAt: c.createdAt,
+        };
+      });
+
+      setClientes(clientesFormateados);
+    } catch (error) {
+      console.error('Error al cargar clientes:', error);
+      Alert.alert('Error', 'Error al cargar los clientes. Verifica que el backend esté activo.');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  useEffect(() => {
+    cargarClientes();
+  }, [token]);
 
   // Funciones auxiliares
   const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
@@ -238,19 +262,29 @@ export default function GestionClienteFinalScreen() {
   };
 
   const handleSuccessEditar = (clienteActualizado: any) => {
+    const nombreCompleto = [
+      clienteActualizado.nombres,
+      clienteActualizado.segundoNombre,
+      clienteActualizado.apellidos,
+      clienteActualizado.segundoApellido,
+    ]
+      .filter(Boolean)
+      .join(' ');
+    
+    const clienteMejorado: Cliente = {
+      ...clienteActualizado,
+      nombreCompleto,
+      correo: clienteActualizado.correo || clienteActualizado.correoEmpresarial || '',
+      estadoConexion: clienteActualizado.cuentaActiva ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+      cuentaActiva: clienteActualizado.cuentaActiva ?? true,
+    };
+    
     setClientes((prev) =>
-      prev.map((c) =>
-        c.id === clienteActualizado.id
-          ? {
-              ...c,
-              nombreCompleto: clienteActualizado.nombreCompleto,
-              correo: clienteActualizado.correo,
-              telefono: clienteActualizado.telefono,
-              cuentaActiva: clienteActualizado.cuentaActiva,
-            }
-          : c
-      )
+      prev.map((c) => c.id === clienteActualizado.id ? clienteMejorado : c)
     );
+    
+    // Actualizar también clienteSeleccionado para que la tarjeta refleje los cambios
+    setClienteSeleccionado(clienteMejorado);
   };
 
   const handleEliminar = (cliente: Cliente) => {
@@ -261,25 +295,84 @@ export default function GestionClienteFinalScreen() {
   const handleConfirmarEliminacion = async () => {
     if (!clienteSeleccionado) return;
 
-    // Simulación: simplemente eliminar del estado local
-    setClienteEliminado({
-      nombre: clienteSeleccionado.nombreCompleto,
-      rol: 'Usuario',
-    });
-    
-    // Actualizar lista
-    setClientes((prev) => prev.filter((c) => c.id !== clienteSeleccionado.id));
-    
-    // Cerrar modal de confirmación y abrir modal de éxito
-    setModalEliminarClienteVisible(false);
-    setModalEliminacionExitosaVisible(true);
+    try {
+      console.log(`[ELIMINAR] Cliente - Enviando a /clientes/${clienteSeleccionado.id}`);
+
+      const resp = await fetch(`${BASE_URL}/clientes/${clienteSeleccionado.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al eliminar');
+      }
+
+      console.log(`[ELIMINAR SUCCESS]`);
+
+      // Actualizar lista local
+      setClientes((prev) => prev.filter((c) => c.id !== clienteSeleccionado.id));
+
+      // Mostrar confirmación
+      setClienteEliminado({
+        nombre: clienteSeleccionado.nombreCompleto,
+        rol: 'Usuario',
+      });
+
+      // Cerrar modal de confirmación y abrir modal de éxito
+      setModalEliminarClienteVisible(false);
+      setModalEliminacionExitosaVisible(true);
+    } catch (error: any) {
+      console.error('[ELIMINAR ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo eliminar el cliente.');
+      setModalEliminarClienteVisible(false);
+    }
   };
 
   const handleToggleCuenta = async (cliente: Cliente) => {
-    // Simulación: simplemente cambiar el estado local
-    setClientes((prev) =>
-      prev.map((c) => (c.id === cliente.id ? { ...c, cuentaActiva: !c.cuentaActiva } : c))
-    );
+    try {
+      console.log(`[TOGGLE] Cliente - Enviando a /clientes/${cliente.id}/estado`);
+
+      const resp = await fetch(`${BASE_URL}/clientes/${cliente.id}/estado`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ cuentaActiva: !cliente.cuentaActiva }),
+      });
+
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al cambiar estado');
+      }
+
+      const clienteActualizado = await resp.json();
+      console.log(`[TOGGLE SUCCESS]`, clienteActualizado);
+
+      // Actualizar lista y estado seleccionado
+      const clienteMejorado: Cliente = {
+        ...cliente,
+        cuentaActiva: clienteActualizado.cuentaActiva ?? !cliente.cuentaActiva,
+        estadoConexion: (clienteActualizado.cuentaActiva ?? !cliente.cuentaActiva) ? 'LÍNEA' : 'SUSPENDIDO' as EstadoConexion,
+      };
+
+      setClientes((prev) =>
+        prev.map((c) => (c.id === cliente.id ? clienteMejorado : c))
+      );
+
+      if (clienteSeleccionado?.id === cliente.id) {
+        setClienteSeleccionado(clienteMejorado);
+      }
+
+      Alert.alert('Éxito', `Cliente ${clienteActualizado.cuentaActiva ? 'activado' : 'desactivado'}.`);
+    } catch (error: any) {
+      console.error('[TOGGLE ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo cambiar el estado.');
+    }
   };
 
   const handleSignOut = () => {
@@ -305,9 +398,17 @@ export default function GestionClienteFinalScreen() {
           style={({ pressed }) => [styles.registerBtn, pressed && styles.registerBtnPressed]}
         >
           {({ pressed }) => (
-            <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
-              REGISTRAR NUEVO USUARIO
-            </Text>
+            <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+              <FontAwesome 
+                name="user-plus" 
+                size={18} 
+                color={pressed ? '#FFFFFF' : '#000000'}
+              />
+              <View style={{ width: 10 }} />
+              <Text style={[styles.registerBtnText, pressed && styles.registerBtnTextPressed]}>
+                REGISTRAR NUEVO USUARIO
+              </Text>
+            </View>
           )}
         </Pressable>
 
@@ -326,66 +427,85 @@ export default function GestionClienteFinalScreen() {
             />
           </View>
 
-          {/* Orden A-Z / Z-A */}
-          <Text style={styles.filterLabel}>Orden</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {ordenDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['A-Z', 'Z-A'] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
-                  onPress={() => {
-                    setOrdenAZ(option);
-                    setOrdenDropdownOpen(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
-                  <Text style={styles.dropdownItemText}>{option}</Text>
-                </Pressable>
-              ))}
+          {/* Fila de filtros: Orden y Estado */}
+          <View style={[
+            Platform.OS === 'web' && !isSmallScreen && styles.filterRowContainer
+          ]}>
+            {/* Filtro Orden */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Orden</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setOrdenDropdownOpen((v) => !v);
+                setEstadoDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {ordenDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['A-Z', 'Z-A'] as const).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setOrdenAZ(option);
+                        setOrdenDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{option}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
-          )}
 
-          {/* Estado de conexión */}
-          <Text style={styles.filterLabel}>Estado</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setEstadoDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroEstado === 'TODOS' ? 'Todos' : 
-               filtroEstado === 'LÍNEA' ? 'En línea' :
-               filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {estadoDropdownOpen && (
-            <ScrollView 
-              style={styles.dropdownList}
-              nestedScrollEnabled={true}
-              showsVerticalScrollIndicator={true}
-            >
-              {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' : 
-                                   option === 'LÍNEA' ? 'En línea' :
-                                   option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroEstado(option);
-                      setEstadoDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-          )}
+            {/* Filtro Estado */}
+            <View style={[
+              Platform.OS === 'web' && !isSmallScreen && styles.filterColumn
+            ]}>
+              <Text style={styles.filterLabel}>Estado</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setEstadoDropdownOpen((v) => !v);
+                setOrdenDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>
+                  {filtroEstado === 'TODOS' ? 'Todos' : 
+                   filtroEstado === 'LÍNEA' ? 'En línea' :
+                   filtroEstado === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido'}
+                </Text>
+                <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {estadoDropdownOpen && (
+                <ScrollView 
+                  style={styles.dropdownList}
+                  nestedScrollEnabled={true}
+                  showsVerticalScrollIndicator={true}
+                >
+                  {(['TODOS', 'LÍNEA', 'DESCONECTADO', 'SUSPENDIDO'] as const).map((option) => {
+                    const displayText = option === 'TODOS' ? 'Todos' : 
+                                       option === 'LÍNEA' ? 'En línea' :
+                                       option === 'DESCONECTADO' ? 'Desconectado' : 'Suspendido';
+                    return (
+                      <Pressable
+                        key={option}
+                        style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setFiltroEstado(option);
+                          setEstadoDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
+                        <Text style={styles.dropdownItemText}>{displayText}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              )}
+            </View>
+          </View>
 
           {/* Rango de fechas */}
           <Text style={styles.filterLabel}>Rango de Fechas de Registro</Text>
@@ -454,9 +574,26 @@ export default function GestionClienteFinalScreen() {
         )}
 
         {/* LISTA DE CLIENTES */}
-        <View style={styles.usuariosContainer}>
+        <View style={[
+          styles.usuariosContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
           {clientesFiltrados.map((cliente) => (
-            <View key={cliente.id} style={styles.userCard}>
+            <View 
+              key={cliente.id} 
+              style={[
+                styles.userCard,
+                Platform.OS === 'web' && !isSmallScreen && { 
+                  flex: 1, 
+                  minWidth: 300, 
+                  maxWidth: 'calc(50% - 8px)' 
+                },
+                Platform.OS === 'web' && isSmallScreen && { 
+                  width: '100%',
+                  maxWidth: '100%'
+                }
+              ]}
+            >
               {/* Contenido de la cartilla - Sin foto de perfil */}
               <View style={styles.userContent}>
                 {/* Nombre y datos básicos */}
@@ -494,7 +631,7 @@ export default function GestionClienteFinalScreen() {
                   </View>
                 </View>
 
-                {/* Botón principal: VER PERFIL */}
+                {/* Botón principal: PERFIL */}
                 <Pressable
                   onPress={() => handleAbrirPerfil(cliente)}
                   style={({ pressed }) => [
@@ -503,14 +640,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnPerfilText,
-                        pressed && styles.btnPerfilTextPressed,
-                      ]}
-                    >
-                      VER PERFIL
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="user" 
+                        size={16} 
+                        color={pressed ? '#FFFFFF' : '#000000'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnPerfilText,
+                          pressed && styles.btnPerfilTextPressed,
+                        ]}
+                      >
+                        PERFIL
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -524,14 +669,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      EDITAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="edit" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        EDITAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -545,14 +698,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      ELIMINAR
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name="trash" 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        ELIMINAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -566,14 +727,22 @@ export default function GestionClienteFinalScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnSecundarioText,
-                        pressed && styles.btnSecundarioTextPressed,
-                      ]}
-                    >
-                      {cliente.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
-                    </Text>
+                    <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                      <FontAwesome 
+                        name={cliente.cuentaActiva ? 'ban' : 'check-circle'} 
+                        size={14} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'}
+                      />
+                      <View style={{ width: 8 }} />
+                      <Text
+                        style={[
+                          styles.btnSecundarioText,
+                          pressed && styles.btnSecundarioTextPressed,
+                        ]}
+                      >
+                        {cliente.cuentaActiva ? 'DESACTIVAR' : 'ACTIVAR'}
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
               </View>
@@ -744,7 +913,6 @@ export default function GestionClienteFinalScreen() {
         cliente={clienteSeleccionado}
         onClose={() => setModalEditarVisible(false)}
         onSuccess={handleSuccessEditar}
-        token="" // No necesario para datos simulados
       />
 
       {/* MODAL VISUALIZAR PERFIL - MISMO ESTILO QUE MECANICO */}

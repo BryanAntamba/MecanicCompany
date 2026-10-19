@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Marco Teórico: Arquitectura MecanicCompany</title>
+    <style>
+        body {
+            font-family: "Times New Roman", Times, serif;
+            margin: 40px;
+            line-height: 2;
+            max-width: 8.5in;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: justify;
+        }
+        
+        .portada {
+            text-align: center;
+            padding-bottom: 40px;
+            border-bottom: 1px solid #000;
+        }
+        
+        .portada h1, .portada h2, .portada p {
+            margin: 20px 0;
+        }
+        
+        h1 {
+            text-align: center;
+            margin: 40px 0;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        h2 {
+            text-align: center;
+            margin: 30px 0 20px 0;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: underline;
+        }
+        
+        h3 {
+            margin-left: 0.5in;
+            font-size: 13px;
+            font-weight: bold;
+        }
+        
+        h4 {
+            margin-left: 1in;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        h5 {
+            margin-left: 1.5in;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .nivel1 {
+            margin-left: 0;
+            text-indent: 0;
+        }
+        
+        .nivel2 {
+            margin-left: 0.5in;
+            text-indent: -0.5in;
+            padding-left: 0.5in;
+        }
+        
+        .nivel3 {
+            margin-left: 1in;
+            text-indent: -0.5in;
+            padding-left: 0.5in;
+        }
+        
+        .nivel4 {
+            margin-left: 1.5in;
+            text-indent: -0.5in;
+            padding-left: 0.5in;
+        }
+        
+        .referencias {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #000;
+        }
+        
+        .version-info {
+            text-align: center;
+            font-size: 12px;
+            margin-top: 20px;
+            color: #666;
+        }
+        
+        p {
+            text-indent: 0.5in;
+        }
+        
+        .sin-indent {
+            text-indent: 0;
+        }
+        
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <!-- PORTADA -->
+    <div class="portada">
+        <h1>Marco Teórico: Arquitectura y Tecnologías del Sistema MecanicCompany</h1>
+        <p>Documento de especificación técnica</p>
+        <p>Versión 1.0.0</p>
+        <p>Fecha: 25 de septiembre de 2026</p>
+    </div>
+
+    <!-- TABLA DE CONTENIDOS -->
+    <h2>Tabla de Contenidos</h2>
+    <ul>
+        <li class="nivel1">1. Introducción</li>
+        <li class="nivel1">2. Términos y Conceptos Fundamentales</li>
+        <li class="nivel2">2.1 Arquitectura de Software</li>
+        <li class="nivel2">2.2 Stack de Tecnologías</li>
+        <li class="nivel2">2.3 Lenguajes de Programación</li>
+        <li class="nivel2">2.4 Frameworks y Librerías</li>
+        <li class="nivel2">2.5 Base de Datos</li>
+        <li class="nivel2">2.6 Interfaces de Programación de Aplicaciones (APIs)</li>
+        <li class="nivel2">2.7 Entornos de Desarrollo y Ejecución</li>
+    </ul>
+
+    <!-- INTRODUCCIÓN -->
+    <h2>1. Introducción</h2>
+    <p>El presente documento estructura de manera jerárquica los términos técnicos, arquitectura, lenguajes de programación, entornos y APIs utilizados en el desarrollo del sistema MecanicCompany. La organización responde a una clasificación de términos grandes con sus respectivos subtérminos, ordenados por relevancia e importancia en la estructura tecnológica del proyecto.</p>
+
+    <!-- SECCIÓN 2: TÉRMINOS Y CONCEPTOS FUNDAMENTALES -->
+    <h2>2. Términos y Conceptos Fundamentales</h2>
+
+    <!-- 2.1 ARQUITECTURA DE SOFTWARE -->
+    <h3>2.1 Arquitectura de Software</h3>
+    <p>La arquitectura de software del sistema MecanicCompany se fundamenta en un modelo de tres capas distribuidas que separa las responsabilidades entre presentación, lógica de negocio y persistencia de datos.</p>
+
+    <h4>2.1.1 Arquitectura de Tres Capas (Three-Tier Architecture)</h4>
+    <ul>
+        <li class="nivel3"><strong>Capa de Presentación (Frontend).</strong> Responsable de la interacción directa con el usuario final. Implementada mediante React Native con soporte multiplataforma (web, Android, iOS).</li>
+        <li class="nivel3"><strong>Capa de Lógica de Negocio (Backend).</strong> Procesa las solicitudes del cliente, implementa reglas de negocio y coordina operaciones. Desarrollada con Node.js y Express.js.</li>
+        <li class="nivel3"><strong>Capa de Persistencia (Base de Datos).</strong> Almacena y recupera datos mediante un gestor de base de datos relacional PostgreSQL con intermediación del ORM Prisma.</li>
+    </ul>
+
+    <h4>2.1.2 Patrón de Arquitectura Cliente-Servidor</h4>
+    <ul>
+        <li class="nivel3"><strong>Cliente.</strong> Aplicación frontend que realiza peticiones HTTP hacia el servidor backend.</li>
+        <li class="nivel3"><strong>Servidor.</strong> API REST que procesa solicitudes, ejecuta operaciones y devuelve respuestas en formato JSON.</li>
+        <li class="nivel3"><strong>Comunicación.</strong> Protocolo HTTP/HTTPS con autenticación mediante tokens JWT (JSON Web Tokens).</li>
+    </ul>
+
+    <h4>2.1.3 Patrones de Diseño Implementados</h4>
+    <ul>
+        <li class="nivel3"><strong>Patrón MVC (Model-View-Controller).</strong> Aplicado en el backend para la organización de controladores, modelos y rutas.</li>
+        <li class="nivel3"><strong>Patrón Singleton.</strong> Utilizado en la configuración de conexiones a base de datos y variables de entorno.</li>
+        <li class="nivel3"><strong>Patrón Repository.</strong> Implementado mediante Prisma Client para abstraer operaciones de base de datos.</li>
+        <li class="nivel3"><strong>Patrón Middleware.</strong> Empleado en Express.js para validación, autenticación y manejo de errores.</li>
+    </ul>
+
+    <!-- 2.2 STACK DE TECNOLOGÍAS -->
+    <h2>2.2 Stack de Tecnologías</h2>
+    <p>El stack tecnológico de MecanicCompany está conformado por un conjunto integrado de herramientas, frameworks y librerías que trabajan en conjunto para proporcionar una solución completa de software.</p>
+
+    <h4>2.2.1 Tecnologías Frontend</h4>
+    <ul>
+        <li class="nivel3"><strong>React Native (v0.81.5).</strong> Framework de desarrollo multiplataforma que permite crear aplicaciones para iOS, Android y web desde una única base de código.</li>
+        <li class="nivel3"><strong>Expo (v54.0.8).</strong> Plataforma de desarrollo y distribución que simplifica el proceso de compilación y deployment de aplicaciones React Native.</li>
+        <li class="nivel3"><strong>Expo Router (v6.0.23).</strong> Sistema de enrutamiento basado en archivos para manejar navegación entre pantallas de la aplicación.</li>
+        <li class="nivel3"><strong>React Navigation (v7.1.8).</strong> Librería de navegación nativa que gestiona la pila de pantallas, tabs y drawers.</li>
+        <li class="nivel3"><strong>TypeScript.</strong> Lenguaje tipado que extiende JavaScript proporcionando verificación de tipos estática en tiempo de compilación.</li>
+    </ul>
+
+    <h4>2.2.2 Tecnologías Backend</h4>
+    <ul>
+        <li class="nivel3"><strong>Node.js.</strong> Entorno de ejecución de JavaScript en servidor que permite ejecutar código JavaScript del lado del servidor.</li>
+        <li class="nivel3"><strong>Express.js (v4.19.2).</strong> Framework minimalista y flexible para construir APIs REST en Node.js.</li>
+        <li class="nivel3"><strong>TypeScript.</strong> Proporciona tipado estático al código backend para mejorar la calidad y mantenibilidad.</li>
+        <li class="nivel3"><strong>Prisma (v5.14.0).</strong> ORM (Object-Relational Mapping) que abstrae operaciones de base de datos y proporciona un cliente tipado.</li>
+    </ul>
+
+    <h4>2.2.3 Tecnologías de Base de Datos</h4>
+    <ul>
+        <li class="nivel3"><strong>PostgreSQL.</strong> Sistema gestor de base de datos relacional de código abierto con soporte para tipos de datos complejos y transacciones ACID.</li>
+        <li class="nivel3"><strong>Prisma Client.</strong> Cliente de base de datos generado automáticamente que proporciona métodos tipados para consultas SQL.</li>
+    </ul>
+
+    <!-- 2.3 LENGUAJES DE PROGRAMACIÓN -->
+    <h2>2.3 Lenguajes de Programación</h2>
+    <p>El sistema MecanicCompany utiliza lenguajes de programación modernos y tipados que facilitan la detección de errores y mejoran la mantenibilidad del código.</p>
+
+    <h4>2.3.1 JavaScript (ECMAScript 2020 o superior)</h4>
+    <ul>
+        <li class="nivel3"><strong>Uso en Frontend.</strong> Lenguaje base de React Native para la lógica de componentes y manejo de estado.</li>
+        <li class="nivel3"><strong>Uso en Backend.</strong> A través de Node.js, permite ejecutar código JavaScript en servidor.</li>
+        <li class="nivel3"><strong>Características.</strong> Dinámicamente tipado, orientado a prototipos, soporte para programación asincrónica mediante Promises y async/await.</li>
+    </ul>
+
+    <h4>2.3.2 TypeScript (v5.4.5)</h4>
+    <ul>
+        <li class="nivel3"><strong>Descripción.</strong> Superset de JavaScript que añade tipado estático opcional, interfaces, clases y decoradores.</li>
+        <li class="nivel3"><strong>Modo Estricto.</strong> Configuración tsconfig.json con modo estricto habilitado ("strict": true) para máxima verificación de tipos.</li>
+        <li class="nivel3"><strong>Compilación.</strong> Se transpila a JavaScript antes de la ejecución o interpretación.</li>
+        <li class="nivel3"><strong>Ventajas.</strong> Detección de errores en tiempo de compilación, mejor autocompletado en IDEs, documentación mediante tipos.</li>
+    </ul>
+
+    <h4>2.3.3 SQL (Structured Query Language)</h4>
+    <ul>
+        <li class="nivel3"><strong>Uso.</strong> Lenguaje declarativo para definir esquema de base de datos y ejecutar consultas en PostgreSQL.</li>
+        <li class="nivel3"><strong>Abstracción mediante Prisma.</strong> Las consultas SQL se generan automáticamente desde el cliente de Prisma, evitando escritura manual de SQL.</li>
+    </ul>
+
+    <!-- 2.4 FRAMEWORKS Y LIBRERÍAS -->
+    <h2>2.4 Frameworks y Librerías</h2>
+    <p>Los frameworks y librerías son componentes reutilizables que proporcionan funcionalidades predefinidas para acelerar el desarrollo y mejorar la consistencia del código.</p>
+
+    <h4>2.4.1 Frameworks Principales</h4>
+    <ul>
+        <li class="nivel3"><strong>React Native.</strong> Framework de componentes declarativos que abstrae diferencias entre plataformas (iOS, Android, Web).</li>
+        <li class="nivel3"><strong>Express.js.</strong> Framework web minimalista que proporciona enrutamiento, middleware y soporte para aplicaciones API.</li>
+        <li class="nivel3"><strong>Expo.</strong> Framework que envuelve React Native proporcionando herramientas de desarrollo, compilación y distribución.</li>
+    </ul>
+
+    <h4>2.4.2 Librerías de Utilidad y Seguridad</h4>
+    <ul>
+        <li class="nivel3"><strong>jsonwebtoken (v9.0.2).</strong> Genera y valida tokens JWT para autenticación stateless en API REST.</li>
+        <li class="nivel3"><strong>bcryptjs (v2.4.3).</strong> Librería para hashing y verificación de contraseñas con algoritmo bcrypt.</li>
+        <li class="nivel3"><strong>helmet (v8.2.0).</strong> Middleware que configura headers HTTP de seguridad para proteger contra vulnerabilidades comunes.</li>
+        <li class="nivel3"><strong>cors (v2.8.5).</strong> Middleware para habilitar Cross-Origin Resource Sharing entre cliente y servidor.</li>
+        <li class="nivel3"><strong>express-rate-limit (v8.5.2).</strong> Middleware para limitación de tasa de solicitudes y prevención de ataques DoS.</li>
+    </ul>
+
+    <h4>2.4.3 Librerías de Validación y Transformación de Datos</h4>
+    <ul>
+        <li class="nivel3"><strong>zod (v3.23.8).</strong> Librería de validación de datos que proporciona esquemas tipados y mensajes de error descriptivos.</li>
+        <li class="nivel3"><strong>dotenv (v16.4.5).</strong> Carga variables de entorno desde archivo .env en tiempo de ejecución.</li>
+    </ul>
+
+    <h4>2.4.4 Librerías de Navegación y Enrutamiento</h4>
+    <ul>
+        <li class="nivel3"><strong>expo-router (v6.0.23).</strong> Sistema de enrutamiento basado en convención de directorios (file-based routing).</li>
+        <li class="nivel3"><strong>React Navigation (v7.1.8).</strong> Proporciona componentes de navegación (NavigationContainer, BottomTabNavigator, etc.).</li>
+        <li class="nivel3"><strong>@react-navigation/bottom-tabs (v7.4.0).</strong> Componente especializado para navegación mediante tabs en la parte inferior.</li>
+    </ul>
+
+    <h4>2.4.5 Librerías de Almacenamiento y Gestión de Archivos</h4>
+    <ul>
+        <li class="nivel3"><strong>@react-native-async-storage/async-storage (v2.2.0).</strong> Base de datos local key-value para almacenamiento persistente en cliente.</li>
+        <li class="nivel3"><strong>expo-file-system (v19.0.22).</strong> Acceso a sistema de archivos del dispositivo para lectura y escritura.</li>
+        <li class="nivel3"><strong>expo-image-picker (v17.0.11).</strong> Permite seleccionar imágenes desde galería o cámara del dispositivo.</li>
+    </ul>
+
+    <h4>2.4.6 Librerías de Comunicación y Datos</h4>
+    <ul>
+        <li class="nivel3"><strong>nodemailer (v6.9.13).</strong> Librería para envío de correos electrónicos desde el servidor backend.</li>
+        <li class="nivel3"><strong>multer (v2.1.1).</strong> Middleware para Node.js que maneja carga de archivos multipart/form-data.</li>
+        <li class="nivel3"><strong>expo-av (v16.0.8).</strong> Proporciona capacidades de audio y video en aplicaciones Expo.</li>
+    </ul>
+
+    <!-- 2.5 BASE DE DATOS -->
+    <h2>2.5 Base de Datos</h2>
+    <p>El subsistema de persistencia de datos utiliza una arquitectura relacional con abstracción mediante ORM para garantizar integridad referencial y eficiencia en operaciones.</p>
+
+    <h4>2.5.1 Sistema Gestor de Base de Datos</h4>
+    <ul>
+        <li class="nivel3"><strong>PostgreSQL.</strong> Base de datos relacional de código abierto con características avanzadas como índices B-tree, tipos de datos personalizados y soporte para transacciones ACID.</li>
+        <li class="nivel3"><strong>Ubicación.</strong> Servidor local en localhost:5432 con base de datos nombrada "mecaniccompany".</li>
+        <li class="nivel3"><strong>Autenticación.</strong> Credenciales configuradas en variables de entorno para acceso seguro.</li>
+    </ul>
+
+    <h4>2.5.2 Mapeo Objeto-Relacional (ORM)</h4>
+    <ul>
+        <li class="nivel3"><strong>Prisma (v5.14.0).</strong> ORM moderna que proporciona abstracción de base de datos mediante lenguaje de esquema propio (Prisma Schema).</li>
+        <li class="nivel3"><strong>Características.</strong> Generación automática de tipos TypeScript, migraciones de esquema, seeds para datos de prueba, Prisma Studio para visualización de datos.</li>
+        <li class="nivel3"><strong>Prisma Client.</strong> Cliente tipado que reemplaza queries SQL manuales con métodos JavaScript/TypeScript seguros.</li>
+    </ul>
+
+    <h4>2.5.3 Estructura de Datos Principal</h4>
+    <ul>
+        <li class="nivel3"><strong>Modelos Principales.</strong> Solicitud, Mantenimiento, Producto, Finanza, Usuario, Cliente, Mecánico.</li>
+        <li class="nivel3"><strong>Relaciones.</strong> Relaciones uno-a-muchos (1:N) entre Solicitud y Mantenimiento, muchos-a-muchos (N:M) entre Productos y Mantenimientos.</li>
+        <li class="nivel3"><strong>Tipos de Datos.</strong> String, Int, DateTime, Decimal (para precios y costos), Boolean, JSON (para datos complejos como repuestos utilizados).</li>
+    </ul>
+
+    <h4>2.5.4 Operaciones de Base de Datos</h4>
+    <ul>
+        <li class="nivel3"><strong>Operaciones CRUD.</strong> Create (Crear), Read (Leer), Update (Actualizar), Delete (Eliminar) implementadas mediante métodos de Prisma Client.</li>
+        <li class="nivel3"><strong>Transacciones.</strong> Soporte para operaciones multipasos que garantizan integridad de datos mediante rollback en caso de error.</li>
+        <li class="nivel3"><strong>Migraciones.</strong> Cambios de esquema versionados mediante Prisma Migrate que permiten evolucionar estructura sin pérdida de datos.</li>
+    </ul>
+
+    <!-- 2.6 INTERFACES DE PROGRAMACIÓN DE APLICACIONES (APIs) -->
+    <h2>2.6 Interfaces de Programación de Aplicaciones (APIs)</h2>
+    <p>Las APIs definen contratos entre cliente y servidor que especifican qué operaciones pueden ejecutarse, qué datos se transmiten y qué respuestas se esperan.</p>
+
+    <h4>2.6.1 Arquitectura de API REST</h4>
+    <ul>
+        <li class="nivel3"><strong>Definición.</strong> REST (Representational State Transfer) es estilo arquitectónico que utiliza métodos HTTP estándar (GET, POST, PUT, DELETE) para operaciones sobre recursos.</li>
+        <li class="nivel3"><strong>Recursos.</strong> Cada recurso es identificado por URL única (ej. /api/productos, /api/solicitudes).</li>
+        <li class="nivel3"><strong>Formato de Datos.</strong> JSON (JavaScript Object Notation) como formato de serialización para solicitudes y respuestas.</li>
+    </ul>
+
+    <h4>2.6.2 Protocolos de Comunicación</h4>
+    <ul>
+        <li class="nivel3"><strong>HTTP/HTTPS.</strong> Protocolo de transferencia de hipertexto con soporte para conexiones seguras (HTTPS con TLS).</li>
+        <li class="nivel3"><strong>Métodos HTTP.</strong> GET (lectura), POST (creación), PUT (actualización), DELETE (eliminación), PATCH (actualización parcial).</li>
+        <li class="nivel3"><strong>Códigos de Estado.</strong> 200 OK, 201 Created, 400 Bad Request, 401 Unauthorized, 403 Forbidden, 404 Not Found, 500 Internal Server Error.</li>
+    </ul>
+
+    <h4>2.6.3 Autenticación y Autorización</h4>
+    <ul>
+        <li class="nivel3"><strong>JSON Web Tokens (JWT).</strong> Tokens autofirmados que contienen información de usuario codificada en formato base64, utilizados en header Authorization: Bearer [token].</li>
+        <li class="nivel3"><strong>Middleware de Autenticación.</strong> Valida presencia y validez de token JWT en cada solicitud a endpoints protegidos.</li>
+        <li class="nivel3"><strong>Roles y Permisos.</strong> Control de acceso basado en roles (RBAC) que determina operaciones permitidas según tipo de usuario (admin, mecánico, cliente).</li>
+    </ul>
+
+    <h4>2.6.4 Endpoints de API Principales</h4>
+    <ul>
+        <li class="nivel3"><strong>Productos.</strong> GET /api/productos (listar), POST /api/productos (crear), PUT /api/productos/:id (actualizar), DELETE /api/productos/:id (eliminar).</li>
+        <li class="nivel3"><strong>Solicitudes.</strong> GET /api/solicitudes (listar), POST /api/solicitudes (crear), PUT /api/solicitudes/:id (actualizar), DELETE /api/solicitudes/:id (eliminar).</li>
+        <li class="nivel3"><strong>Mantenimientos.</strong> GET /api/mantenimientos (listar), POST /api/mantenimientos (crear), PUT /api/mantenimientos/:id (actualizar), DELETE /api/mantenimientos/:id (eliminar).</li>
+        <li class="nivel3"><strong>Finanzas.</strong> GET /api/finanzas (listar), POST /api/finanzas (crear), PUT /api/finanzas/:id (actualizar), GET /api/finanzas/:id/detalles (obtener detalles).</li>
+        <li class="nivel3"><strong>Autenticación.</strong> POST /api/auth/login (iniciar sesión), POST /api/auth/register (registrarse), POST /api/auth/logout (cerrar sesión).</li>
+    </ul>
+
+    <h4>2.6.5 Validación de Datos en API</h4>
+    <ul>
+        <li class="nivel3"><strong>Validación de Entrada.</strong> Esquemas Zod que verifican tipo, formato y restricciones de datos antes de procesar solicitud.</li>
+        <li class="nivel3"><strong>Mensajes de Error.</strong> Respuestas detalladas que especifican qué campos fallaron validación y por qué.</li>
+        <li class="nivel3"><strong>Transformación de Datos.</strong> Conversión automática de tipos (ej. string a número, ISO 8601 a Date).</li>
+    </ul>
+
+    <h4>2.6.6 Limitación de Tasa y Seguridad</h4>
+    <ul>
+        <li class="nivel3"><strong>Rate Limiting.</strong> Middleware express-rate-limit que limita número de solicitudes por IP para prevenir ataques de fuerza bruta.</li>
+        <li class="nivel3"><strong>CORS (Cross-Origin Resource Sharing).</strong> Configuración que especifica qué dominios pueden acceder a API desde navegadores.</li>
+        <li class="nivel3"><strong>Headers de Seguridad.</strong> Helmet middleware que configura Content-Security-Policy, X-Frame-Options, X-Content-Type-Options y otros headers protectores.</li>
+    </ul>
+
+    <!-- 2.7 ENTORNOS DE DESARROLLO Y EJECUCIÓN -->
+    <h2>2.7 Entornos de Desarrollo y Ejecución</h2>
+    <p>Los entornos de desarrollo proporcionan herramientas, configuraciones y runtimes necesarios para ejecutar, probar y desplegar la aplicación.</p>
+
+    <h4>2.7.1 Entorno de Desarrollo Local</h4>
+    <ul>
+        <li class="nivel3"><strong>Sistema Operativo.</strong> Windows con PowerShell y Node.js instalado.</li>
+        <li class="nivel3"><strong>Gestor de Paquetes.</strong> npm (Node Package Manager) versión 9 o superior para instalar dependencias.</li>
+        <li class="nivel3"><strong>Editor de Código.</strong> Visual Studio Code con extensiones para TypeScript, React Native y Prisma.</li>
+    </ul>
+
+    <h4>2.7.2 Runtime de Ejecución</h4>
+    <ul>
+        <li class="nivel3"><strong>Node.js.</strong> Entorno de ejecución basado en motor V8 que permite ejecutar JavaScript en servidor.</li>
+        <li class="nivel3"><strong>Versión Mínima.</strong> Node.js 18.x o superior con soporte para módulos ES6 y async/await.</li>
+        <li class="nivel3"><strong>npm.</strong> Gestor de paquetes que descarga e instala dependencias declaradas en package.json.</li>
+    </ul>
+
+    <h4>2.7.3 Herramientas de Compilación y Transpilación</h4>
+    <ul>
+        <li class="nivel3"><strong>TypeScript Compiler (tsc).</strong> Transpila código TypeScript a JavaScript compatible con versiones antiguas de Node.js.</li>
+        <li class="nivel3"><strong>ts-node-dev.</strong> Herramienta de desarrollo que compila TypeScript sobre la marcha y reinicia servidor automáticamente al detectar cambios (hot reload).</li>
+        <li class="nivel3"><strong>Babel.</strong> Transpilador JavaScript que en Expo convierte código moderno a compatible con navegadores y plataformas antiguas.</li>
+    </ul>
+
+    <h4>2.7.4 Servidor de Desarrollo Backend</h4>
+    <ul>
+        <li class="nivel3"><strong>Express Development Server.</strong> Servidor HTTP local en puerto 3000 o configurable mediante variable de entorno PORT.</li>
+        <li class="nivel3"><strong>Ejecución.</strong> Iniciado mediante comando "npm run dev" que ejecuta ts-node-dev sobre archivo src/server.ts.</li>
+        <li class="nivel3"><strong>Características.</strong> Soporte para middleware, enrutamiento dinámico y CORS para comunicación con frontend.</li>
+    </ul>
+
+    <h4>2.7.5 Servidor de Desarrollo Frontend</h4>
+    <ul>
+        <li class="nivel3"><strong>Expo Development Server.</strong> Servidor local que compila y sirve aplicación React Native.</li>
+        <li class="nivel3"><strong>Plataformas Objetivo.</strong> Web (mediante navegador en localhost:19006), Android (mediante emulador), iOS (mediante simulador).</li>
+        <li class="nivel3"><strong>Ejecución.</strong> Iniciado mediante comando "npm run web" (web), "npm run android" (Android), "npm run ios" (iOS).</li>
+        <li class="nivel3"><strong>Hot Reload.</strong> Recompilación automática y recarga en cliente al detectar cambios en código.</li>
+    </ul>
+
+    <h4>2.7.6 Gestor de Base de Datos de Desarrollo</h4>
+    <ul>
+        <li class="nivel3"><strong>PostgreSQL Local.</strong> Servidor PostgreSQL ejecutándose en localhost:5432 accesible desde aplicación mediante connection string en variable de entorno DATABASE_URL.</li>
+        <li class="nivel3"><strong>Prisma Studio.</strong> Interfaz gráfica web ejecutada mediante "npm run db:studio" que permite visualizar, crear, editar y eliminar registros sin escribir SQL.</li>
+        <li class="nivel3"><strong>Migraciones.</strong> Ejecutadas mediante "npm run db:migrate" que aplica cambios de esquema a base de datos.</li>
+    </ul>
+
+    <h4>2.7.7 Configuración de Variables de Entorno</h4>
+    <ul>
+        <li class="nivel3"><strong>Archivo .env.</strong> Archivo no versionado que contiene configuraciones sensibles como DATABASE_URL, JWT_SECRET, PORT, API_BASE_URL.</li>
+        <li class="nivel3"><strong>dotenv.</strong> Librería que carga variables de archivo .env al process.env de Node.js en tiempo de ejecución.</li>
+        <li class="nivel3"><strong>Seguridad.</strong> Variables sensibles nunca se commitean a repositorio git, se asignan en plataforma de deployment.</li>
+    </ul>
+
+    <h4>2.7.8 Dependencias de Proyecto (package.json)</h4>
+    <ul>
+        <li class="nivel3"><strong>Backend: 18 dependencias principales.</strong> Express, Prisma, jsonwebtoken, bcryptjs, cors, helmet, zod, multer, nodemailer, express-rate-limit y otras.</li>
+        <li class="nivel3"><strong>Backend: 8 dependencias de desarrollo.</strong> TypeScript, ts-node-dev, Prisma CLI, @types/* para tipado.</li>
+        <li class="nivel3"><strong>Frontend: 44 dependencias principales.</strong> React, React Native, Expo, React Navigation, TypeScript, AsyncStorage, Date Picker, Icon Libraries.</li>
+        <li class="nivel3"><strong>Versionamiento Semántico.</strong> Dependencias especificadas con caret (^) para permitir actualizaciones menores y parches.</li>
+    </ul>
+
+    <!-- CONCLUSIÓN -->
+    <h2>3. Conclusión</h2>
+    <p>El sistema MecanicCompany se fundamenta en una arquitectura moderna, escalable y mantenible que integra tecnologías de punta en desarrollo web y móvil. La estructura de tres capas separa claramente responsabilidades, facilitando desarrollo paralelo, testing independiente y mantenimiento futuro. El uso de TypeScript en frontend y backend proporciona verificación de tipos estática que reduce bugs en producción. El stack tecnológico seleccionado (React Native, Express, PostgreSQL con Prisma) representa estándares industriales con excelente documentación, comunidad activa y ecosistema maduro de herramientas complementarias. La arquitectura REST con JWT para autenticación, combinada con middleware de seguridad (Helmet, CORS, Rate Limiting), implementa mejores prácticas de seguridad de aplicaciones web modernas.</p>
+
+    <!-- REFERENCIAS -->
+    <h2>Referencias</h2>
+    <div class="referencias">
+        <ul>
+            <li class="nivel1 sin-indent">Express.js Documentation. (s.f.). <em>Express.js - Node.js web application framework</em>. Recuperado de https://expressjs.com</li>
+            <li class="nivel1 sin-indent">Fielding, R. T. (2000). <em>Architectural Styles and the Design of Network-based Software Architectures</em>. Tesis doctoral, University of California.</li>
+            <li class="nivel1 sin-indent">Facebook Inc. (s.f.). <em>React Native - Learn once, write anywhere</em>. Recuperado de https://reactnative.dev</li>
+            <li class="nivel1 sin-indent">Node.js Foundation. (s.f.). <em>Node.js Documentation</em>. Recuperado de https://nodejs.org/docs</li>
+            <li class="nivel1 sin-indent">PostgreSQL Global Development Group. (s.f.). <em>PostgreSQL Documentation</em>. Recuperado de https://www.postgresql.org/docs</li>
+            <li class="nivel1 sin-indent">Prisma. (s.f.). <em>Prisma - Next-generation ORM</em>. Recuperado de https://www.prisma.io</li>
+            <li class="nivel1 sin-indent">TypeScript. (s.f.). <em>TypeScript Handbook</em>. Recuperado de https://www.typescriptlang.org/docs</li>
+        </ul>
+    </div>
+
+    <!-- INFORMACIÓN DE VERSIÓN -->
+    <div class="version-info">
+        <p>Documento: MARCO_TEORICO_ARQUITECTURA.html</p>
+        <p>Versión: 1.0.0</p>
+        <p>Fecha de Creación: 25 de septiembre de 2026</p>
+        <p>Última Actualización: 25 de septiembre de 2026</p>
+        <p>Formato: HTML 5 con estilos APA</p>
+    </div>
+
+</body>
+</html>

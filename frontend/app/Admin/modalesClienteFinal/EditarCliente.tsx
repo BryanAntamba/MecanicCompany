@@ -16,6 +16,7 @@ import {
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import styles from '@/Styles/pantallaAdmin/modalesClienteFinal/editarCliente';
+import { useAuth } from '@/context/AuthContext';
 import {
   validarUnNombre,
   validarSegundoNombre,
@@ -56,7 +57,7 @@ interface EditarClienteProps {
   cliente: any | null;
   onClose: () => void;
   onSuccess: (cliente: any) => void;
-  token: string;
+  token?: string;
 }
 
 export default function EditarCliente({
@@ -64,8 +65,9 @@ export default function EditarCliente({
   cliente,
   onClose,
   onSuccess,
-  token,
 }: EditarClienteProps) {
+  const { token: contextToken } = useAuth();
+  const token = contextToken;
   const [form, setForm] = useState<FormState>({
     nombres: '',
     segundoNombre: '',
@@ -94,8 +96,10 @@ export default function EditarCliente({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -216,6 +220,12 @@ export default function EditarCliente({
   };
 
   const guardar = async () => {
+    // Validar token
+    if (!token) {
+      Alert.alert('Error', 'Token de autenticación no encontrado. Por favor inicia sesión nuevamente.');
+      return;
+    }
+
     const errorNombres = validarUnNombre(form.nombres, 'El nombre');
     const errorSegundoNombre = validarSegundoNombre(form.segundoNombre, 'El segundo nombre');
     const errorApellidos = validarUnNombre(form.apellidos, 'El apellido');
@@ -251,28 +261,52 @@ export default function EditarCliente({
     const [dia, mes, anio] = form.fechaNacimiento.split('/').map(Number);
     const fechaDate = new Date(anio, mes - 1, dia);
 
-    // Construir nombre completo
-    const nombreCompleto = [
-      form.nombres.trim(),
-      form.segundoNombre.trim(),
-      form.apellidos.trim(),
-      form.segundoApellido.trim(),
-    ]
-      .filter(Boolean)
-      .join(' ');
+    try {
+      // Preparar payload
+      const payload: any = {
+        nombres: form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        segundoNombre: form.segundoNombre.trim() || null,
+        segundoApellido: form.segundoApellido.trim() || null,
+        telefono: form.telefono.trim() || null,
+        correo: form.correo.trim().toLowerCase(),
+        fechaNacimiento: fechaDate,
+      };
 
-    // Simulación: actualizar solo en el estado local
-    const clienteActualizado = {
-      ...cliente,
-      nombreCompleto,
-      correo: form.correo.trim().toLowerCase(),
-      telefono: form.telefono.trim(),
-      fechaNacimiento: fechaDate,
-      cuentaActiva: true,
-    };
+      // Incluir contraseña solo si fue ingresada
+      if (form.contraseña.trim()) {
+        payload.contrasena = form.contraseña.trim();
+      }
 
-    onSuccess(clienteActualizado);
-    onClose();
+      console.log(`[EDITAR] Cliente - Enviando a /clientes/${cliente.id}`, payload);
+
+      const resp = await fetch(`${BASE_URL}/clientes/${cliente.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!resp.ok) {
+        const error = await resp.json();
+        throw new Error(error.message || 'Error al actualizar');
+      }
+
+      const clienteActualizado = await resp.json();
+      console.log(`[EDITAR SUCCESS]`, clienteActualizado);
+
+      onSuccess({
+        ...clienteActualizado.cliente || clienteActualizado,
+      });
+      
+      Alert.alert('Éxito', 'Cliente actualizado correctamente.');
+      onClose();
+    } catch (error: any) {
+      console.error('[EDITAR ERROR]', error);
+      Alert.alert('Error', error.message || 'No se pudo actualizar el cliente.');
+    }
   };
 
   return (
@@ -455,9 +489,17 @@ export default function EditarCliente({
               style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
-                  ACTUALIZAR USUARIO
-                </Text>
+                <View style={[styles.buttonContent, { flexDirection: 'row', alignItems: 'center' }]}>
+                  <FontAwesome 
+                    name="save" 
+                    size={18} 
+                    color={pressed ? '#FFFFFF' : '#000000'}
+                  />
+                  <View style={{ width: 10 }} />
+                  <Text style={[styles.saveBtnText, pressed && styles.saveBtnTextPressed]}>
+                    ACTUALIZAR USUARIO
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

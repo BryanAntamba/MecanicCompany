@@ -1,7 +1,7 @@
 // soporte.ts
 // Estilos para la pantalla de soporte
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
   page: {
@@ -25,6 +25,14 @@ export default StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 30,
     backgroundColor: '#0b1120',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
   sectionTitle: {
     fontSize: 32,
@@ -45,6 +53,14 @@ export default StyleSheet.create({
     backgroundColor: '#1E293B',
     borderRadius: 16,
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
   dropdownWrapper: {
     marginBottom: 12,
@@ -72,6 +88,7 @@ export default StyleSheet.create({
     paddingVertical: 12,
     fontSize: 16,
     color: '#F1F5F9',
+    width: '100%',
   },
   inputError: {
     borderColor: '#EF4444',
@@ -95,6 +112,7 @@ export default StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
   },
   dropdownPlaceholder: {
     fontSize: 16,
@@ -142,6 +160,7 @@ export default StyleSheet.create({
     paddingVertical: 14,
     alignItems: 'center',
     marginTop: 24,
+    width: '100%',
   },
   submitButtonPressed: {
     backgroundColor: '#2563EB',
@@ -154,6 +173,14 @@ export default StyleSheet.create({
   },
   submitButtonTextPressed: {
     color: '#FFFFFF',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 
   // --- PIE DE PÁGINA (FOOTER) ---
@@ -176,11 +203,18 @@ export default StyleSheet.create({
   // Botón "Regresar Arriba" — blanco en reposo
   scrollTopButton: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 6,
+    borderRadius: 8,
     paddingVertical: 14,
-    alignItems: 'center',
+    paddingHorizontal: 24,
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
+    gap: 12,
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 280,
+      cursor: 'pointer',
+    }),
   },
 
   // Estado presionado del botón — azul

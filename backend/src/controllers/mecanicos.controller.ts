@@ -9,8 +9,11 @@ export async function listarMecanicos(_req: Request, res: Response): Promise<voi
             select: {
                 id: true,
                 nombres: true,
+                segundoNombre: true,
                 apellidos: true,
+                segundoApellido: true,
                 edad: true,
+                telefono: true,
                 correo: true,
                 correoEmpresarial: true,
                 especialidad: true,
@@ -34,8 +37,8 @@ export async function listarMecanicos(_req: Request, res: Response): Promise<voi
 export async function crearMecanico(req: Request, res: Response): Promise<void> {
     try {
         const {
-            nombres, apellidos, edad, correo, correoEmpresarial,
-            especialidad, anosExperiencia, contrasena,
+            nombres, segundoNombre, apellidos, segundoApellido, edad, telefono,
+            correo, correoEmpresarial, especialidad, anosExperiencia, contrasena,
         } = req.body;
 
         // Validar si el correoEmpresarial ya existe
@@ -72,8 +75,11 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
         const mecanico = await prisma.mecanico.create({
             data: {
                 nombres,
+                segundoNombre: segundoNombre || null,
                 apellidos,
+                segundoApellido: segundoApellido || null,
                 edad: Number(edad),
+                telefono: telefono || null,
                 correo: correoNormalizado,
                 correoEmpresarial: correoEmpresarialNormalizado,
                 especialidad,
@@ -96,9 +102,22 @@ export async function actualizarMecanico(req: Request, res: Response): Promise<v
     try {
         const { id } = req.params;
         const {
-            nombres, apellidos, edad, correo, correoEmpresarial,
-            especialidad, anosExperiencia, estadoLaboral, contrasena,
+            nombres, segundoNombre, apellidos, segundoApellido, edad, telefono,
+            correo, correoEmpresarial, especialidad, anosExperiencia, estadoLaboral, contrasena,
         } = req.body;
+
+        // Validar que el mecánico existe
+        const mecanicoExistente = await prisma.mecanico.findUnique({ where: { id } });
+        if (!mecanicoExistente) {
+            res.status(404).json({ message: 'Mecánico no encontrado' });
+            return;
+        }
+
+        // Validar que haya al menos un campo para actualizar
+        if (!nombres && !segundoNombre && !apellidos && !segundoApellido && !edad && !telefono && !correo && !correoEmpresarial && !especialidad && !anosExperiencia && !estadoLaboral && !contrasena) {
+            res.status(400).json({ message: 'Debe proporcionar al menos un campo para actualizar' });
+            return;
+        }
 
         // Validar si el correoEmpresarial ya existe en otro mecánico
         if (correoEmpresarial) {
@@ -133,14 +152,17 @@ export async function actualizarMecanico(req: Request, res: Response): Promise<v
         }
 
         const data: Record<string, unknown> = {
-            nombres, 
-            apellidos, 
-            edad: Number(edad), 
-            correo: correo?.trim().toLowerCase(), 
-            correoEmpresarial: correoEmpresarial?.trim().toLowerCase(),
-            especialidad, 
-            anosExperiencia: Number(anosExperiencia), 
-            estadoLaboral,
+            ...(nombres !== undefined && { nombres }),
+            ...(segundoNombre !== undefined && { segundoNombre: segundoNombre || null }),
+            ...(apellidos !== undefined && { apellidos }),
+            ...(segundoApellido !== undefined && { segundoApellido: segundoApellido || null }),
+            ...(edad !== undefined && { edad: Number(edad) }),
+            ...(telefono !== undefined && { telefono: telefono || null }),
+            ...(correo && { correo: correo.trim().toLowerCase() }),
+            ...(correoEmpresarial && { correoEmpresarial: correoEmpresarial.trim().toLowerCase() }),
+            ...(especialidad !== undefined && { especialidad }),
+            ...(anosExperiencia !== undefined && { anosExperiencia: Number(anosExperiencia) }),
+            ...(estadoLaboral !== undefined && { estadoLaboral }),
         };
 
         if (contrasena) {

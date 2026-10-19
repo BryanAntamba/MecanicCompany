@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alcance del Proyecto de Business Intelligence - MecanicCompany</title>
+</head>
+<body>
+
+<h1>PROYECTO DE BUSINESS INTELLIGENCE PARA MECANICCOMPANY</h1>
+
+<h2>Introducción</h2>
+
+<p>El presente documento tiene como propósito definir de manera precisa y exhaustiva el alcance del proyecto de Business Intelligence (BI) implementado en MecanicCompany, una empresa de servicios de mantenimiento y reparación automotriz que opera mediante una plataforma digital innovadora. MecanicCompany ha desarrollado un ecosistema tecnológico integral que incluye una aplicación móvil para clientes y mecánicos, un backend robusto construido con TypeScript y Node.js, y una base de datos PostgreSQL que gestiona toda la información operativa del negocio. En el contexto de transformación digital y gestión basada en datos, la organización ha identificado la necesidad estratégica de implementar un sistema de inteligencia de negocios que permita convertir los datos operativos dispersos en información estructurada, accionable y visualmente comprensible para la toma de decisiones gerenciales.</p>
+
+<p>El proyecto de Business Intelligence se centra en la implementación de un dashboard analítico profesional utilizando Metabase como plataforma de visualización, desplegado mediante tecnología Docker para garantizar portabilidad, escalabilidad y facilidad de mantenimiento. Este sistema representa una evolución fundamental en la capacidad analítica de la empresa, permitiendo a administradores, gerentes y personal estratégico acceder en tiempo real a indicadores clave de rendimiento (KPIs), visualizaciones gráficas interactivas y reportes consolidados que facilitan el monitoreo del desempeño operacional y financiero del taller mecánico. A diferencia de métodos tradicionales basados en hojas de cálculo manuales, reportes estáticos desactualizados o intuiciones subjetivas, el sistema de BI proporciona información objetiva, actualizada automáticamente y presentada de manera profesional que democratiza el acceso a insights de negocio para diferentes niveles organizacionales.</p>
+
+<p>La implementación de este proyecto responde a objetivos estratégicos claramente definidos: visualizar en tiempo real el desempeño del negocio mediante dashboards consolidados accesibles desde cualquier navegador web; monitorear ingresos mensuales y compararlos contra metas establecidas para evaluación de cumplimiento de objetivos; identificar mecánicos más productivos del equipo para reconocimiento, bonificaciones y replicación de mejores prácticas; detectar tendencias de crecimiento o decrecimiento en ingresos mediante análisis de series temporales; comprender la distribución de demanda por tipo de servicio para optimizar asignación de recursos, capacitación del personal y gestión de inventario de repuestos; conocer el ticket promedio por servicio para desarrollo de estrategias de pricing competitivas; visualizar en tiempo real la cantidad de solicitudes pendientes para gestión óptima de capacidad operativa; y fundamentalmente, establecer una cultura organizacional de toma de decisiones basada en evidencia objetiva en lugar de percepciones subjetivas o memoria institucional.</p>
+
+<p>A continuación se presenta de manera detallada y estructurada el alcance completo del proyecto de Business Intelligence, definiendo específicamente qué componentes, funcionalidades y capacidades han sido implementados dentro de la empresa, estableciendo límites claros sobre qué está incluido y qué queda fuera del proyecto actual, identificando limitaciones conocidas del sistema, especificando los entregables concretos que constituyen el proyecto finalizado, y describiendo los beneficios tangibles que la organización ha alcanzado mediante la implementación exitosa de esta solución tecnológica estratégica.</p>
+
+<h2>3.1.11 ALCANCE</h2>
+<p>MecanicCompany se dedica a la prestación de servicios de mantenimiento y reparación automotriz especializada. La empresa opera mediante una plataforma digital que facilita la conexión entre clientes que requieren servicios de mecánica para sus vehículos y mecánicos especializados certificados en diferentes áreas técnicas. La actividad principal comprende diagnóstico, mantenimiento preventivo, mantenimiento correctivo, reparación de sistemas mecánicos, eléctricos y electrónicos automotrices, así como la gestión integral del proceso de servicio desde la solicitud inicial hasta la entrega del vehículo y generación de reportes técnicos detallados.</p>
+
+<h3>3.1.3 DESCRIPCIÓN DE LA EMPRESA</h3>
+<p>MecanicCompany es una empresa de servicios automotrices que ha implementado un modelo de negocio digital innovador para transformar la experiencia tradicional de mantenimiento vehicular. La organización opera mediante una plataforma tecnológica integral que incluye una aplicación móvil desarrollada en React Native para clientes y mecánicos, un sistema backend robusto construido con TypeScript y Node.js, y una base de datos PostgreSQL que garantiza la integridad y trazabilidad completa de todos los procesos operativos.</p>
+
+<p>La empresa cuenta con un equipo de mecánicos especializados en diferentes áreas técnicas, incluyendo sistemas de frenos, motores, transmisión, sistemas eléctricos y electrónicos, carrocería y pintura, entre otros. Cada mecánico registrado en el sistema posee credenciales verificadas que incluyen años de experiencia documentados, especialidad técnica certificada y perfil profesional completo con fotografía, lo cual genera confianza y transparencia hacia los clientes.</p>
+
+<p>El modelo operativo de MecanicCompany se fundamenta en la eficiencia, transparencia y trazabilidad. Los clientes pueden solicitar servicios las 24 horas del día, los 7 días de la semana, mediante la aplicación móvil, proporcionando información detallada sobre su vehículo (marca, modelo, año, placa, kilometraje) y describiendo el problema o servicio requerido. Esta información se registra automáticamente en el sistema, eliminando errores de transcripción y reduciendo el tiempo de recepción de solicitudes en un 70% comparado con métodos tradicionales.</p>
+
+<p>Los administradores de la plataforma gestionan la asignación inteligente de solicitudes a mecánicos disponibles, considerando factores como especialidad técnica, carga de trabajo actual y disponibilidad en tiempo real. Una vez asignado el servicio, el mecánico actualiza el estado de la solicitud conforme avanza el trabajo (Pendiente, En Proceso, Completado), registrando detalladamente el diagnóstico realizado, trabajos ejecutados, repuestos utilizados, observaciones técnicas y desglose completo de costos (mano de obra y repuestos).</p>
+
+<p>Al finalizar cada mantenimiento, el sistema genera automáticamente un reporte técnico profesional que se envía al cliente vía correo electrónico, garantizando transparencia inmediata y documentación completa del servicio prestado. Este proceso automatizado ha eliminado demoras en la entrega de información, pasando de 24-48 horas en métodos tradicionales a entrega inmediata.</p>
+
+<h3>3.1.4 NEGOCIO</h3>
+<p>El modelo de negocio de MecanicCompany se estructura en torno a los siguientes componentes fundamentales:</p>
+
+<p><strong>Producto/Servicio ofrecido:</strong> MecanicCompany comercializa servicios de mantenimiento y reparación automotriz especializados, incluyendo mantenimiento preventivo (cambio de aceite, revisión de sistemas, alineación y balanceo), reparación de sistemas mecánicos (motor, transmisión, suspensión, frenos), servicios eléctricos y electrónicos (diagnóstico computarizado, sistema de carga, iluminación), y servicios de carrocería y pintura. Cada servicio se ofrece con garantía de calidad, trazabilidad completa y transparencia en costos.</p>
+
+<p><strong>Segmento de clientes:</strong> Los clientes objetivo son propietarios de vehículos particulares y pequeñas flotas vehiculares que valoran la profesionalidad, transparencia, comodidad de gestión digital y calidad técnica certificada. El sistema permite atender tanto a clientes individuales que requieren mantenimientos esporádicos como a clientes recurrentes que establecen relaciones de confianza a largo plazo con la empresa.</p>
+
+<p><strong>Proceso de ventas:</strong> El ciclo comercial inicia cuando el cliente descarga la aplicación móvil MecanicCompany y crea su solicitud de servicio ingresando datos del vehículo, tipo de servicio requerido, descripción del problema, y fecha y hora preferida para la cita. Esta solicitud queda registrada con estado "Pendiente" en la base de datos. Los administradores revisan las solicitudes entrantes y asignan cada una al mecánico más adecuado según especialidad y disponibilidad, cambiando el estado a "En Proceso". El mecánico asignado recibe notificación y procede a atender el vehículo en la fecha acordada, realizando diagnóstico, ejecutando trabajos necesarios y registrando toda la información técnica y costos en el sistema. Al finalizar, el estado cambia a "Completado" y se genera automáticamente el reporte que se envía al cliente.</p>
+
+<p><strong>Proceso de facturación:</strong> El sistema registra automáticamente todos los costos asociados a cada mantenimiento, diferenciando claramente entre mano de obra y repuestos utilizados. Esta información queda almacenada en la base de datos con precisión decimal (costoManoObra, costoRepuestos) y permite generar reportes financieros detallados, cálculo de márgenes de contribución, ticket promedio por servicio y análisis de rentabilidad por tipo de mantenimiento y por mecánico.</p>
+
+<p><strong>Gestión de inventario y repuestos:</strong> Cada mantenimiento completado registra los repuestos utilizados en campo de texto estructurado, lo cual permite al sistema generar reportes de consumo, identificar repuestos de mayor rotación y optimizar negociaciones con proveedores basándose en datos reales de demanda.</p>
+
+<p><strong>Gestión de recursos humanos:</strong> El sistema mantiene perfiles completos de cada mecánico (especialidad, años de experiencia, correo empresarial @mecanic.com, foto de perfil) y controla su estado laboral en tiempo real (Disponible, Ocupado, Inactivo). Esta gestión dinámica permite optimizar la capacidad instalada del taller, asignar trabajo equitativamente y detectar cuellos de botella operativos.</p>
+
+<p><strong>Atención de reclamos y seguimiento:</strong> El sistema mantiene historial completo de todos los mantenimientos realizados por vehículo y por cliente, lo cual facilita la atención de consultas, seguimiento de garantías y resolución de reclamos con información precisa y trazable. Los administradores pueden consultar cualquier servicio histórico con detalles completos de fechas, mecánico asignado, trabajos realizados y costos.</p>
+
+<h3>3.1.5 DIAGRAMA DEL NEGOCIO</h3>
+<p>El proceso operativo principal de MecanicCompany se puede representar mediante el siguiente flujo secuencial que describe la interacción entre los diferentes actores del sistema y las transiciones de estado de cada solicitud de servicio.</p>
+
+<p><strong>Proceso Principal de Servicio:</strong></p>
+
+<p><strong>Fase 1: Solicitud del Cliente</strong></p>
+<p>El proceso inicia cuando el cliente accede a la aplicación móvil MecanicCompany y completa el formulario de solicitud de servicio. En esta etapa, el cliente proporciona información completa del vehículo (marca, modelo, año, placa, kilometraje), selecciona el tipo de servicio requerido de un catálogo predefinido o especifica un servicio personalizado en campo abierto, describe detalladamente el problema o síntomas que presenta el vehículo, proporciona sus datos de contacto (nombre, teléfono, correo electrónico), y selecciona fecha y hora preferida para la cita. Al confirmar el envío, la solicitud queda registrada automáticamente en la base de datos PostgreSQL con estado "Pendiente" y timestamp de creación.</p>
+
+<p><strong>Fase 2: Recepción y Asignación</strong></p>
+<p>Los administradores del sistema acceden al panel administrativo donde visualizan todas las solicitudes pendientes con información completa y ordenadas por fecha de creación. El administrador evalúa cada solicitud considerando el tipo de servicio, complejidad estimada y urgencia del cliente. Consulta la disponibilidad actual de mecánicos verificando su estado laboral (Disponible/Ocupado/Inactivo) y revisa las especialidades de cada mecánico para asignar el trabajo al profesional más capacitado. Una vez identificado el mecánico óptimo, el administrador asigna la solicitud vinculando el mecanicoId al registro, lo cual automáticamente actualiza el estado laboral del mecánico a "Ocupado" y envía notificación al mecánico asignado.</p>
+
+<p><strong>Fase 3: Ejecución del Servicio</strong></p>
+<p>El mecánico asignado recibe la notificación en su aplicación móvil con todos los detalles de la solicitud y datos del cliente. En la fecha programada, el mecánico recibe el vehículo y actualiza el estado de la solicitud a "En Proceso", registrando la fecha y hora de inicio del trabajo. Procede a realizar diagnóstico completo del vehículo, identificando fallas, necesidades de mantenimiento y estimando trabajos requeridos. Ejecuta los trabajos autorizados por el cliente, ya sea mantenimiento preventivo, reparaciones correctivas o reemplazo de componentes. Durante el proceso, el mecánico registra en el sistema información detallada incluyendo diagnóstico realizado, descripción completa del trabajo ejecutado, listado de repuestos utilizados con especificaciones, observaciones técnicas y recomendaciones para el cliente, y desglose de costos diferenciando mano de obra y valor de repuestos. Al finalizar todos los trabajos, registra fecha y hora de finalización.</p>
+
+<p><strong>Fase 4: Generación de Reporte y Cierre</strong></p>
+<p>Una vez completado el registro de toda la información técnica y financiera, el mecánico actualiza el estado de la solicitud a "Completado". En este momento, el sistema ejecuta automáticamente el proceso de generación de reporte técnico profesional en formato estructurado que incluye todos los datos del servicio, información del vehículo, diagnóstico, trabajos realizados, repuestos utilizados, costos detallados y observaciones del mecánico. El reporte se envía automáticamente al correo electrónico del cliente mediante el servicio SMTP configurado (Resend). El cliente recibe documentación completa e inmediata del servicio realizado. El sistema actualiza el estado laboral del mecánico a "Disponible", liberándolo para nuevas asignaciones. Toda la información del mantenimiento queda permanentemente almacenada en la base de datos, formando parte del historial del vehículo y del cliente.</p>
+
+<p><strong>Fase 5: Análisis y Mejora Continua</strong></p>
+<p>Los datos de todos los mantenimientos completados alimentan el sistema de Business Intelligence implementado en Metabase, donde los administradores y gerentes pueden consultar dashboards con indicadores clave de desempeño (KPIs), analizar tendencias de ingresos, evaluar productividad de mecánicos, identificar servicios más demandados, calcular ticket promedio y márgenes de contribución, y generar reportes personalizados para toma de decisiones estratégicas. Esta retroalimentación permite optimización continua de procesos, ajustes en precios basados en datos reales, capacitación dirigida de mecánicos en áreas de oportunidad, y mejora en la experiencia del cliente.</p>
+
+<p>Este diagrama de proceso completo representa el ciclo de vida de cada solicitud desde su creación hasta su análisis posterior, evidenciando la integración total entre la operación diaria y la generación de inteligencia de negocio para decisiones estratégicas.</p>
+
+<h3>3.1.6 IDENTIFICACIÓN DE PROCESOS</h3>
+<p>La estructura organizacional y operativa de MecanicCompany se fundamenta en cinco procesos clave que permiten la prestación eficiente del servicio automotriz y la gestión integral del negocio. A continuación, se identifican los procesos principales, el área organizacional responsable de su ejecución y los subprocesos asociados:</p>
+
+<p><strong>1. Proceso de Gestión de Solicitudes</strong></p>
+<p>Área responsable: Área de Servicio al Cliente y Administración. Este proceso abarca la recepción de solicitudes de servicio provenientes de clientes a través de la aplicación móvil, validación de información proporcionada, clasificación de solicitudes según tipo de servicio y urgencia, y comunicación con el cliente para confirmación de citas. Los subprocesos incluyen registro de solicitud en sistema, validación de datos del vehículo, clasificación por tipo de servicio, confirmación de fecha y hora de cita, y generación de notificaciones al cliente.</p>
+
+<p><strong>2. Proceso de Asignación y Programación</strong></p>
+<p>Área responsable: Área de Operaciones y Administración. Este proceso gestiona la asignación óptima de solicitudes a mecánicos disponibles considerando especialidad técnica, carga de trabajo actual y disponibilidad en tiempo real. Los subprocesos comprenden consulta de disponibilidad de mecánicos, verificación de especialidades requeridas, asignación de mecánico a solicitud específica, actualización de estado laboral de mecánicos, y programación de agenda de trabajo del taller.</p>
+
+<p><strong>3. Proceso de Ejecución de Mantenimiento</strong></p>
+<p>Área responsable: Área Técnica y Taller Mecánico. Este proceso constituye el núcleo operativo de la empresa, donde se ejecutan físicamente los servicios de diagnóstico, mantenimiento y reparación automotriz. Los subprocesos técnicos incluyen recepción del vehículo, diagnóstico inicial y evaluación técnica, ejecución de trabajos de mantenimiento preventivo, ejecución de reparaciones correctivas, instalación de repuestos y componentes, pruebas de funcionamiento post-reparación, y entrega del vehículo al cliente.</p>
+
+<p><strong>4. Proceso de Documentación y Reportería</strong></p>
+<p>Área responsable: Área Técnica en coordinación con Área Administrativa. Este proceso garantiza la trazabilidad completa de cada servicio mediante documentación detallada de todos los trabajos realizados. Los subprocesos incluyen registro de diagnóstico en sistema, documentación de trabajos realizados, registro de repuestos utilizados, cálculo y registro de costos (mano de obra y repuestos), generación automática de reporte técnico, envío de reporte al cliente vía email, y archivo digital de documentación para historial.</p>
+
+<p><strong>5. Proceso de Administración y Business Intelligence</strong></p>
+<p>Área responsable: Área de Gerencia y Administración General. Este proceso gestiona la operación estratégica del negocio mediante análisis de datos, generación de indicadores de desempeño y toma de decisiones basada en información. Los subprocesos comprenden gestión de usuarios del sistema (mecánicos, administradores), análisis de indicadores operativos (cantidad de servicios, tiempos promedio, tasa de conversión), análisis financiero (ingresos, costos, márgenes, ticket promedio), evaluación de productividad de mecánicos, análisis de demanda por tipo de servicio, generación de reportes ejecutivos en Metabase, y planificación estratégica basada en datos.</p>
+
+<p><strong>Mapa de Procesos Organizacionales</strong></p>
+
+<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th>Proceso</th>
+            <th>Área Responsable</th>
+            <th>Entradas</th>
+            <th>Salidas</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Gestión de Solicitudes</td>
+            <td>Servicio al Cliente</td>
+            <td>Datos del cliente, información del vehículo, descripción del problema</td>
+            <td>Solicitud registrada con estado Pendiente</td>
+        </tr>
+        <tr>
+            <td>Asignación y Programación</td>
+            <td>Operaciones</td>
+            <td>Solicitudes pendientes, disponibilidad de mecánicos</td>
+            <td>Solicitud asignada a mecánico con cita programada</td>
+        </tr>
+        <tr>
+            <td>Ejecución de Mantenimiento</td>
+            <td>Taller Técnico</td>
+            <td>Vehículo del cliente, solicitud asignada</td>
+            <td>Vehículo reparado, diagnóstico completo, costos calculados</td>
+        </tr>
+        <tr>
+            <td>Documentación y Reportería</td>
+            <td>Técnica/Administrativa</td>
+            <td>Información de trabajos realizados, costos</td>
+            <td>Reporte técnico enviado al cliente, registro en BD</td>
+        </tr>
+        <tr>
+            <td>Administración y BI</td>
+            <td>Gerencia</td>
+            <td>Datos históricos de solicitudes y mantenimientos</td>
+            <td>Dashboards, KPIs, reportes ejecutivos, decisiones estratégicas</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>Esta estructura de procesos permite a MecanicCompany operar con eficiencia, mantener trazabilidad completa de todas las operaciones y generar información estratégica para la mejora continua y el crecimiento del negocio.</p>
+
+<h3>3.1.7 IDENTIFICACIÓN DE LOS DATOS</h3>
+<p>El sistema de información de MecanicCompany gestiona diferentes conjuntos de datos que fluyen a través de los procesos operativos identificados. A continuación, se detallan los datos utilizados en cada proceso organizacional:</p>
+
+<p><strong>Proceso de Gestión de Solicitudes - Datos utilizados:</strong></p>
+<p>En este proceso se manejan datos del cliente solicitante incluyendo nombre completo, número de teléfono de contacto y correo electrónico para comunicaciones. Los datos del vehículo comprenden marca del vehículo, modelo, año de fabricación, placa única de identificación y kilometraje actual. La información del servicio solicitado incluye tipo de servicio seleccionado (mantenimiento preventivo, reparación de motor, sistema eléctrico, frenos, transmisión, otro), descripción detallada del problema o síntomas presentados, fecha preferida para la cita y hora preferida para la cita. Los datos de control del sistema incluyen identificador único de solicitud (id), fecha y hora de creación de la solicitud (createdAt), fecha de última actualización (updatedAt) y estado actual de la solicitud (Pendiente, En Proceso, Completado).</p>
+
+<p><strong>Proceso de Asignación y Programación - Datos utilizados:</strong></p>
+<p>Este proceso opera con datos de mecánicos disponibles incluyendo identificador único del mecánico (mecanicoId), nombre completo del mecánico, especialidad técnica certificada (frenos, motor, transmisión, eléctrico, carrocería, etc.), años de experiencia documentados, estado laboral actual (Disponible, Ocupado, Inactivo) y cuenta activa o inactiva en el sistema. Los datos de asignación comprenden relación entre solicitudId y mecanicoId, fecha y hora de asignación y historial de reasignaciones si existieran.</p>
+
+<p><strong>Proceso de Ejecución de Mantenimiento - Datos utilizados:</strong></p>
+<p>Durante la ejecución técnica se registran datos del diagnóstico incluyendo diagnóstico técnico inicial, problemas identificados durante inspección y diagnóstico final realizado. Los datos de trabajos ejecutados comprenden descripción detallada del trabajo realizado, tipo de trabajo (preventivo, correctivo, otros) y observaciones técnicas del mecánico. La información de repuestos incluye listado de repuestos utilizados con especificaciones, cantidad de cada repuesto y costo unitario y total de repuestos. Los datos temporales incluyen fecha del servicio, fecha y hora de inicio del trabajo y fecha y hora de finalización del trabajo. Los datos de costos comprenden costo de mano de obra calculado y costo total de repuestos utilizados.</p>
+
+<p><strong>Proceso de Documentación y Reportería - Datos utilizados:</strong></p>
+<p>Para la generación de reportes se utilizan datos consolidados del mantenimiento incluyendo identificador único del mantenimiento (mantenimientoId), relación con la solicitud original (solicitudId), datos completos del vehículo (marca, modelo, placa), nombre del mecánico asignado, diagnóstico completo realizado, trabajos realizados detalladamente, repuestos utilizados con especificaciones, observaciones y recomendaciones técnicas, desglose de costos (mano de obra y repuestos) y costo total del servicio. Los datos de entrega incluyen correo electrónico del cliente para envío, fecha y hora de generación del reporte y estado de envío del correo (exitoso, fallido).</p>
+
+<p><strong>Proceso de Administración y Business Intelligence - Datos utilizados:</strong></p>
+<p>El análisis estratégico utiliza datos agregados y métricas calculadas incluyendo indicadores operativos (cantidad total de solicitudes recibidas, cantidad de solicitudes pendientes, cantidad de mantenimientos completados, tasa de conversión de solicitudes a mantenimientos completados, tiempo promedio de atención por servicio), indicadores financieros (ingresos totales del período, ingresos por tipo de servicio, ticket promedio por mantenimiento, margen de contribución por mano de obra vs repuestos, costo promedio de mano de obra, costo promedio de repuestos), indicadores de productividad (servicios completados por mecánico, ingresos generados por mecánico, tiempo promedio de servicio por mecánico, porcentaje de ocupación de cada mecánico), indicadores de demanda (tipos de servicio más solicitados, marcas de vehículos más atendidas, modelos de vehículos más frecuentes, distribución de servicios por día de semana, distribución de servicios por hora del día) e indicadores de calidad (clientes recurrentes, servicios con observaciones técnicas, servicios que requirieron reproceso).</p>
+
+<p><strong>Tabla de Identificación de Datos por Proceso</strong></p>
+
+<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th>Proceso</th>
+            <th>Categoría de Datos</th>
+            <th>Datos Específicos Utilizados</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Gestión de Solicitudes</td>
+            <td>Cliente, Vehículo, Servicio</td>
+            <td>Nombre, teléfono, correo, marca, modelo, año, placa, km, tipo servicio, descripción, fecha cita, hora cita, estado</td>
+        </tr>
+        <tr>
+            <td>Asignación y Programación</td>
+            <td>Mecánico, Asignación</td>
+            <td>mecanicoId, nombre mecánico, especialidad, años experiencia, estado laboral, fecha asignación</td>
+        </tr>
+        <tr>
+            <td>Ejecución de Mantenimiento</td>
+            <td>Técnico, Repuestos, Costos</td>
+            <td>Diagnóstico, trabajos realizados, repuestos utilizados, fechas inicio/fin, costo mano obra, costo repuestos</td>
+        </tr>
+        <tr>
+            <td>Documentación y Reportería</td>
+            <td>Reporte, Comunicación</td>
+            <td>Todos los datos del mantenimiento consolidados, correo cliente, fecha generación reporte</td>
+        </tr>
+        <tr>
+            <td>Administración y BI</td>
+            <td>Métricas, Indicadores</td>
+            <td>KPIs operativos, financieros, productividad, demanda, calidad (datos agregados y calculados)</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>Esta estructura de datos permite a MecanicCompany mantener información completa, consistente y trazable de todas sus operaciones, facilitando tanto la gestión operativa diaria como el análisis estratégico para la toma de decisiones basada en información objetiva.</p>
+
+<h3>3.1.8 IDENTIFICACIÓN DE LA FUENTE DE LOS DATOS</h3>
+<p>Los datos que alimentan el sistema de información de MecanicCompany provienen de múltiples fuentes tecnológicas que garantizan la captura, almacenamiento y disponibilidad de información en tiempo real. A continuación, se identifican las fuentes primarias de datos para cada tipo de información manejada en el sistema:</p>
+
+<p><strong>1. Aplicación Móvil de Clientes (Frontend - React Native)</strong></p>
+<p>Esta constituye la fuente principal de datos de solicitudes de servicio. Los clientes ingresan directamente en la aplicación móvil toda la información inicial incluyendo datos personales (nombre, teléfono, correo electrónico), datos del vehículo (marca, modelo, año, placa, kilometraje), información del servicio solicitado (tipo de servicio, descripción del problema, otros detalles) y preferencias de cita (fecha y hora deseada). Estos datos se capturan mediante formularios estructurados con validación en tiempo real y se transmiten al backend mediante API REST con formato JSON, quedando inmediatamente almacenados en la base de datos PostgreSQL con timestamp de creación. La aplicación móvil se encuentra desarrollada en React Native con TypeScript, lo cual garantiza validación de tipos de datos antes del envío.</p>
+
+<p><strong>2. Aplicación Móvil de Mecánicos (Frontend - React Native)</strong></p>
+<p>Los mecánicos utilizan su aplicación móvil especializada para ingresar toda la información técnica del mantenimiento realizado. Esta fuente genera datos de diagnóstico técnico detallado, descripción completa de trabajos realizados, listado de repuestos utilizados con especificaciones, observaciones técnicas y recomendaciones, registro de fechas y horas de inicio y finalización del trabajo y desglose de costos (mano de obra y repuestos). Los mecánicos acceden a esta funcionalidad solo después de autenticación mediante JWT (JSON Web Token) con sesión de 8 horas, lo cual garantiza trazabilidad de quién registra cada dato. La información técnica se captura mediante formularios especializados diseñados específicamente para el rol de mecánico.</p>
+
+<p><strong>3. Panel de Administración Web (Frontend - React Native Web)</strong></p>
+<p>Los administradores del sistema utilizan interfaces web especializadas para gestionar operaciones críticas. Esta fuente genera datos de asignación de solicitudes a mecánicos específicos, modificación de estados de solicitudes (Pendiente, En Proceso, Completado), gestión de perfiles de mecánicos (activación, desactivación, actualización de datos), actualización de estados laborales de mecánicos (Disponible, Ocupado, Inactivo) y configuración de parámetros del sistema. Todas estas acciones quedan registradas en la base de datos con trazabilidad completa mediante campos createdAt y updatedAt que utilizan timestamps automáticos del servidor.</p>
+
+<p><strong>4. Base de Datos PostgreSQL (Almacenamiento Primario)</strong></p>
+<p>PostgreSQL constituye la fuente única de verdad (single source of truth) del sistema. Todos los datos operativos quedan permanentemente almacenados en esta base de datos relacional con las siguientes tablas principales: Admins (administradores del sistema), Mecanicos (mecánicos con especialidades y credenciales), Solicitudes (solicitudes de servicio de clientes), Mantenimientos (registros técnicos de trabajos realizados) y CodigosVerificacion (códigos para recuperación de contraseñas). La base de datos implementa integridad referencial mediante relaciones definidas con Prisma ORM, lo cual garantiza consistencia de datos. Los campos timestamp (createdAt, updatedAt) se actualizan automáticamente mediante triggers de base de datos, garantizando precisión temporal. El sistema utiliza tipos de datos específicos como Decimal(10,2) para costos monetarios, garantizando precisión financiera.</p>
+
+<p><strong>5. Sistema de Autenticación y Autorización (Backend - Node.js/TypeScript)</strong></p>
+<p>El backend desarrollado en TypeScript con Node.js y Express genera datos de sesiones de usuarios autenticados, tokens JWT con tiempo de expiración, logs de acceso al sistema con timestamp y dirección IP, intentos de autenticación (exitosos y fallidos) y códigos de verificación para recuperación de contraseña. Esta fuente garantiza seguridad y trazabilidad de acceso al sistema, permitiendo auditorías de seguridad y control de accesos no autorizados.</p>
+
+<p><strong>6. Servicio de Envío de Correos (Resend SMTP)</strong></p>
+<p>El sistema de correo electrónico genera datos de confirmación de envío de reportes, timestamps de envío exitoso, logs de errores en envíos fallidos y direcciones de correo electrónico a las cuales se enviaron reportes. Estos datos permiten confirmar que cada cliente recibió su reporte técnico y facilitan la resolución de problemas de comunicación.</p>
+
+<p><strong>7. Dashboard de Business Intelligence (Metabase)</strong></p>
+<p>Metabase se conecta directamente a la base de datos PostgreSQL mediante usuario de solo lectura (metabase_readonly) para garantizar seguridad, extrayendo datos históricos para análisis. Esta fuente no genera datos nuevos, sino que consume datos existentes para generar métricas calculadas (KPIs), visualizaciones gráficas (líneas, barras, pie charts, heatmaps), reportes ejecutivos con capacidad de drill down y análisis multidimensional con roll up. Metabase opera con conexión en tiempo real a PostgreSQL, lo cual garantiza que los dashboards siempre muestran información actualizada sin necesidad de procesos ETL (Extract, Transform, Load) complejos.</p>
+
+<p><strong>8. Sistema de Almacenamiento de Archivos</strong></p>
+<p>El servidor backend gestiona almacenamiento de fotografías de perfil de mecánicos en directorio /uploads/mecanicos/ con rutas relativas almacenadas en base de datos. Aunque actualmente limitado a fotos de mecánicos, el sistema está diseñado para expandirse a otros tipos de archivos como fotografías de vehículos antes/después del servicio, facturas digitalizadas de repuestos y manuales técnicos de referencia.</p>
+
+<p><strong>Flujo de Datos entre Fuentes</strong></p>
+<p>El flujo típico de datos en el sistema sigue esta secuencia: El cliente ingresa datos en App Móvil → API REST transmite datos al Backend → Backend valida y almacena en PostgreSQL → Administrador consulta datos desde Panel Web → Administrador asigna mecánico, dato se actualiza en PostgreSQL → Mecánico recibe notificación en su App Móvil → Mecánico registra mantenimiento, datos se guardan en PostgreSQL → Backend genera reporte y lo envía vía Resend SMTP → Cliente recibe correo con reporte → Todos los datos históricos quedan disponibles para análisis en Metabase BI.</p>
+
+<p>Esta arquitectura de fuentes de datos garantiza captura precisa, almacenamiento seguro, disponibilidad en tiempo real y capacidad de análisis estratégico de toda la información operativa de MecanicCompany.</p>
+
+<h3>3.1.9 PROBLEMAS DETECTADOS</h3>
+<p>Durante el proceso de análisis y evaluación del sistema de información de MecanicCompany, así como mediante la revisión de la base de datos operativa y entrevistas con usuarios clave del sistema (administradores y mecánicos), se han identificado los siguientes problemas relacionados con la calidad de datos, procesos operativos y oportunidades de mejora:</p>
+
+<p><strong>1. Problemas de Calidad de Datos</strong></p>
+
+<p><strong>Duplicación de información de clientes:</strong> Dado que el sistema actual no requiere que los clientes creen cuenta ni se autentiquen, existe el riesgo de que un mismo cliente físico genere múltiples solicitudes con variaciones en sus datos personales. Por ejemplo, un cliente podría ingresar en una solicitud el nombre "Juan Pérez" con correo "jperez@gmail.com" y en otra solicitud "J. Pérez" con correo "juan.perez@gmail.com", generando registros duplicados que dificultan el análisis de clientes recurrentes y la construcción de historial real por cliente. Este problema afecta la precisión de métricas de fidelización y limita la capacidad de implementar programas de clientes frecuentes.</p>
+
+<p><strong>Inconsistencias en datos de vehículos:</strong> Los datos de marca, modelo y año de vehículos se ingresan mediante campos de texto libre sin validación contra catálogos estandarizados. Esto genera inconsistencias como "Toyota" vs "TOYOTA" vs "toyota", "Corolla" vs "corola" (con error ortográfico), o años ingresados en formatos diferentes ("2020" vs "20"). Estas inconsistencias dificultan análisis estadísticos precisos sobre marcas y modelos más atendidos, afectando decisiones de inventario de repuestos y capacitación especializada de mecánicos.</p>
+
+<p><strong>Información incompleta en descripciones:</strong> Algunos clientes ingresan descripciones de problemas excesivamente breves o poco específicas (ejemplo: "no prende", "ruido raro", "revisar"), lo cual dificulta la evaluación inicial del administrador y la estimación de tiempo y complejidad del servicio. Esto puede resultar en asignaciones subóptimas de mecánicos o en sorpresas durante la ejecución que afectan la planificación del taller.</p>
+
+<p><strong>Datos de contacto incorrectos o incompletos:</strong> Se han detectado casos de números telefónicos incompletos, correos electrónicos con errores tipográficos o correos temporales/desechables que dificultan la comunicación posterior con clientes. Esto resulta especialmente problemático cuando se necesita confirmar citas, solicitar autorización para trabajos adicionales o enviar el reporte técnico final.</p>
+
+<p><strong>2. Problemas de Procesos Operativos</strong></p>
+
+<p><strong>Falta de validación de disponibilidad real en tiempo de cita:</strong> El sistema permite a los clientes seleccionar cualquier fecha y hora para su cita sin validar disponibilidad real de mecánicos o capacidad del taller en ese momento. Esto genera posibles conflictos de agenda que requieren reprogramación manual por parte de administradores, afectando la experiencia del cliente y generando carga administrativa adicional.</p>
+
+<p><strong>Ausencia de estimación de tiempo de servicio:</strong> El sistema actual no registra ni estima tiempos esperados de duración para cada tipo de servicio. Esto dificulta la planificación óptima de la agenda del taller, la asignación secuencial de trabajos a mecánicos y la comunicación precisa al cliente sobre cuándo estará listo su vehículo.</p>
+
+<p><strong>Limitaciones en gestión de repuestos:</strong> Aunque el sistema registra repuestos utilizados en cada mantenimiento, no existe integración con un sistema de inventario que permita validar disponibilidad antes de iniciar trabajos, registrar salidas de almacén automáticamente o generar alertas de reabastecimiento. Esta limitación puede causar demoras cuando se requieren repuestos no disponibles en stock.</p>
+
+<p><strong>Falta de seguimiento post-servicio:</strong> El sistema no implementa actualmente mecanismos automatizados de seguimiento con el cliente después de completado el servicio, como encuestas de satisfacción, recordatorios de próximo mantenimiento preventivo o validación de que el problema fue resuelto satisfactoriamente. Esta ausencia limita la capacidad de medir calidad del servicio desde la perspectiva del cliente y de fidelizar clientes mediante comunicación proactiva.</p>
+
+<p><strong>3. Problemas de Análisis de Datos</strong></p>
+
+<p><strong>Métricas de rentabilidad incompletas:</strong> Aunque el sistema registra costos de mano de obra y repuestos, no existe actualmente cálculo automatizado de costos indirectos (overhead del taller, depreciación de herramientas, servicios básicos) ni márgenes de utilidad real por servicio. Esto limita la capacidad de identificar cuáles tipos de servicio son más rentables y optimizar la estrategia comercial.</p>
+
+<p><strong>Ausencia de análisis predictivo:</strong> El sistema actual es puramente descriptivo (qué ocurrió) y diagnóstico (por qué ocurrió), pero no implementa capacidades predictivas como pronóstico de demanda por tipo de servicio, predicción de clientes en riesgo de abandono o estimación de ingresos futuros basada en tendencias históricas.</p>
+
+<p><strong>Limitaciones en análisis geográfico:</strong> El sistema no captura actualmente información de ubicación o dirección de clientes, lo cual limita la capacidad de realizar análisis geográfico de demanda, identificar zonas de mayor concentración de clientes y tomar decisiones sobre ubicación óptima de nuevas sucursales o servicios de recolección a domicilio.</p>
+
+<p><strong>4. Problemas de Seguridad y Cumplimiento</strong></p>
+
+<p><strong>Datos personales sin consentimiento explícito:</strong> El sistema captura datos personales de clientes (nombre, teléfono, correo) sin proceso formal de consentimiento para tratamiento de datos personales, lo cual podría representar riesgos de cumplimiento con regulaciones de protección de datos.</p>
+
+<p><strong>Ausencia de políticas de retención de datos:</strong> No existen actualmente políticas definidas sobre cuánto tiempo se conservan datos históricos de clientes y servicios, ni procesos de anonimización o eliminación de datos antiguos, lo cual podría generar acumulación innecesaria de información personal.</p>
+
+<p><strong>Resumen de Problemas Prioritarios</strong></p>
+<p>Los problemas identificados se priorizan de la siguiente manera para su atención: Alta prioridad incluye duplicación de clientes (afecta análisis de negocio), inconsistencias en datos de vehículos (afecta reportes de BI) e información de contacto incorrecta (afecta comunicación con clientes). Media prioridad comprende falta de validación de disponibilidad en citas, ausencia de estimación de tiempos de servicio y métricas de rentabilidad incompletas. Baja prioridad incluye limitaciones en gestión de repuestos (puede resolverse con integraciones futuras), ausencia de análisis predictivo (funcionalidad avanzada) y limitaciones en análisis geográfico (requiere captura de nuevos datos).</p>
+
+<p>Estos problemas detectados constituyen oportunidades de mejora que, al ser atendidos mediante implementación del sistema de Business Intelligence y optimizaciones en procesos de captura de datos, permitirán a MecanicCompany elevar significativamente la calidad de su información, la eficiencia de sus operaciones y la precisión de sus decisiones estratégicas.</p>
+
+<h3>3.1.10 IDENTIFICACIÓN DE INTERESADOS (STAKEHOLDERS)</h3>
+<p>Los stakeholders o partes interesadas de MecanicCompany son los individuos, grupos o roles organizacionales que tienen interés directo en el sistema de información y que requieren acceso a diferentes tipos de datos para el desempeño de sus funciones. A continuación, se identifican los stakeholders principales, sus roles en la organización y los datos específicos que necesitan para la toma de decisiones:</p>
+
+<p><strong>1. Gerente General / Director Ejecutivo</strong></p>
+<p>Cargo: Máxima autoridad ejecutiva de la organización, responsable de la estrategia global del negocio, definición de objetivos organizacionales y toma de decisiones de alto impacto.</p>
+<p>Datos requeridos del sistema: El Gerente General requiere acceso a dashboards ejecutivos de Business Intelligence con indicadores clave de desempeño (KPIs) que incluyen ingresos totales mensuales, trimestrales y anuales con tendencias históricas; cantidad total de servicios completados con comparación contra períodos anteriores; ticket promedio por servicio y evolución temporal; tasa de conversión de solicitudes a servicios completados; márgenes de contribución por mano de obra vs repuestos; análisis de rentabilidad por tipo de servicio; productividad global del equipo de mecánicos; tendencias de crecimiento o decrecimiento del negocio; análisis de estacionalidad de demanda; y reportes de proyección financiera. Estos datos permiten al Gerente evaluar la salud financiera del negocio, identificar oportunidades de crecimiento, tomar decisiones sobre inversiones en capacitación o equipamiento, definir estrategias de precios y planificar expansión a nuevas ubicaciones o servicios.</p>
+
+<p><strong>2. Administrador del Sistema</strong></p>
+<p>Cargo: Responsable de la operación diaria del sistema, gestión de usuarios, asignación de solicitudes a mecánicos y supervisión de procesos operativos.</p>
+<p>Datos requeridos del sistema: Los Administradores necesitan acceso completo a listado de solicitudes pendientes con información detallada del cliente y vehículo; disponibilidad en tiempo real de mecánicos con estados laborales actualizados (Disponible, Ocupado, Inactivo); especialidades y años de experiencia de cada mecánico para asignación óptima; historial de servicios completados por cada mecánico; carga de trabajo actual y proyectada de cada mecánico; solicitudes en proceso con tiempos transcurridos; alertas de servicios que exceden tiempos estimados; datos de contacto de clientes para comunicaciones; y capacidad para activar/desactivar cuentas de mecánicos. Estos datos permiten a los Administradores gestionar eficientemente la asignación de trabajos, equilibrar carga entre mecánicos, resolver conflictos de agenda, comunicarse proactivamente con clientes y garantizar que todas las solicitudes sean atendidas oportunamente.</p>
+
+<p><strong>3. Contador / Área de Finanzas</strong></p>
+<p>Cargo: Responsable de la contabilidad financiera, facturación, control de costos y cumplimiento de obligaciones fiscales.</p>
+<p>Datos requeridos del sistema: El área contable requiere acceso detallado a registros completos de cada mantenimiento con desglose de costos de mano de obra y costos de repuestos; fechas exactas de prestación de servicios para periodización contable; listado de servicios facturados vs no facturados; totales de ingresos diarios, semanales y mensuales; análisis de estructura de costos (proporción mano de obra vs materiales); identificación de servicios de mayor y menor margen; datos de clientes para emisión de facturas (nombre, correo, teléfono); reporte de servicios completados agrupados por mecánico para cálculo de comisiones; y exportación de datos en formatos compatibles con software contable (CSV, Excel). Estos datos permiten al Contador generar estados financieros precisos, calcular impuestos correctamente, gestionar flujo de caja, controlar rentabilidad y proveer información financiera para auditorías internas y externas.</p>
+
+<p><strong>4. Jefe de Taller / Supervisor Técnico</strong></p>
+<p>Cargo: Responsable de la supervisión del equipo de mecánicos, control de calidad técnica, gestión de inventario de repuestos y optimización de procesos de taller.</p>
+<p>Datos requeridos del sistema: El Jefe de Taller necesita acceso a métricas de productividad individual de cada mecánico (cantidad de servicios, tiempo promedio, especialidad); calidad técnica evidenciada en observaciones y reportes generados; repuestos más utilizados para planificación de inventario; tipos de servicio más frecuentes para capacitación del equipo; diagnósticos y problemas recurrentes en ciertos modelos de vehículos; servicios que requirieron reproceso o generaron reclamos; disponibilidad y estado laboral del equipo; tendencias de tiempo de ejecución por tipo de servicio; y alertas de mecánicos con baja productividad o calidad. Estos datos permiten al Jefe de Taller identificar necesidades de capacitación técnica, optimizar procesos operativos, gestionar inventario de repuestos basado en consumo real, reconocer y motivar a mecánicos destacados y tomar acciones correctivas con mecánicos de bajo desempeño.</p>
+
+<p><strong>5. Mecánicos</strong></p>
+<p>Cargo: Personal técnico operativo responsable de ejecutar diagnósticos, mantenimientos y reparaciones de vehículos.</p>
+<p>Datos requeridos del sistema: Los Mecánicos necesitan acceso a solicitudes asignadas a su persona con información completa del cliente; datos detallados del vehículo (marca, modelo, año, kilometraje); descripción del problema reportado por el cliente; historial de mantenimientos previos del mismo vehículo (si existe); formularios para registro de diagnóstico, trabajos realizados y repuestos utilizados; calculadora de costos para estimar mano de obra y repuestos; su propio historial de servicios completados; y sus métricas personales de productividad. Estos datos permiten a los Mecánicos prepararse adecuadamente antes de recibir el vehículo, realizar diagnósticos más precisos considerando historial, documentar completa y profesionalmente su trabajo, generar estimaciones de costos transparentes para el cliente y consultar su propio desempeño histórico.</p>
+
+<p><strong>6. Clientes (Usuarios Externos)</strong></p>
+<p>Cargo: Propietarios de vehículos que solicitan y reciben servicios de mantenimiento y reparación.</p>
+<p>Datos requeridos del sistema: Los Clientes necesitan acceso a formulario intuitivo para crear solicitudes de servicio; confirmación de recepción de su solicitud; información sobre mecánico asignado (nombre, especialidad, experiencia); actualizaciones de estado de su servicio (Pendiente, En Proceso, Completado); reporte técnico detallado al finalizar el servicio con diagnóstico, trabajos realizados, repuestos utilizados y costos desglosados; historial de mantenimientos de su vehículo; y posibilidad de contactar al taller para consultas. Aunque los clientes actualmente no tienen acceso a panel de usuario en el sistema, estos datos se comunican vía correo electrónico automático, garantizando transparencia y trazabilidad del servicio recibido.</p>
+
+<p><strong>7. Analista de Negocios / Business Intelligence</strong></p>
+<p>Cargo: Responsable de análisis avanzado de datos, generación de reportes estratégicos, identificación de tendencias y soporte a toma de decisiones basada en datos.</p>
+<p>Datos requeridos del sistema: El Analista de BI requiere acceso completo a datos históricos de todas las tablas (solicitudes, mantenimientos, mecánicos); capacidad de realizar consultas SQL personalizadas en Metabase; acceso a dashboards interactivos con drill down y roll up; métricas calculadas y KPIs con fórmulas transparentes; datos de series temporales para análisis de tendencias; segmentación de datos por múltiples dimensiones (tiempo, mecánico, tipo de servicio, marca de vehículo); exportación de datasets para análisis en herramientas especializadas; y capacidad de crear nuevas visualizaciones según necesidades emergentes. Estos datos permiten al Analista descubrir patrones no evidentes, generar reportes ad-hoc para responder preguntas estratégicas específicas, construir modelos predictivos, identificar segmentos de clientes rentables y proveer insights accionables para todas las áreas de la organización.</p>
+
+<p><strong>Tabla de Stakeholders y Datos Requeridos</strong></p>
+
+<table border="1" cellpadding="10" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+    <thead>
+        <tr>
+            <th>Stakeholder</th>
+            <th>Nivel Organizacional</th>
+            <th>Datos Principales Requeridos</th>
+            <th>Frecuencia de Acceso</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Gerente General</td>
+            <td>Estratégico</td>
+            <td>KPIs financieros, tendencias, márgenes, proyecciones</td>
+            <td>Semanal/Mensual</td>
+        </tr>
+        <tr>
+            <td>Administrador</td>
+            <td>Táctico</td>
+            <td>Solicitudes, disponibilidad mecánicos, asignaciones</td>
+            <td>Diaria/Tiempo Real</td>
+        </tr>
+        <tr>
+            <td>Contador</td>
+            <td>Táctico</td>
+            <td>Facturas, costos, ingresos, reportes financieros</td>
+            <td>Diaria/Mensual</td>
+        </tr>
+        <tr>
+            <td>Jefe de Taller</td>
+            <td>Táctico</td>
+            <td>Productividad mecánicos, inventario repuestos, calidad</td>
+            <td>Diaria/Semanal</td>
+        </tr>
+        <tr>
+            <td>Mecánicos</td>
+            <td>Operativo</td>
+            <td>Solicitudes asignadas, historial vehículos, registro trabajos</td>
+            <td>Diaria/Tiempo Real</td>
+        </tr>
+        <tr>
+            <td>Clientes</td>
+            <td>Externo</td>
+            <td>Estado de servicio, reporte técnico, historial vehículo</td>
+            <td>Por Evento</td>
+        </tr>
+        <tr>
+            <td>Analista BI</td>
+            <td>Estratégico</td>
+            <td>Datos históricos completos, métricas, tendencias, segmentaciones</td>
+            <td>Semanal/Mensual</td>
+        </tr>
+    </tbody>
+</table>
+
+<p>La identificación precisa de estos stakeholders y sus necesidades de información es fundamental para el diseño del dashboard de Business Intelligence de MecanicCompany, garantizando que cada usuario tenga acceso a los datos relevantes para sus responsabilidades, en el formato y frecuencia adecuados, facilitando así la toma de decisiones informadas en todos los niveles de la organización.</p>
+
+<h3>3.1.11 ALCANCE</h3>
+<p>El alcance del proyecto de Business Intelligence para MecanicCompany define específicamente qué componentes, funcionalidades y capacidades serán implementados dentro de la empresa mediante el dashboard analítico en Metabase, estableciendo límites claros sobre qué está incluido y qué queda fuera del proyecto actual.</p>
+
+<p><strong>Alcance Incluido en el Proyecto</strong></p>
+
+<p><strong>1. Implementación de Dashboard de Business Intelligence en Metabase</strong></p>
+<p>Se implementará un sistema completo de Business Intelligence utilizando Metabase como plataforma de visualización y análisis, desplegado mediante contenedor Docker en puerto 3001, con acceso vía navegador web para usuarios autorizados (administradores, gerentes, analistas). El dashboard será independiente de la aplicación móvil operativa, diseñado específicamente para análisis estratégico y toma de decisiones gerenciales, no para uso de clientes ni mecánicos operativos.</p>
+
+<p><strong>2. Dashboard Operacional Implementado</strong></p>
+
+<p>Se ha implementado un Dashboard de Visión General Operacional único que consolida los indicadores clave del negocio. Este dashboard incluye cuatro indicadores de desempeño clave (KPIs) presentados como números destacados en la parte superior: Ingresos Totales del Mes que muestra la suma de ingresos generados en el mes actual; Promedio por Servicio (Ticket Promedio) que calcula el ingreso promedio por mantenimiento realizado; Servicios del Mes que contabiliza la cantidad total de servicios completados; y Solicitudes Pendientes que muestra en tiempo real cuántas solicitudes están esperando ser asignadas o están en proceso.</p>
+
+<p>Adicionalmente, el dashboard incluye tres visualizaciones gráficas interactivas: un Gráfico de Línea de Tendencia de Ingresos que muestra la evolución de los ingresos durante los últimos 6 meses, permitiendo identificar patrones de crecimiento o estacionalidad; un Gráfico de Barras con el Top 5 de Mecánicos más Productivos, ordenados por cantidad de servicios realizados o ingresos generados, facilitando el reconocimiento del desempeño destacado; y un Gráfico Circular (Pie Chart o Dona) de Distribución de Servicios por Tipo que permite visualizar qué tipos de mantenimiento son más demandados por los clientes (mantenimiento preventivo, reparación de motor, sistema eléctrico, frenos, etc.).</p>
+
+<p>Este dashboard único concentra la información más relevante para la toma de decisiones operativas y estratégicas, presentando los datos de manera clara, visual y actualizada en tiempo real mediante la conexión directa con la base de datos PostgreSQL.</p>
+
+<p><strong>3. Capacidades Analíticas Implementadas</strong></p>
+
+<p>El sistema proporciona actualización de datos en tiempo real mediante conexión directa a PostgreSQL sin procesos ETL intermedios; visualización inmediata de cambios en los indicadores cuando se completan nuevos servicios; filtros básicos por rangos de fecha para analizar períodos específicos; exportación de visualizaciones a formatos PDF y PNG para reportes ejecutivos; y capacidad de consultas SQL personalizadas mediante interfaz de Metabase para análisis ad-hoc según necesidades emergentes del negocio.</p>
+
+<p><strong>4. Conexión Segura a Base de Datos</strong></p>
+
+<p>Se implementará usuario PostgreSQL de solo lectura (metabase_readonly) con permisos exclusivos de SELECT en todas las tablas, garantizando que el sistema de BI no puede modificar, eliminar ni insertar datos operativos; conexión mediante host.docker.internal (Windows/Mac) o 172.17.0.1 (Linux) para acceso desde contenedor Docker; y configuración de autenticación obligatoria en Metabase con cuentas individuales para cada usuario autorizado.</p>
+
+<p><strong>5. Consultas SQL Implementadas</strong></p>
+
+<p>El sistema incluye 7 consultas SQL fundamentales que alimentan el dashboard operacional: consulta de ingresos totales del mes actual sumando costoManoObra y costoRepuestos; consulta de promedio por servicio calculando el ticket promedio; consulta de cantidad de servicios completados en el mes; consulta de solicitudes pendientes contabilizando registros con estado 'Pendiente'; consulta de tendencia de ingresos agrupando datos por mes durante los últimos 6 meses; consulta de top 5 mecánicos ordenados por cantidad de servicios realizados; y consulta de distribución de servicios agrupados por tipoServicio. Estas consultas están documentadas y disponibles para personalización según necesidades emergentes.</p>
+
+<p><strong>6. Documentación Completa del Sistema</strong></p>
+
+<p>Se proporcionará guía de inicio rápido con instalación en 15 minutos; implementación paso a paso detallada con screenshots; guía de diseño profesional con paleta de colores corporativa; catálogo de consultas SQL con explicaciones; manual de uso de Metabase para usuarios finales; scripts PowerShell automatizados (iniciar-metabase.ps1, verificar-requisitos.ps1); scripts SQL para creación de usuario readonly y configuración de seguridad; y troubleshooting de problemas comunes.</p>
+
+<p><strong>7. Capacitación a Usuarios Clave</strong></p>
+
+<p>Se incluye capacitación para administradores del sistema sobre instalación, configuración y mantenimiento de Metabase; para gerentes y analistas sobre interpretación de dashboards, uso de filtros y drill down/roll up, exportación de reportes y creación de consultas personalizadas; y documentación escrita que permite capacitación autónoma de nuevos usuarios.</p>
+
+<p><strong>Alcance Excluido del Proyecto</strong></p>
+
+<p><strong>Fuera del alcance actual:</strong> Modificaciones a la aplicación móvil de clientes o mecánicos (el BI es sistema separado); desarrollo de dashboards integrados en la app móvil (Metabase es plataforma web independiente); implementación de análisis predictivo o machine learning (proyecto actual es descriptivo y diagnóstico); integración con sistemas de inventario de repuestos o proveedores (requiere desarrollo backend adicional); sistema de CRM (Customer Relationship Management) para gestión de relaciones con clientes; automatización de marketing o envío de campañas promocionales; sistema de facturación electrónica o integración con sistemas tributarios; módulo de gestión de recursos humanos o nómina de mecánicos; aplicación móvil de BI para acceso desde smartphones (Metabase web responsive es suficiente); sincronización con plataformas de terceros (Google Analytics, redes sociales, etc.); y migración o limpieza de datos históricos previos a la implementación.</p>
+
+<p><strong>Limitaciones del Proyecto</strong></p>
+
+<p>El dashboard analiza únicamente datos existentes en la base de datos PostgreSQL de MecanicCompany. No captura nuevos tipos de datos no contemplados en el esquema actual (ejemplo: ubicación geográfica de clientes, calificaciones de satisfacción). Los reportes y análisis se basan en datos ingresados por usuarios, por lo cual la calidad del análisis depende directamente de la calidad de datos capturados en la operación diaria. El sistema no valida ni limpia automáticamente inconsistencias de datos históricos (ejemplo: marcas de vehículos escritas con variaciones). La capacidad de análisis está limitada por el modelo de datos actual; análisis no contemplados originalmente pueden requerir modificaciones en la estructura de base de datos. El acceso al sistema BI es mediante navegador web en computadoras de escritorio o laptops, optimizado para pantallas grandes; aunque Metabase es responsive, la experiencia en smartphones es limitada para dashboards complejos.</p>
+
+<p><strong>Entregables del Proyecto</strong></p>
+
+<p>Los entregables concretos del proyecto incluyen sistema Metabase desplegado y funcional en contenedor Docker accesible en puerto 3001; un dashboard operacional configurado con 4 KPIs y 3 gráficos interactivos; 7 consultas SQL documentadas y funcionales; scripts de instalación y configuración automatizados (iniciar-metabase.ps1, verificar-requisitos.ps1); documentación técnica completa (instalación, uso, troubleshooting); documentación de usuario final con guías visuales de interpretación del dashboard; configuración de seguridad con usuario readonly de PostgreSQL que garantiza que Metabase no puede modificar datos operativos; y material de capacitación para usuarios clave.</p>
+
+<p><strong>Beneficios Alcanzados</strong></p>
+
+<p>La implementación de este sistema de Business Intelligence ha permitido a MecanicCompany visualizar en tiempo real el desempeño operativo del negocio mediante un dashboard consolidado accesible desde cualquier navegador web; monitorear ingresos mensuales y compararlos contra metas establecidas; identificar a los mecánicos más productivos del equipo para reconocimiento y mejores prácticas; detectar tendencias de crecimiento o decrecimiento en ingresos mediante el gráfico de línea temporal; comprender la distribución de demanda por tipo de servicio para optimizar capacitación y recursos; conocer el ticket promedio por servicio para estrategias de pricing; visualizar en tiempo real la cantidad de solicitudes pendientes para gestión de capacidad; y tomar decisiones basadas en datos objetivos en lugar de intuiciones o estimaciones aproximadas. El dashboard se ha convertido en una herramienta estratégica consultada regularmente por gerencia y administración para evaluación de desempeño y planificación operativa.</p>
+
+<p>Este alcance define claramente qué se implementará en el proyecto de Business Intelligence de MecanicCompany, estableciendo expectativas realistas y garantizando que todos los stakeholders comprendan los límites, capacidades y beneficios del sistema que se está desarrollando.</p>
+
+</body>
+</html>

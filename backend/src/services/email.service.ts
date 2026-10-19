@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
-import Mail from 'nodemailer/lib/mailer';
+import * as nodemailer from 'nodemailer';
+import * as Mail from 'nodemailer/lib/mailer';
 import { Solicitud, Mantenimiento, Mecanico } from '@prisma/client';
 
 // Crea el transporter de Nodemailer con las variables de entorno
@@ -183,6 +183,33 @@ export async function enviarReporteEmail(
     }
   }
 
+  // Parsear repuestos para mostrar en HTML
+  let repuestosHtml = '';
+  try {
+    if (mantenimiento.repuestosUtilizados) {
+      const repuestos = JSON.parse(mantenimiento.repuestosUtilizados);
+      if (Array.isArray(repuestos) && repuestos.length > 0) {
+        repuestosHtml = `
+          <table width="100%" cellpadding="0" cellspacing="0" style="margin-top:8px;">
+            ${repuestos.map((r: any) => `
+              <tr style="border-bottom:1px solid #eeeeee;">
+                <td style="padding:8px 0;font-size:12px;color:#111;">
+                  <strong>${r.nombre}</strong><br/>
+                  <span style="color:#666;font-size:11px;">${r.marcaComponente} • SKU: ${r.codigoSKU}</span>
+                </td>
+                <td style="padding:8px 0;font-size:12px;color:#111;text-align:right;">
+                  $${Number(r.precio).toFixed(2)} × ${r.cantidad} = $${Number(r.subtotal).toFixed(2)}
+                </td>
+              </tr>
+            `).join('')}
+          </table>
+        `;
+      }
+    }
+  } catch (e) {
+    console.log('[email.service] No se pudo parsear repuestos:', e);
+  }
+
   const totalCosto = (
     Number(mantenimiento.costoManoObra) + Number(mantenimiento.costoRepuestos)
   ).toFixed(2);
@@ -316,7 +343,7 @@ export async function enviarReporteEmail(
               <tr>
                 <td style="padding:5px 0;font-size:13px;color:#444;vertical-align:top;">Repuestos</td>
                 <td style="padding:5px 0;font-size:13px;color:#111;">
-                  ${mantenimiento.repuestosUtilizados}
+                  ${repuestosHtml ? repuestosHtml : mantenimiento.repuestosUtilizados || 'Ninguno'}
                 </td>
               </tr>
               ${mantenimiento.observaciones ? `

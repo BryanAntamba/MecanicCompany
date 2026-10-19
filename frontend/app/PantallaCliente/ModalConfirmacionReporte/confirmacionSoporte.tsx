@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { Modal, View, Text, Pressable, ScrollView } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import styles from '@/Styles/pantallaCliente/modalConfirmacionSoporte/confirmacionSoporte';
 
 interface ConfirmacionSoporteProps {
@@ -18,6 +19,7 @@ interface ConfirmacionSoporteProps {
   };
   onEnviar: () => void;
   onCerrar: () => void;
+  isLoading?: boolean;
 }
 
 const ConfirmacionSoporte: React.FC<ConfirmacionSoporteProps> = ({
@@ -25,6 +27,7 @@ const ConfirmacionSoporte: React.FC<ConfirmacionSoporteProps> = ({
   datos,
   onEnviar,
   onCerrar,
+  isLoading = false,
 }) => {
   return (
     <Modal
@@ -84,29 +87,49 @@ const ConfirmacionSoporte: React.FC<ConfirmacionSoporteProps> = ({
           <View style={styles.buttonContainer}>
             <Pressable
               style={({ pressed }) => [
-                styles.cancelButton,
-                pressed && styles.cancelButtonPressed,
+                styles.sendButton,
+                pressed && !isLoading && styles.sendButtonPressed,
+                isLoading && { opacity: 0.6 },
               ]}
-              onPress={onCerrar}
+              onPress={onEnviar}
+              disabled={isLoading}
             >
               {({ pressed }) => (
-                <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
-                  Cancelar
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name={isLoading ? "spinner" : "paper-plane"} 
+                    size={18} 
+                    color={pressed && !isLoading ? '#E0E7FF' : '#FFFFFF'} 
+                    style={[styles.buttonIcon, isLoading && { animation: 'spin' }]}
+                  />
+                  <Text style={[styles.sendButtonText, pressed && !isLoading && styles.sendButtonTextPressed]}>
+                    {isLoading ? 'ENVIANDO...' : 'ENVIAR REPORTE'}
+                  </Text>
+                </View>
               )}
             </Pressable>
 
             <Pressable
               style={({ pressed }) => [
-                styles.sendButton,
-                pressed && styles.sendButtonPressed,
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+                isLoading && { opacity: 0.6 },
               ]}
-              onPress={onEnviar}
+              onPress={onCerrar}
+              disabled={isLoading}
             >
               {({ pressed }) => (
-                <Text style={[styles.sendButtonText, pressed && styles.sendButtonTextPressed]}>
-                  Enviar Reporte
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>

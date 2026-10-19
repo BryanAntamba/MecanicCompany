@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Cliente - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* HEADER */
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* FORMULARIO DE BÚSQUEDA */
+        .search-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .search-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .input-group input {
+            flex: 1;
+            min-width: 250px;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .input-group button {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .input-group button:hover {
+            transform: translateY(-2px);
+        }
+
+        /* SECCIÓN DE SOLICITUDES */
+        .solicitudes-container {
+            margin-top: 30px;
+        }
+
+        .solicitudes-title {
+            color: white;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .solicitud-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 5px solid;
+        }
+
+        .solicitud-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+
+        .solicitud-card.pendiente {
+            border-left-color: #ff6b6b;
+        }
+
+        .solicitud-card.en-proceso {
+            border-left-color: #ffd93d;
+        }
+
+        .solicitud-card.completado {
+            border-left-color: #6bcf7f;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .status-badge.pendiente {
+            background: #ffe0e0;
+            color: #d63031;
+        }
+
+        .status-badge.pendiente::before {
+            content: "🔴";
+            font-size: 1.2rem;
+        }
+
+        .status-badge.en-proceso {
+            background: #fff3e0;
+            color: #e67e22;
+        }
+
+        .status-badge.en-proceso::before {
+            content: "🟡";
+            font-size: 1.2rem;
+        }
+
+        .status-badge.completado {
+            background: #e0ffe0;
+            color: #27ae60;
+        }
+
+        .status-badge.completado::before {
+            content: "✅";
+            font-size: 1.2rem;
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        .card-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #666;
+        }
+
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 3px;
+        }
+
+        .card-action {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+
+        .btn-details {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+        }
+
+        .btn-details:hover {
+            transform: scale(1.05);
+        }
+
+        /* MODAL DE DETALLES */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 600px;
+            width: 95%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: #333;
+            font-size: 1.8rem;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: #999;
+            transition: color 0.2s;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .detail-section {
+            margin-bottom: 25px;
+        }
+
+        .detail-section h3 {
+            color: #667eea;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .detail-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+            color: #555;
+        }
+
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .detail-value {
+            color: #666;
+            text-align: right;
+        }
+
+        .estado-pendiente {
+            background: #ffe0e0;
+            color: #d63031;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #d63031;
+        }
+
+        .estado-en-proceso {
+            background: #fff3e0;
+            color: #e67e22;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #e67e22;
+        }
+
+        .estado-completado {
+            background: #e0ffe0;
+            color: #27ae60;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid #27ae60;
+        }
+
+        .mecanico-info {
+            background: #f5f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .mecanico-info .mecanico-nombre {
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .mecanico-info .mecanico-especialidad {
+            color: #666;
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        .modal-actions {
+            margin-top: 25px;
+            padding-top: 20px;
+            border-top: 2px solid #eee;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .btn-modal {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn-volver {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-volver:hover {
+            background: #d0d0d0;
+        }
+
+        .btn-contactar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-contactar:hover {
+            transform: translateY(-2px);
+        }
+
+        /* MENSAJE VACÍO */
+        .empty-state {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state h3 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .search-section {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-group input,
+            .input-group button {
+                width: 100%;
+            }
+
+            .card-info {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 25px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🚗 MecanicCompany</h1>
+            <p>Panel de Seguimiento de Solicitudes</p>
+        </div>
+
+        <!-- BÚSQUEDA -->
+        <div class="search-section">
+            <h2>Ingresa tu correo para ver tus solicitudes</h2>
+            <div class="input-group">
+                <input 
+                    type="email" 
+                    id="emailInput" 
+                    placeholder="ejemplo@gmail.com"
+                    value="cliente@gmail.com"
+                >
+                <button onclick="buscarSolicitudes()">Buscar mis solicitudes</button>
+            </div>
+        </div>
+
+        <!-- SOLICITUDES -->
+        <div class="solicitudes-container" id="solicitudesContainer">
+            <!-- Aquí se cargarán las solicitudes -->
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALLES -->
+    <div class="modal" id="modalDetalles">
+        <div class="modal-content" id="modalContent">
+            <!-- Contenido dinámico -->
+        </div>
+    </div>
+
+    <script>
+        // BASE DE DATOS SIMULADA
+        const solicitudesDB = [
+            {
+                id: 'SOL-001',
+                correoCliente: 'cliente@gmail.com',
+                vehiculo: 'Chevrolet Spark',
+                placa: 'KVD-123',
+                anio: '2018',
+                marca: 'Chevrolet',
+                modelo: 'Spark',
+                servicio: 'Cambio de aceite',
+                estado: 'Pendiente',
+                fechaSolicitud: '30 de julio, 2:30 PM',
+                mecanico: 'Sin asignar',
+                especialidad: '-',
+                experiencia: '-',
+                estimadoEntrega: 'Próximamente'
+            },
+            {
+                id: 'SOL-002',
+                correoCliente: 'cliente@gmail.com',
+                vehiculo: 'Ford Fiesta',
+                placa: 'ABC-456',
+                anio: '2015',
+                marca: 'Ford',
+                modelo: 'Fiesta',
+                servicio: 'Reparación de frenos',
+                estado: 'En_proceso',
+                fechaSolicitud: '25 de julio, 9:00 AM',
+                mecanico: 'Steven Cabascango',
+                especialidad: 'Frenos y suspensión',
+                experiencia: '8 años',
+                estimadoEntrega: '31 de julio, 2:00 PM'
+            },
+            {
+                id: 'SOL-003',
+                correoCliente: 'cliente@gmail.com',
+                vehiculo: 'Hyundai Tucson',
+                placa: 'XYZ-789',
+                anio: '2020',
+                marca: 'Hyundai',
+                modelo: 'Tucson',
+                servicio: 'Revisión general',
+                estado: 'Completado',
+                fechaSolicitud: '15 de julio, 11:00 AM',
+                mecanico: 'Juan López',
+                especialidad: 'Motores',
+                experiencia: '12 años',
+                estimadoEntrega: '29 de julio, 4:00 PM'
+            }
+        ];
+
+        function buscarSolicitudes() {
+            const email = document.getElementById('emailInput').value.toLowerCase().trim();
+            const container = document.getElementById('solicitudesContainer');
+
+            if (!email) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📧</div>
+                        <h3>Ingresa tu correo</h3>
+                        <p>Por favor, escribe el correo con el que hiciste tu solicitud</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const solicitudes = solicitudesDB.filter(s => s.correoCliente === email);
+
+            if (solicitudes.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🔍</div>
+                        <h3>No se encontraron solicitudes</h3>
+                        <p>No hay solicitudes registradas con este correo</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `<div class="solicitudes-title">📋 Tus Solicitudes (${solicitudes.length})</div>`;
+
+            solicitudes.forEach(sol => {
+                const estadoClass = sol.estado === 'Pendiente' ? 'pendiente' : 
+                                   sol.estado === 'En_proceso' ? 'en-proceso' : 'completado';
+                
+                html += `
+                    <div class="solicitud-card ${estadoClass}" onclick="abrirDetalles('${sol.id}')">
+                        <div class="card-header">
+                            <div class="card-title">${sol.marca} ${sol.modelo}</div>
+                            <div class="status-badge ${estadoClass}">${sol.estado.replace('_', ' ').toUpperCase()}</div>
+                        </div>
+                        <div class="card-info">
+                            <div class="info-item">
+                                <span class="info-label">Placa</span>
+                                <span>${sol.placa}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Servicio</span>
+                                <span>${sol.servicio}</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Solicitado</span>
+                                <span>${sol.fechaSolicitud}</span>
+                            </div>
+                            ${sol.mecanico !== 'Sin asignar' ? `
+                                <div class="info-item">
+                                    <span class="info-label">Mecánico</span>
+                                    <span>${sol.mecanico}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div class="card-action">
+                            <button class="btn-details">Ver detalles</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function abrirDetalles(solicitudId) {
+            const solicitud = solicitudesDB.find(s => s.id === solicitudId);
+            if (!solicitud) return;
+
+            const estadoClass = solicitud.estado === 'Pendiente' ? 'pendiente' : 
+                               solicitud.estado === 'En_proceso' ? 'en-proceso' : 'completado';
+            
+            let estadoHTML = '';
+            if (solicitud.estado === 'Pendiente') {
+                estadoHTML = `
+                    <div class="estado-pendiente">
+                        <strong>⏳ ¿QUÉ SIGNIFICA PENDIENTE?</strong>
+                        <p style="margin-top: 8px;">Tu solicitud fue recibida pero aún no comienza el trabajo. El taller está asignando un mecánico disponible. Recibirás notificación cuando empiece.</p>
+                    </div>
+                `;
+            } else if (solicitud.estado === 'En_proceso') {
+                estadoHTML = `
+                    <div class="estado-en-proceso">
+                        <strong>⚙️ TRABAJO EN PROGRESO</strong>
+                        <p style="margin-top: 8px;">Tu vehículo está siendo reparado en este momento. Puedes ver quién está trabajando en él y cuándo estará listo.</p>
+                    </div>
+                `;
+            } else {
+                estadoHTML = `
+                    <div class="estado-completado">
+                        <strong>✅ TRABAJO COMPLETADO</strong>
+                        <p style="margin-top: 8px;">Tu vehículo está 100% listo. Puedes retirarlo en el horario de atención del taller.</p>
+                    </div>
+                `;
+            }
+
+            let mecanicHTML = '';
+            if (solicitud.mecanico !== 'Sin asignar') {
+                mecanicHTML = `
+                    <div class="mecanico-info">
+                        <div class="mecanico-nombre">👨‍🔧 ${solicitud.mecanico}</div>
+                        <div class="mecanico-especialidad">Especialidad: ${solicitud.especialidad}</div>
+                        <div class="mecanico-especialidad">Experiencia: ${solicitud.experiencia}</div>
+                    </div>
+                `;
+            }
+
+            const html = `
+                <div class="modal-header">
+                    <h2>${solicitud.marca} ${solicitud.modelo}</h2>
+                    <button class="modal-close" onclick="cerrarDetalles()">✕</button>
+                </div>
+
+                ${estadoHTML}
+
+                <div class="detail-section">
+                    <h3>📋 Información del Vehículo</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Marca</span>
+                        <span class="detail-value">${solicitud.marca}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Modelo</span>
+                        <span class="detail-value">${solicitud.modelo}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Año</span>
+                        <span class="detail-value">${solicitud.anio}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Placa</span>
+                        <span class="detail-value">${solicitud.placa}</span>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h3>🔧 Servicio Solicitado</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Tipo de Servicio</span>
+                        <span class="detail-value">${solicitud.servicio}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Fecha de Solicitud</span>
+                        <span class="detail-value">${solicitud.fechaSolicitud}</span>
+                    </div>
+                </div>
+
+                ${mecanicHTML}
+
+                <div class="detail-section">
+                    <h3>⏱️ Estimado de Entrega</h3>
+                    <div class="detail-item">
+                        <span class="detail-label">Listo para retirar</span>
+                        <span class="detail-value"><strong>${solicitud.estimadoEntrega}</strong></span>
+                    </div>
+                </div>
+
+                <div style="background: #f0f4ff; padding: 15px; border-radius: 8px; margin: 15px 0; border-left: 4px solid #667eea;">
+                    <strong>📧 Para costos y detalles de factura</strong>
+                    <p style="margin-top: 8px; color: #555;">Revisa tu correo. Allí encontrarás la factura completa con el desglose de costos, repuestos utilizados y detalles técnicos del servicio.</p>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-modal btn-volver" onclick="cerrarDetalles()">Volver</button>
+                    <button class="btn-modal btn-contactar" onclick="contactarTaller()">Contactar Taller</button>
+                </div>
+            `;
+
+            document.getElementById('modalContent').innerHTML = html;
+            document.getElementById('modalDetalles').classList.add('active');
+        }
+
+        function cerrarDetalles() {
+            document.getElementById('modalDetalles').classList.remove('active');
+        }
+
+        function contactarTaller() {
+            alert('Función de contacto: Aquí se abrirá un formulario o chat con el taller.\nEsta funcionalidad se integrará en la app móvil.');
+        }
+
+        // Cargar solicitudes al abrir la página
+        window.addEventListener('load', function() {
+            buscarSolicitudes();
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.getElementById('modalDetalles').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarDetalles();
+            }
+        });
+    </script>
+</body>
+</html>

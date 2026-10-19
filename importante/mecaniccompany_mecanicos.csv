@@ -1,0 +1,17 @@
+mecanico_id,nombres,apellidos,nombre_completo,correo,correo_empresarial,especialidad,años_experiencia,estado_laboral,total_servicios_realizados
+"cmp71nh6p000016wflfsnh22k","Carlos Erick","Lopez Mendez","Carlos Erick Lopez Mendez","carlos.mecanico@gmail.com","carlos.lopez@mecanic.com","Motor",5,"Disponible",4
+"cmpmpdpp10000zs34tm3f59n4","Alexis Javier","Arcos Gutiérrez","Alexis Javier Arcos Gutiérrez","alexischainsaw@gmail.com","alexis.arcos@mecanic.com","Frenos",6,"Disponible",3
+"cmpvcbfx20000eprs96njnkym","Steven cc","Cabascango heredia","Steven cc Cabascango heredia","stivoter12345678911@gmail.com","steven.cabascango@mecanic.com","Motor",23,"Disponible",3
+"cmpwpn9vc0003lck11kow5t7y","Bryan justinn","Atamba sanchezz","Bryan justinn Atamba sanchezz","bryjus2003@gmail.com","bryan.antamba@mecanic.com","Suspensión",23,"Disponible",3
+"cmq6n6ddd0000y6cfiio95gr0","Pepe pedro","La loca","Pepe pedro La loca","bryandressel4@gmail.com","bryan@mecanic.com","Transmisión",5,"Disponible",1
+"cmqgopt1v0002mpqhglxviao3","Maicol juan","zurita sanchez","Maicol juan zurita sanchez","maicol@gmail.com","maicol@mecanic.com","Electricidad automotriz",4,"Disponible",4
+"cmr3o33dl00007p8xeqp31hom","Héctor","Ortiz Mendoza","Héctor Ortiz Mendoza","héctor.ortiz790@gmail.com","héctor.ortiz1@mecanic.com","Aire acondicionado",3,"Disponible",0
+"cmr3o33dm00017p8xes6o014z","Fernando","Mendoza Reyes","Fernando Mendoza Reyes","fernando.mendoza830@gmail.com","fernando.mendoza2@mecanic.com","Carrocería y pintura",10,"Disponible",2
+"cmr3o33dm00027p8xzx6ubg80","Óscar","Mendoza Morales","Óscar Mendoza Morales","óscar.mendoza374@gmail.com","óscar.mendoza3@mecanic.com","Frenos y suspensión",6,"Disponible",2
+"cmr3o33dm00037p8xqspx0qsn","Armando","Mendoza Torres","Armando Mendoza Torres","armando.mendoza815@gmail.com","armando.mendoza4@mecanic.com","Sistema eléctrico",6,"Ocupado",1
+"cmr3o33dm00047p8xnruhkege","Fernando","Morales Torres","Fernando Morales Torres","fernando.morales845@gmail.com","fernando.morales5@mecanic.com","Diagnóstico electrónico",3,"Disponible",2
+"cmr3o33dn00057p8xklt9buez","Gustavo","Silva Ramírez","Gustavo Silva Ramírez","gustavo.silva597@gmail.com","gustavo.silva6@mecanic.com","Aire acondicionado",3,"Ocupado",1
+"cmr3o33dn00067p8xe64u14dj","Armando","Vargas Vargas","Armando Vargas Vargas","armando.vargas309@gmail.com","armando.vargas7@mecanic.com","Frenos y suspensión",19,"Disponible",2
+"cmr3o33dn00077p8xd4hg5a3t","Roberto","Morales Silva","Roberto Morales Silva","roberto.morales830@gmail.com","roberto.morales8@mecanic.com","Carrocería y pintura",16,"Ocupado",0
+"cmr3o33dn00087p8xdfomdkq3","Óscar","Vargas Reyes","Óscar Vargas Reyes","óscar.vargas513@gmail.com","óscar.vargas9@mecanic.com","Aire acondicionado",2,"Disponible",1
+"cmr3o33dn00097p8x5926l6u2","Ricardo","Torres Mendoza","Ricardo Torres Mendoza","ricardo.torres181@gmail.com","ricardo.torres10@mecanic.com","Diagnóstico electrónico",8,"Ocupado",1

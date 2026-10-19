@@ -1,35 +1,10 @@
 // api.ts
 // Utilidades para comunicarse con el backend de MecanicCompany.
-//
-// ⚠️  URL base - AUTOMÁTICAMENTE DETECTA EL ENTORNO:
-//   - Android Studio Emulator → http://10.0.2.2:3000/api
-//   - iOS simulator             → http://localhost:3000/api
-//   - Dispositivo físico / Expo Go → http://TU_IP:3000/api
 
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
+import { API_URL } from '@/config';
 
-// Función para obtener la URL base según el entorno
-function getBaseUrl(): string {
-  // Si estás en desarrollo y tienes debuggerHost (dispositivo físico con Expo)
-  const debuggerHost = Constants.expoConfig?.hostUri;
-  
-  if (debuggerHost) {
-    // Extraer solo la IP (sin el puerto de Metro)
-    const ip = debuggerHost.split(':')[0];
-    return `http://${ip}:3000/api`;
-  }
-  
-  // Para emulador de Android Studio
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:3000/api';
-  }
-  
-  // Para simulador de iOS
-  return 'http://localhost:3000/api';
-}
-
-export const BASE_URL = getBaseUrl();
+// URL base del backend (importada desde config.ts)
+export const BASE_URL = API_URL;
 
 // ─── Tipo de error de API ─────────────────────────────────────────────────────
 export interface ApiError {
@@ -84,7 +59,20 @@ async function request<T>(
 
 export interface LoginResponse {
     token: string;
-    mecanico: {
+    usuario: {
+        id: string;
+        nombres: string;
+        apellidos: string;
+        correoEmpresarial?: string;
+        correo?: string;
+        especialidad?: string;
+        estadoLaboral?: string;
+        rol: 'admin' | 'mecanico' | 'financiero' | 'inventario' | 'cliente';
+        esAdmin?: boolean;
+        tipoPersonal?: string;
+    };
+    // Mantener compatibilidad con versión anterior
+    mecanico?: {
         id: string;
         nombres: string;
         apellidos: string;
@@ -92,6 +80,7 @@ export interface LoginResponse {
         especialidad: string;
         estadoLaboral: string;
         esAdmin: boolean;
+        tipoPersonal?: string;
     };
 }
 
@@ -163,6 +152,12 @@ export interface SolicitudBackend {
     fechaCita: string;
     horaCita: string;
     estado: string;
+    createdAt: string;
+    mecanico: {
+        id: string;
+        nombres: string;
+        apellidos: string;
+    } | null;
     mantenimiento: {
         id: string;
         marca: string;
@@ -175,7 +170,7 @@ export interface SolicitudBackend {
         diagnostico: string;
         trabajoRealizado: string;
         otroTrabajo: string;
-        repuestosUtilizados: string;
+        repuestosUtilizados: string; // JSON string de repuestos
         diagnosticoRealizado: string;
         costoManoObra: number;
         costoRepuestos: number;
@@ -278,6 +273,7 @@ export interface CrearMantenimientoBody {
     fechaServicio: string;
     fechaInicio: string;
     fechaFinalizacion: string;
+    fotoVehiculo?: string | null;  // Foto en base64
 }
 
 export const mantenimientosApi = {
@@ -286,6 +282,9 @@ export const mantenimientosApi = {
 
     actualizar: (id: string, body: Partial<CrearMantenimientoBody>, token: string) =>
         request<{ id: string }>('PUT', `/mantenimientos/${id}`, body, token),
+
+    obtenerHistorial: (token: string) =>
+        request<{ message: string; historial: any[] }>('GET', '/mantenimientos/historial/mecanico', undefined, token),
 };
 
 // ─── API Reportes ──────────────────────────────────────────────────────────────
@@ -294,4 +293,190 @@ export const reportesApi = {
     // Envía el reporte al correo del cliente y marca la solicitud como Completado
     enviar: (solicitudId: string, token: string) =>
         request<{ message: string }>('POST', `/reportes/enviar/${solicitudId}`, undefined, token),
+};
+
+// ─── API Reportes de Soporte ───────────────────────────────────────────────────
+
+export interface CrearReporteSoporteBody {
+    nombre: string;
+    segundoNombre?: string;
+    apellido: string;
+    segundoApellido?: string;
+    correo: string;
+    tipoAsunto: string;
+    descripcion: string;
+}
+
+export const reporteSoporteApi = {
+    crear: (body: CrearReporteSoporteBody) =>
+        request<{ message: string; id: string }>('POST', '/reportes-soporte', body),
+
+    listar: (token: string) =>
+        request<any[]>('GET', '/reportes-soporte', undefined, token),
+};
+
+// ─── API Productos (Inventario) ────────────────────────────────────────────────
+
+export interface CompatibilidadProducto {
+    id: string;
+    marca: string;
+    modelo: string;
+    anoDesde: number;
+    anoHasta: number;
+}
+
+export interface Producto {
+    id: string;
+    nombreProducto: string;
+    codigoSKU: string;
+    marcaComponente: string;
+    categoria: string;
+    numeroParteOEM: string;
+    descripcion: string;
+    stockActual: number;
+    stockMinimo: number;
+    stockCritico: number;
+    precioCompra: number;
+    precioVenta: number;
+    ubicacion: string;
+    unidadMedida: string;
+    compatibilidades: CompatibilidadProducto[];
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CrearProductoBody {
+    nombreProducto: string;
+    codigoSKU: string;
+    marcaComponente: string;
+    categoria: string;
+    numeroParteOEM?: string;
+    descripcion: string;
+    stockActual: number;
+    stockMinimo: number;
+    stockCritico: number;
+    precioCompra: number;
+    precioVenta: number;
+    ubicacion: string;
+    unidadMedida: string;
+    compatibilidades: Array<{
+        marca: string;
+        modelo: string;
+        anoDesde: number;
+        anoHasta: number;
+    }>;
+}
+
+export const productosApi = {
+    crear: (body: CrearProductoBody, token: string) =>
+        request<{ message: string; producto: Producto }>('POST', '/productos', body, token),
+
+    listar: () =>
+        request<{ message: string; cantidad: number; productos: Producto[] }>('GET', '/productos'),
+
+    obtenerPorId: (id: string) =>
+        request<{ message: string; producto: Producto }>('GET', `/productos/${id}`),
+
+    actualizar: (id: string, body: Partial<CrearProductoBody>, token: string) =>
+        request<{ message: string; producto: Producto }>('PUT', `/productos/${id}`, body, token),
+
+    eliminar: (id: string, token: string) =>
+        request<{ message: string; productoEliminado: { id: string; nombreProducto: string } }>('DELETE', `/productos/${id}`, undefined, token),
+};
+
+// ─── API Finanzas ─────────────────────────────────────────────────────────────
+
+export interface Finanzas {
+    id: string;
+    numeroFactura: string;
+    mantenimientoId: string;
+    clienteNombre: string;
+    clienteTelefono: string;
+    clienteCorreo: string;
+    vehiculo: string;
+    marca: string;
+    modelo: string;
+    placa: string;
+    anio: string;
+    kilometraje: string;
+    servicio: string;
+    mecanico: string;
+    costoManoObra: number;
+    costoRepuestos: number;
+    total: number;
+    estado: 'Pendiente' | 'Pagado' | 'Cancelado';
+    metodoPago?: 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'OTRO';
+    fechaPago?: string;
+    observacion?: string;
+    comprobanteUri?: string;
+    fechaFactura: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CrearFinanzasBody {
+    mantenimientoId: string;
+    clienteNombre: string;
+    clienteTelefono: string;
+    clienteCorreo: string;
+    vehiculo: string;
+    marca: string;
+    modelo: string;
+    placa: string;
+    anio: string;
+    kilometraje: string;
+    servicio: string;
+    mecanico: string;
+    costoManoObra: number;
+    costoRepuestos: number;
+}
+
+export interface ActualizarFinanzasBody {
+    estado?: 'Pendiente' | 'Pagado' | 'Cancelado';
+    metodoPago?: 'EFECTIVO' | 'TRANSFERENCIA' | 'TARJETA' | 'OTRO';
+    fechaPago?: string;
+    observacion?: string;
+    comprobanteUri?: string;
+}
+
+export interface EstadisticasFinanzas {
+    ingresosMes: number;
+    costoRepuestosMes: number;
+    utilidadNeta: number;
+    serviciosCompletados: number;
+    serviciosPendientes: number;
+}
+
+export const finanzasApi = {
+    listar: (estado?: string, clienteNombre?: string, fechaDesde?: string, fechaHasta?: string, token?: string) => {
+        let path = '/finanzas';
+        const params = new URLSearchParams();
+        
+        if (estado) params.append('estado', estado);
+        if (clienteNombre) params.append('clienteNombre', clienteNombre);
+        if (fechaDesde) params.append('fechaDesde', fechaDesde);
+        if (fechaHasta) params.append('fechaHasta', fechaHasta);
+        
+        if (params.toString()) path += `?${params.toString()}`;
+        
+        return request<{ message: string; cantidad: number; pagos: Finanzas[] }>('GET', path, undefined, token);
+    },
+
+    obtenerPorId: (id: string) =>
+        request<{ message: string; pago: Finanzas }>('GET', `/finanzas/${id}`),
+
+    crear: (body: CrearFinanzasBody, token: string) =>
+        request<{ message: string; pago: Finanzas }>('POST', '/finanzas', body, token),
+
+    actualizar: (id: string, body: ActualizarFinanzasBody, token: string) =>
+        request<{ message: string; pago: Finanzas }>('PUT', `/finanzas/${id}`, body, token),
+
+    eliminar: (id: string, token: string) =>
+        request<{ message: string; pago: Finanzas }>('DELETE', `/finanzas/${id}`, undefined, token),
+
+    obtenerEstadisticas: () =>
+        request<{ message: string; estadisticas: EstadisticasFinanzas }>('GET', '/finanzas/estadisticas/resumen'),
+
+    obtenerEstadisticasPagados: () =>
+        request<{ message: string; pagosRealizados: { numeroPagos: number; totalCancelado: number } }>('GET', '/finanzas/estadisticas/pagados'),
 };

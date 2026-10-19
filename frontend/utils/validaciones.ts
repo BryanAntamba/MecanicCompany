@@ -146,16 +146,18 @@ export const validarCorreoMecanic = (valor: string): string | null => {
 };
 
 // ─── validarCredencial ───────────────────────────────────────────────────────
-// Valida correo que puede ser @gmail.com o @mecanic.com
+// Valida correo que puede ser @gmail.com, @mecanic.com, @inventariomecanic.com o @finanzasmecanic.com
 export const validarCredencial = (valor: string): string | null => {
   if (!valor.trim()) return 'La credencial es obligatoria.';
   
   const correoLower = valor.trim().toLowerCase();
   const esGmail = /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(correoLower);
   const esMecanic = /^[a-zA-Z0-9._%+-]+@mecanic\.com$/.test(correoLower);
+  const esInventario = /^[a-zA-Z0-9._%+-]+@inventariomecanic\.com$/.test(correoLower);
+  const esFinanzas = /^[a-zA-Z0-9._%+-]+@finanzasmecanic\.com$/.test(correoLower);
   
-  if (!esGmail && !esMecanic) {
-    return 'Ingresa un correo válido (@gmail.com o @mecanic.com).';
+  if (!esGmail && !esMecanic && !esInventario && !esFinanzas) {
+    return 'Ingrese un correo válido.';
   }
   
   return null;
@@ -163,14 +165,16 @@ export const validarCredencial = (valor: string): string | null => {
 
 
 // ─── validarAño ──────────────────────────────────────────────────────────────
-// Exactamente 4 dígitos, entre 1900 y año actual + 1.
+// Exactamente 4 dígitos, desde 1900 hasta el año actual
+// Se ajusta dinámicamente al año en que se ejecuta la app
 export const validarAño = (valor: string): string | null => {
   if (!valor.trim()) return 'El año es obligatorio.';
   if (!/^\d{4}$/.test(valor.trim())) return 'Ingrese el año del vehiculo de manera correcta.';
   const num = parseInt(valor.trim(), 10);
   const actual = new Date().getFullYear();
-  if (num < 1900 || num > actual + 1)
-    return `El año debe estar entre 1900 y ${actual + 1}.`;
+  // Permite desde 1900 hasta el año actual
+  if (num < 1900 || num > actual)
+    return 'Ingrese un año valido.';
   return null;
 };
 
@@ -395,4 +399,199 @@ export const validarEspecialidadOServicio = (valor: string, tipo: 'especialidad'
   }
   
   return null;
+};
+
+
+// ─── VALIDACIONES PARA INVENTARIO DE PRODUCTOS ────────────────────────────────
+
+// ─── validarNombreProducto ────────────────────────────────────────────────────
+// Solo letras y números, sin caracteres especiales
+export const validarNombreProducto = (valor: string): string | null => {
+  if (!valor.trim()) return 'El nombre del producto es obligatorio.';
+  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim()))
+    return 'Ingrese un nombre de producto válido.';
+  if (valor.trim().length < 3) return 'El nombre debe tener al menos 3 caracteres.';
+  return null;
+};
+
+// ─── validarCodigoSKU ─────────────────────────────────────────────────────────
+// Letras y números, sin caracteres especiales
+export const validarCodigoSKU = (valor: string): string | null => {
+  if (!valor.trim()) return 'El código/SKU es obligatorio.';
+  if (!/^[a-zA-Z0-9]+$/.test(valor.trim()))
+    return 'El código/SKU solo puede contener letras y números.';
+  if (valor.trim().length < 3) return 'El código/SKU debe tener al menos 3 caracteres.';
+  return null;
+};
+
+// ─── validarNumeroOEM ─────────────────────────────────────────────────────────
+// Opcional, letras y números, sin caracteres especiales
+export const validarNumeroOEM = (valor: string): string | null => {
+  if (!valor.trim()) return null; // Opcional
+  if (!/^[a-zA-Z0-9]+$/.test(valor.trim()))
+    return 'El número de parte/OEM solo puede contener letras y números.';
+  return null;
+};
+
+// ─── validarDescripcionProducto ───────────────────────────────────────────────
+// Permite letras, números y caracteres especiales
+export const validarDescripcionProducto = (valor: string): string | null => {
+  if (!valor.trim()) return null; // Opcional
+  if (valor.trim().length < 10) return 'La descripción debe tener al menos 10 caracteres.';
+  return null;
+};
+
+// ─── validarStockNumero ───────────────────────────────────────────────────────
+// Solo números enteros positivos, puede tener puntos como separadores de miles
+// NO permite decimales ni comas
+export const validarStockNumero = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  
+  // Quitar puntos (separadores de miles españoles)
+  const sinPuntos = valor.trim().replace(/\./g, '');
+  
+  // No permitir comas
+  if (sinPuntos.includes(',')) {
+    return `${campo} debe ser un número entero (sin decimales).`;
+  }
+  
+  if (!/^\d+$/.test(sinPuntos)) return `${campo} debe ser un número entero.`;
+  const num = parseInt(sinPuntos, 10);
+  if (num < 0) return `${campo} no puede ser negativo.`;
+  return null;
+};
+
+// ─── validarPrecio ────────────────────────────────────────────────────────────
+// Número en formato estadounidense: coma como separador de miles y punto como decimal
+// Ejemplos válidos: 34.50, 340.75, 34000.99, 34,000.99
+export const validarPrecio = (valor: string, campo: string): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  
+  // No permitir que inicie con punto o coma
+  if (/^[.,]/.test(valor.trim())) {
+    return 'Ingrese una cantidad válida.';
+  }
+  
+  // Permitir formato estadounidense: números con comas opcionales (miles) y punto decimal
+  // Ejemplos: 34.50, 340.75, 34,000.99
+  if (!/^[\d,]+\.?\d*$/.test(valor.trim())) {
+    return 'Ingrese una cantidad válida.';
+  }
+  
+  // Convertir al formato numérico (quitar comas)
+  const valorNumerico = parseFloat(valor.trim().replace(/,/g, ''));
+  
+  if (isNaN(valorNumerico) || valorNumerico <= 0) {
+    return 'Ingrese una cantidad válida.';
+  }
+  
+  return null;
+};
+
+// ─── validarCategoriaOtra ─────────────────────────────────────────────────────
+// Solo letras cuando selecciona "Otros" en categoría
+export const validarCategoriaOtra = (valor: string): string | null => {
+  if (!valor.trim()) return 'Debe especificar la categoría.';
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim()))
+    return 'La categoría solo puede contener letras y espacios.';
+  if (valor.trim().length < 3) return 'La categoría debe tener al menos 3 caracteres.';
+  return null;
+};
+
+
+
+
+
+
+// ─── validarUbicacionInventario ──────────────────────────────────────────────
+// Letras, números y guión (-). Ejemplo: "Estante A-4", "Zona B-12"
+export const validarUbicacionInventario = (valor: string): string | null => {
+  if (!valor.trim()) return 'La ubicación en inventario es obligatoria.';
+  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s-]+$/.test(valor.trim()))
+    return 'La ubicación solo puede contener letras, números, espacios y guiones.';
+  return null;
+};
+
+
+// ─── validarAnoVehiculo ──────────────────────────────────────────────────────
+// Año válido (4 dígitos, entre 1900 y año actual + 2)
+export const validarAnoVehiculo = (valor: string, campo: string = 'Año'): string | null => {
+  if (!valor.trim()) return `${campo} es obligatorio.`;
+  if (!/^\d{4}$/.test(valor.trim())) return `${campo} debe tener 4 dígitos.`;
+  const ano = parseInt(valor.trim(), 10);
+  const anoActual = new Date().getFullYear();
+  if (ano < 1900 || ano > anoActual + 2) 
+    return `${campo} debe estar entre 1900 y ${anoActual + 2}.`;
+  return null;
+};
+
+
+// ─── validarRangoAnos ────────────────────────────────────────────────────────
+// Validar que anoDesde <= anoHasta
+export const validarRangoAnos = (anoDesde: string, anoHasta: string): string | null => {
+  const desde = parseInt(anoDesde, 10);
+  const hasta = parseInt(anoHasta, 10);
+  if (desde > hasta) return 'El año "Desde" no puede ser mayor que el año "Hasta".';
+  return null;
+};
+
+
+// ─── validarMarcaPersonalizada ────────────────────────────────────────────────
+// Validación para marcas personalizadas (solo letras y espacios)
+export const validarMarcaPersonalizada = (valor: string, contexto: string = 'la marca'): string | null => {
+  if (!valor.trim()) return `Ingrese ${contexto}.`;
+  if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/.test(valor.trim())) {
+    // Mensaje específico según el contexto
+    if (contexto.includes('componente')) return 'Ingrese una marca de componente válida.';
+    if (contexto.includes('vehículo')) return 'Ingrese una marca de vehículo válida.';
+    return 'Ingrese la marca de manera correcta.';
+  }
+  return null;
+};
+
+
+// ─── validarModeloPersonalizado ──────────────────────────────────────────────
+// Validación para modelos personalizados (letras, números, espacios y guión)
+export const validarModeloPersonalizado = (valor: string, contexto: string = 'vehículo'): string | null => {
+  if (!valor.trim()) return `Ingrese el modelo del ${contexto}.`;
+  if (!/^[a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s-]+$/.test(valor.trim()))
+    return `Ingrese un modelo de ${contexto} válido.`;
+  return null;
+};
+
+
+/**
+ * Valida que stock mínimo no sea mayor que stock actual
+ */
+export const validarStockMinimo = (stockActual: string, stockMinimo: string): string => {
+  const actual = parseInt(stockActual, 10);
+  const minimo = parseInt(stockMinimo, 10);
+  
+  if (isNaN(minimo) || minimo < 0) {
+    return 'El stock mínimo debe ser un número válido';
+  }
+  
+  if (minimo > actual) {
+    return 'El stock mínimo no puede ser mayor que el stock actual';
+  }
+  
+  return '';
+};
+
+/**
+ * Valida que stock crítico no sea mayor que stock actual
+ */
+export const validarStockCritico = (stockActual: string, stockCritico: string): string => {
+  const actual = parseInt(stockActual, 10);
+  const critico = parseInt(stockCritico, 10);
+  
+  if (isNaN(critico) || critico < 0) {
+    return 'El stock crítico debe ser un número válido';
+  }
+  
+  if (critico > actual) {
+    return 'El stock crítico no puede ser mayor que el stock actual';
+  }
+  
+  return '';
 };

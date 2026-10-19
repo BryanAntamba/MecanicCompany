@@ -1,0 +1,6 @@
+solicitud_id,tipo_servicio,descripcion,estado,cliente,telefono,correo,marca,modelo,año,placa,fecha_cita,hora_cita,fecha_solicitud,mecanico_asignado
+"cmr98wcqk003cc3hblx4ntrqj","Revisión de frenos","Solicitud de revisión de frenos","Pendiente","María González","555-0102","maria.gonzalez@email.com","Hyundai","Elantra","2020","SCQ-533","2026-07-12","13:00","2026-07-06T13:17:55.196Z"," "
+"cmr98wcqm003dc3hb9dsqf1pp","Suspensión","Solicitud de suspensión","Pendiente","Diego Ramírez","555-0109","diego.ramirez@email.com","Hyundai","Tucson","2023","RUT-307","2026-07-06","10:00","2026-07-06T13:17:55.198Z"," "
+"cmr98wcqn003ec3hbchhjlxog","Alineación y balanceo","Solicitud de alineación y balanceo","Pendiente","Diego Ramírez","555-0109","diego.ramirez@email.com","Nissan","X-Trail","2020","VIC-386","2026-07-12","13:00","2026-07-06T13:17:55.200Z"," "
+"cmr98wcqp003fc3hbkrygiyb9","Revisión de frenos","Solicitud de revisión de frenos","Pendiente","Patricia Martínez","555-0106","patricia.martinez@email.com","Kia","Sportage","2022","YTJ-636","2026-07-08","13:00","2026-07-06T13:17:55.201Z"," "
+"cmr98wcqq003gc3hbcqtr77q3","Sistema eléctrico","Solicitud de sistema eléctrico","Pendiente","Roberto Silva","555-0107","roberto.silva@email.com","Toyota","RAV4","2020","MFY-290","2026-07-07","9:00","2026-07-06T13:17:55.203Z"," "

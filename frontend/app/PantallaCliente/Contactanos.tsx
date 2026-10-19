@@ -5,6 +5,7 @@ import {
   Animated,   // API de animaciones de React Native
   BackHandler, // Control del botón back del teléfono
   Linking,    // Abre URLs externas (tel:, mailto:, https:)
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -12,13 +13,14 @@ import {
 } from 'react-native';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
-import MapView, { Marker } from 'react-native-maps'; // Mapa nativo embebido
+import MapView, { Marker } from '@/components/MapView'; // Mapa compatible con web y móvil
 import { useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';
 // Sistema de provincias y mecánicas de Ecuador
 import { PROVINCIAS_ECUADOR, obtenerMecanicasPorProvincia, type ProvinciaEcuador } from '@/utils/provinciasEcuador';
 import styles from '@/Styles/pantallaCliente/Contactanos';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
 
 // Coordenadas exactas del taller SM Quality Tires en Quito
 const TALLER_LAT = -0.1632772;
@@ -32,8 +34,10 @@ export default function ContactanosScreen() {
   const router = useRouter();
   const { user, logout } = useAuth();
 
-  // BackHandler: regresa a index (PantallaCliente)
+  // BackHandler: regresa a index (PantallaCliente, solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.push('/PantallaCliente' as any);
       return true;
@@ -87,13 +91,14 @@ export default function ContactanosScreen() {
   };
 
   return (
-    <View style={styles.page}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]} // La navbar queda fija al hacer scroll
-      >
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[0]} // La navbar queda fija al hacer scroll
+        >
         {/* Navbar sticky del cliente */}
         <NavbarCliente
           onScrollToAbout={handleScrollToAbout}
@@ -365,5 +370,6 @@ export default function ContactanosScreen() {
 
       </ScrollView>
     </View>
+    </ResponsiveContainer>
   );
 }

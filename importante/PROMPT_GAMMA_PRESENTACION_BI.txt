@@ -1,0 +1,431 @@
+PROMPT PARA GAMMA.APP - PRESENTACIÓN MECANICCOMPANY BUSINESS INTELLIGENCE
+==========================================================================
+
+Crea una presentación profesional sobre el proyecto de Business Intelligence de MecanicCompany con diseño moderno corporativo.
+
+CONFIGURACIÓN GENERAL:
+- Total de diapositivas: 8 (2 por presentador × 4 personas)
+- Estilo: Profesional, moderno, corporativo automotriz
+- Paleta de colores: Azul #1E3A8A, Gris #475569, Verde #16A34A, Amarillo #F59E0B
+- Fuente: Inter, Segoe UI o Roboto
+- Iconos: Relacionados con mecánica, tecnología, datos
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 1 - PORTADA (PRESENTADOR 1)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO PRINCIPAL:
+MecanicCompany
+Sistema de Business Intelligence
+
+SUBTÍTULO:
+Transformando Datos en Decisiones Estratégicas
+
+ELEMENTOS VISUALES:
+- Logo conceptual: Llave inglesa + gráfico de datos
+- Imagen de fondo: Taller mecánico moderno (con opacidad 20%)
+- Fecha: Julio 2026
+
+FOOTER:
+Proyecto de Inteligencia de Negocios
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 2 - NOMBRE Y ACTIVIDAD DE LA EMPRESA (PRESENTADOR 1)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+¿Quiénes Somos?
+
+CONTENIDO:
+
+🔧 NOMBRE DE LA EMPRESA
+MecanicCompany
+
+🚗 NUESTRA ACTIVIDAD
+
+MecanicCompany se dedica a la prestación de servicios de mantenimiento y reparación automotriz especializada mediante una plataforma digital innovadora.
+
+SERVICIOS PRINCIPALES:
+• Diagnóstico computarizado profesional
+• Mantenimiento preventivo y correctivo
+• Reparación de sistemas mecánicos, eléctricos y electrónicos
+• Servicios especializados en frenos, motor, transmisión
+• Carrocería y pintura
+
+DIFERENCIADOR CLAVE:
+Plataforma tecnológica que conecta clientes con mecánicos especializados certificados, garantizando:
+✓ Transparencia total en costos
+✓ Trazabilidad completa del servicio
+✓ Eficiencia operativa digital
+✓ Reportes técnicos automatizados
+
+ELEMENTOS VISUALES:
+- Iconos de servicios automotrices
+- Imagen: Mecánico profesional con tablet
+- Gráfico circular mostrando tipos de servicio
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 3 - DESCRIPCIÓN DE LA EMPRESA (PRESENTADOR 2)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Nuestra Empresa: Tecnología + Experiencia
+
+CONTENIDO:
+
+📱 PLATAFORMA TECNOLÓGICA INTEGRAL
+
+MecanicCompany opera mediante un ecosistema digital completo:
+
+APLICACIÓN MÓVIL (React Native)
+• Para clientes: Solicitud de servicios 24/7
+• Para mecánicos: Gestión de trabajos asignados
+• Disponible en iOS y Android
+
+BACKEND ROBUSTO (TypeScript + Node.js)
+• API REST segura con autenticación JWT
+• Base de datos PostgreSQL con integridad referencial
+• Gestión automática de estados y notificaciones
+
+EQUIPO PROFESIONAL
+• Mecánicos especializados certificados
+• Registro de años de experiencia
+• Especialidades técnicas verificadas:
+  - Sistemas de frenos
+  - Motores y transmisión
+  - Sistemas eléctricos/electrónicos
+  - Carrocería y pintura
+
+📊 IMPACTO MEDIBLE
+• ⏱️ Reducción 70% en tiempo de recepción de solicitudes
+  (De 10-15 min → 2-3 min)
+• 📧 Entrega inmediata de reportes técnicos
+  (Vs 24-48 horas método tradicional)
+• 📈 Precisión 98% en datos de vehículos
+  (Vs 60% con métodos manuales)
+
+ELEMENTOS VISUALES:
+- Diagrama de arquitectura tecnológica simplificado
+- Iconos: app móvil, servidor, base de datos
+- Gráfico comparativo antes/después (barras)
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 4 - MODELO DE NEGOCIO (PRESENTADOR 2)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Nuestro Modelo de Negocio Digital
+
+CONTENIDO:
+
+💼 ¿QUÉ VENDEMOS?
+
+SERVICIOS AUTOMOTRICES ESPECIALIZADOS
+• Mantenimiento preventivo (cambio aceite, revisión, alineación)
+• Reparación de sistemas mecánicos (motor, transmisión, frenos)
+• Servicios eléctricos y diagnóstico computarizado
+• Carrocería y pintura
+
+🎯 ¿QUIÉNES SON NUESTROS CLIENTES?
+
+• Propietarios de vehículos particulares
+• Pequeñas flotas vehiculares
+• Clientes que valoran:
+  ✓ Profesionalidad certificada
+  ✓ Transparencia en costos
+  ✓ Comodidad digital
+  ✓ Trazabilidad completa
+
+🔄 ¿CÓMO SE REALIZA LA VENTA?
+
+1. Cliente solicita servicio vía app móvil
+2. Sistema registra automáticamente (estado: Pendiente)
+3. Administrador asigna mecánico óptimo
+4. Mecánico ejecuta servicio (estado: En Proceso)
+5. Sistema genera reporte automático (estado: Completado)
+6. Cliente recibe documentación vía email
+
+💰 GESTIÓN FINANCIERA
+
+• Registro automático de costos:
+  - Mano de obra
+  - Repuestos utilizados
+• Cálculo de márgenes en tiempo real
+• Análisis de rentabilidad por tipo de servicio
+• Reportes financieros para contabilidad
+
+📦 CONTROL DE REPUESTOS
+
+• Registro de consumo por servicio
+• Identificación de repuestos de alta rotación
+• Optimización de negociaciones con proveedores
+
+ELEMENTOS VISUALES:
+- Infografía del ciclo de venta
+- Iconos para cada etapa del proceso
+- Gráfico de distribución de ingresos (pie chart)
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 5 - DIAGRAMA DEL PROCESO (Parte 1) (PRESENTADOR 3)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Proceso Principal de Servicio (Fases 1-3)
+
+CONTENIDO:
+
+FASE 1: SOLICITUD DEL CLIENTE ✍️
+
+CLIENTE:
+• Accede a app móvil MecanicCompany
+• Completa formulario con:
+  - Datos del vehículo (marca, modelo, año, placa, km)
+  - Tipo de servicio requerido
+  - Descripción del problema
+  - Fecha y hora preferida
+
+SISTEMA:
+• Registra en PostgreSQL
+• Estado: "Pendiente"
+• Timestamp automático
+
+FASE 2: ASIGNACIÓN ⚙️
+
+ADMINISTRADOR:
+• Revisa solicitudes pendientes
+• Consulta disponibilidad de mecánicos
+• Evalúa especialidades técnicas
+• Asigna mecánico óptimo
+
+SISTEMA:
+• Actualiza estado laboral → "Ocupado"
+• Vincula mecanicoId a solicitud
+• Envía notificación al mecánico
+
+FASE 3: EJECUCIÓN DEL SERVICIO 🔧
+
+MECÁNICO:
+• Recibe vehículo en fecha programada
+• Actualiza estado → "En Proceso"
+• Realiza diagnóstico completo
+• Ejecuta trabajos autorizados
+• Registra en sistema:
+  ✓ Diagnóstico realizado
+  ✓ Trabajos ejecutados
+  ✓ Repuestos utilizados
+  ✓ Costos (mano obra + repuestos)
+  ✓ Observaciones técnicas
+
+ELEMENTOS VISUALES:
+- Diagrama de flujo simplificado con 3 fases
+- Iconos: smartphone, admin, mecánico
+- Colores por estado (Pendiente=azul, Proceso=amarillo)
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 6 - DIAGRAMA DEL PROCESO (Parte 2) (PRESENTADOR 3)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Proceso Principal de Servicio (Fases 4-5)
+
+CONTENIDO:
+
+FASE 4: REPORTE Y CIERRE 📄
+
+SISTEMA (Automático):
+• Detecta estado "Completado"
+• Genera reporte técnico profesional:
+  - Datos del vehículo
+  - Diagnóstico completo
+  - Trabajos realizados
+  - Repuestos utilizados
+  - Desglose de costos
+  - Observaciones del mecánico
+• Envía vía email (Resend SMTP)
+• Actualiza mecánico → "Disponible"
+
+CLIENTE:
+• Recibe documentación inmediata
+• Historial permanente en BD
+
+FASE 5: BUSINESS INTELLIGENCE 📊
+
+METABASE (Tiempo Real):
+• Extrae datos de PostgreSQL
+• Actualiza dashboards:
+
+📈 VISIÓN OPERACIONAL
+• KPIs: Ingresos, servicios, ticket promedio
+• Tendencia de ingresos con drill down
+• Top 5 mecánicos
+
+👷 PRODUCTIVIDAD
+• Ranking de mecánicos
+• Eficiencia por técnico
+• Heatmap de disponibilidad
+
+💰 ANÁLISIS FINANCIERO
+• Márgenes (mano obra vs repuestos)
+• Crecimiento mensual
+• Embudo de conversión
+
+🚗 CLIENTES Y VEHÍCULOS
+• Top 10 marcas atendidas
+• Modelos más frecuentes
+• Demanda por día de semana
+
+TOMA DE DECISIONES ESTRATÉGICAS
+✓ Optimización de precios
+✓ Capacitación dirigida
+✓ Planificación de inventario
+✓ Estrategias comerciales
+
+ELEMENTOS VISUALES:
+- Mockup de dashboard de Metabase
+- Gráficos de KPIs
+- Flujo de datos hacia BI
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 7 - VALOR DEL PROCESO DIGITAL (PRESENTADOR 4)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Transformación Digital: Antes vs Ahora
+
+CONTENIDO:
+
+⚡ COMPARATIVA DE IMPACTO
+
+┌─────────────────────────────────────────────────────────────┐
+│                    ANTES              │        AHORA         │
+├─────────────────────────────────────────────────────────────┤
+│ RECEPCIÓN DE SOLICITUD                                       │
+│ • Llamada telefónica      │ • App móvil 24/7                │
+│ • 10-15 minutos           │ • 2-3 minutos (-70%)            │
+│ • Notas en papel          │ • Registro automático en BD     │
+│ • Errores de transcripción│ • Precisión 98%                 │
+├─────────────────────────────────────────────────────────────┤
+│ ASIGNACIÓN DE MECÁNICO                                       │
+│ • Manual, basada en       │ • Digital, basada en datos      │
+│   disponibilidad percibida│   tiempo real                   │
+│ • Sin trazabilidad        │ • Trazabilidad 100%             │
+├─────────────────────────────────────────────────────────────┤
+│ DOCUMENTACIÓN DEL SERVICIO                                   │
+│ • Formularios físicos     │ • Registro digital estructurado │
+│ • Información incompleta  │ • Campos obligatorios validados │
+│ • Difícil de consultar    │ • Búsqueda instantánea en BD    │
+├─────────────────────────────────────────────────────────────┤
+│ ENTREGA DE REPORTES                                          │
+│ • 24-48 horas después     │ • Inmediato (email automático)  │
+│ • Reporte manual en papel │ • Reporte digital profesional   │
+├─────────────────────────────────────────────────────────────┤
+│ ANÁLISIS DE NEGOCIO                                          │
+│ • Cálculos manuales       │ • Dashboards en tiempo real     │
+│ • Reportes mensuales      │ • Actualización instantánea     │
+│ • Basado en intuición     │ • Basado en datos objetivos     │
+└─────────────────────────────────────────────────────────────┘
+
+🎯 BENEFICIOS CLAVE
+
+PARA CLIENTES:
+✅ Conveniencia (solicitud desde cualquier lugar)
+✅ Transparencia total en costos y trabajos
+✅ Documentación profesional inmediata
+
+PARA LA EMPRESA:
+✅ Eficiencia operativa (+70% en recepción)
+✅ Decisiones basadas en datos reales
+✅ Trazabilidad completa de operaciones
+✅ Reducción de errores humanos
+
+ELEMENTOS VISUALES:
+- Tabla comparativa con iconos
+- Gráfico de barras de mejoras porcentuales
+- Timeline: Método tradicional vs Digital
+
+═══════════════════════════════════════════════════════════════════
+DIAPOSITIVA 8 - CIERRE Y DASHBOARDS BI (PRESENTADOR 4)
+═══════════════════════════════════════════════════════════════════
+
+TÍTULO:
+Sistema de Business Intelligence en Acción
+
+CONTENIDO:
+
+📊 DASHBOARDS IMPLEMENTADOS EN METABASE
+
+1️⃣ VISIÓN GENERAL OPERACIONAL
+   • Ingresos totales del mes: $52,340
+   • Servicios completados: 45
+   • Ticket promedio: $1,163
+   • Tasa de conversión: 78%
+   • Gráfico de tendencia mensual con drill down
+
+2️⃣ PRODUCTIVIDAD DE MECÁNICOS
+   • Ranking por ingresos y cantidad de servicios
+   • Análisis de eficiencia (tiempo vs ingresos)
+   • Heatmap de disponibilidad semanal
+   • Identificación de top performers
+
+3️⃣ ANÁLISIS FINANCIERO
+   • Márgenes: Mano de obra vs Repuestos
+   • Crecimiento mensual comparativo
+   • Embudo de conversión
+   • Rentabilidad por tipo de servicio
+
+4️⃣ CLIENTES Y VEHÍCULOS
+   • Top 10 marcas más atendidas
+   • Modelos frecuentes
+   • Clientes recurrentes
+   • Demanda por día de semana
+
+🎯 CAPACIDADES ANALÍTICAS
+
+✓ Drill Down: De vista mensual → diaria → servicio individual
+✓ Roll Up: De servicio individual → diaria → mensual
+✓ Filtros interactivos: Fecha, mecánico, tipo de servicio
+✓ Exportación: PDF, Excel, PNG
+✓ Actualización en tiempo real (conexión directa PostgreSQL)
+
+💡 TOMA DE DECISIONES ESTRATÉGICAS
+
+Ejemplos de decisiones basadas en datos:
+• Identificar mecánicos para bonificación por desempeño
+• Ajustar inventario de repuestos según consumo real
+• Optimizar precios basados en márgenes por servicio
+• Planificar capacitación en especialidades demandadas
+• Detectar oportunidades de crecimiento
+
+🚀 PRÓXIMOS PASOS
+
+• Expansión de análisis predictivo
+• Integración con sistema de inventario
+• Implementación de encuestas de satisfacción
+• Desarrollo de app móvil para consulta de KPIs
+
+ELEMENTOS VISUALES:
+- Screenshots de dashboards de Metabase
+- Gráficos representativos (líneas, barras, heatmap)
+- Iconos de capacidades analíticas
+
+FOOTER:
+MecanicCompany - Transformando Datos en Ventaja Competitiva
+¿Preguntas?
+
+═══════════════════════════════════════════════════════════════════
+
+DISTRIBUCIÓN POR PRESENTADOR:
+• Presentador 1: Diapositivas 1-2 (Portada + Nombre/Actividad)
+• Presentador 2: Diapositivas 3-4 (Descripción + Modelo de Negocio)
+• Presentador 3: Diapositivas 5-6 (Diagrama Proceso Parte 1 y 2)
+• Presentador 4: Diapositivas 7-8 (Comparativa + Dashboards BI)
+
+TIEMPO ESTIMADO: 12-15 minutos (2 min por diapositiva)
+
+NOTAS DE DISEÑO PARA GAMMA:
+- Usa transiciones suaves entre diapositivas
+- Incluye números de página
+- Mantén consistencia en iconografía
+- Usa gráficos de datos reales del proyecto
+- Incluye imágenes de alta calidad relacionadas con talleres mecánicos modernos
+- Asegura legibilidad con contraste adecuado entre texto y fondo

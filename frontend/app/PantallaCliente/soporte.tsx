@@ -6,6 +6,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import {
   Animated,
   BackHandler,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -16,6 +17,7 @@ import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
+import { useCliente } from '@/context/ClienteContext';
 import NavbarCliente from '@/components/navbarCliente/navbarCliente';
 import ConfirmacionSoporte from './ModalConfirmacionReporte/confirmacionSoporte';
 import ReporteExitoso from './ModalConfirmacionReporte/reporteExistoso';
@@ -27,6 +29,8 @@ import {
   validarObligatorio,
   validarTextoYNumeros,
 } from '@/utils/validaciones';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
+import { reporteSoporteApi } from '@/utils/api';
 
 // Opciones de tipos de asunto
 const tiposAsunto = [
@@ -34,7 +38,7 @@ const tiposAsunto = [
   'Problema técnico',
   'Sugerencia',
   'Reclamo',
-  'Facturación',
+  'Comprobante',
   'Otro',
 ];
 
@@ -42,10 +46,19 @@ export default function SoporteScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const router = useRouter();
   const { user, logout } = useAuth();
+  const {
+    correoCliente,
+    nombrePrimerCliente,
+    nombreSegundoCliente,
+    apellidoPrimerCliente,
+    apellidoSegundoCliente,
+  } = useCliente();
 
-  // BackHandler: regresa a index (PantallaCliente)
+  // BackHandler: regresa a index (PantallaCliente, solo en móvil)
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') return;
+
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         router.push('/PantallaCliente' as any);
         return true;
@@ -69,12 +82,7 @@ export default function SoporteScreen() {
     descripcion: '',
   });
 
-  // Estados de error
-  const [errNombre, setErrNombre] = useState('');
-  const [errSegundoNombre, setErrSegundoNombre] = useState('');
-  const [errApellido, setErrApellido] = useState('');
-  const [errSegundoApellido, setErrSegundoApellido] = useState('');
-  const [errCorreo, setErrCorreo] = useState('');
+  // Estados de error (solo campos editables)
   const [errTipoAsunto, setErrTipoAsunto] = useState('');
   const [errDescripcion, setErrDescripcion] = useState('');
 
@@ -84,6 +92,10 @@ export default function SoporteScreen() {
 
   // Estado del dropdown
   const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Estado de carga y mensajes
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
   // Dispara la animación del logo al montar el componente
   useEffect(() => {
@@ -97,23 +109,20 @@ export default function SoporteScreen() {
   useFocusEffect(
     useCallback(() => {
       setForm({
-        nombre: '',
-        segundoNombre: '',
-        apellido: '',
-        segundoApellido: '',
-        correo: '',
+        nombre: nombrePrimerCliente || '',
+        segundoNombre: nombreSegundoCliente || '',
+        apellido: apellidoPrimerCliente || '',
+        segundoApellido: apellidoSegundoCliente || '',
+        correo: correoCliente || '',
         tipoAsunto: '',
         descripcion: '',
       });
-      setErrNombre('');
-      setErrSegundoNombre('');
-      setErrApellido('');
-      setErrSegundoApellido('');
-      setErrCorreo('');
+      // Solo limpiar errores de campos editables
       setErrTipoAsunto('');
       setErrDescripcion('');
       setDropdownOpen(false);
-    }, [])
+      setSuccessMessage('');
+    }, [nombrePrimerCliente, nombreSegundoCliente, apellidoPrimerCliente, apellidoSegundoCliente, correoCliente])
   );
 
   // Navega al index pasando el parámetro scrollTo='cards'
@@ -128,48 +137,63 @@ export default function SoporteScreen() {
 
   // Validación y apertura del modal de confirmación
   const handleVerificarReporte = () => {
-    // Validar cada campo
-    const eNombre = validarUnNombre(form.nombre, 'El nombre');
-    const eSegundoNombre = validarSegundoNombre(form.segundoNombre, 'El segundo nombre');
-    const eApellido = validarUnNombre(form.apellido, 'El apellido');
-    const eSegundoApellido = validarSegundoNombre(form.segundoApellido, 'El segundo apellido');
-    const eCorreo = validarCorreo(form.correo);
+    // Validar solo los campos editables (tipo de asunto y descripción)
     const eTipoAsunto = validarObligatorio(form.tipoAsunto, 'El tipo de asunto');
     const eDescripcion = validarTextoYNumeros(form.descripcion, 'La descripción');
 
-    setErrNombre(eNombre ?? '');
-    setErrSegundoNombre(eSegundoNombre ?? '');
-    setErrApellido(eApellido ?? '');
-    setErrSegundoApellido(eSegundoApellido ?? '');
-    setErrCorreo(eCorreo ?? '');
     setErrTipoAsunto(eTipoAsunto ?? '');
     setErrDescripcion(eDescripcion ?? '');
 
     // Si hay algún error, no continúa
-    if ([eNombre, eSegundoNombre, eApellido, eSegundoApellido, eCorreo, eTipoAsunto, eDescripcion].some(Boolean)) return;
+    if ([eTipoAsunto, eDescripcion].some(Boolean)) return;
 
     // Todo válido → mostrar modal de confirmación
     setConfirmacionVisible(true);
   };
 
   // Envío del reporte
-  const handleEnviarReporte = () => {
-    // Cerrar modal de confirmación
-    setConfirmacionVisible(false);
-    
-    // Mostrar modal de éxito
-    setExitosoVisible(true);
-    
-    // Limpiar formulario
-    setForm({
-      nombre: '',
-      segundoNombre: '',
-      apellido: '',
-      segundoApellido: '',
-      correo: '',
-      tipoAsunto: '',
-      descripcion: '',
-    });
+  const handleEnviarReporte = async () => {
+    try {
+      setIsLoading(true);
+      console.log('🔍 Enviando reporte de soporte...');
+
+      // Llamar a la API
+      const response = await reporteSoporteApi.crear({
+        nombre: form.nombre,
+        segundoNombre: form.segundoNombre || undefined,
+        apellido: form.apellido,
+        segundoApellido: form.segundoApellido || undefined,
+        correo: form.correo,
+        tipoAsunto: form.tipoAsunto,
+        descripcion: form.descripcion,
+      });
+
+      console.log('✅ Reporte enviado exitosamente:', response);
+
+      // Cerrar modal de confirmación
+      setConfirmacionVisible(false);
+
+      // Mostrar mensaje de éxito
+      setSuccessMessage('¡Reporte enviado correctamente! Te contactaremos pronto.');
+      setExitosoVisible(true);
+
+      // Limpiar formulario
+      setForm({
+        nombre: nombrePrimerCliente || '',
+        segundoNombre: nombreSegundoCliente || '',
+        apellido: apellidoPrimerCliente || '',
+        segundoApellido: apellidoSegundoCliente || '',
+        correo: correoCliente || '',
+        tipoAsunto: '',
+        descripcion: '',
+      });
+    } catch (err: any) {
+      console.error('❌ Error al enviar reporte:', err);
+      setSuccessMessage('Error al enviar el reporte. Intenta de nuevo.');
+      setExitosoVisible(true);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCerrarExitoso = () => {
@@ -177,13 +201,17 @@ export default function SoporteScreen() {
   };
 
   return (
-    <View style={styles.page}>
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]}
-      >
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <ScrollView
+          ref={scrollRef}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          stickyHeaderIndices={[0]}
+          scrollEnabled={true}
+          nestedScrollEnabled={true}
+          overScrollMode="always"
+        >
         {/* Navbar sticky del cliente */}
         <NavbarCliente
           onScrollToAbout={handleScrollToAbout}
@@ -214,85 +242,69 @@ export default function SoporteScreen() {
 
           {/* FORMULARIO */}
           <View style={styles.form}>
-            {/* Campo: Nombre */}
-            <Text style={styles.fieldLabel}>Nombre</Text>
-            <TextInput
-              placeholder="Ej: Juan"
-              placeholderTextColor="#94A3B8"
-              value={form.nombre}
-              onChangeText={(t) => {
-                // Solo permite letras
-                const filtered = t.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, '');
-                setForm((p) => ({ ...p, nombre: filtered }));
-                setErrNombre('');
-              }}
-              style={[styles.input, errNombre ? styles.inputError : null]}
-            />
-            {errNombre ? <Text style={styles.fieldError}>{errNombre}</Text> : null}
+            {/* Sección: TUS DATOS (No Editable) */}
+            <View style={{ marginBottom: 20, padding: 12, backgroundColor: '#0F172A', borderRadius: 8, borderLeftWidth: 4, borderLeftColor: '#3B82F6' }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#F1F5F9', marginBottom: 12 }}>Tus Datos</Text>
+              
+              {/* Campo: Nombre (No Editable) */}
+              <Text style={styles.fieldLabel}>Nombre</Text>
+              <TextInput
+                placeholder="Ej: Juan"
+                placeholderTextColor="#94A3B8"
+                value={form.nombre}
+                editable={false}
+                style={[styles.input, { backgroundColor: '#1E293B', color: '#CBD5E1' }]}
+              />
 
-            {/* Campo: Segundo Nombre (Opcional) */}
-            <Text style={styles.fieldLabel}>Segundo Nombre (Opcional)</Text>
-            <TextInput
-              placeholder="Ej: Carlos"
-              placeholderTextColor="#94A3B8"
-              value={form.segundoNombre}
-              onChangeText={(t) => {
-                // Solo permite letras
-                const filtered = t.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, '');
-                setForm((p) => ({ ...p, segundoNombre: filtered }));
-                setErrSegundoNombre('');
-              }}
-              style={[styles.input, errSegundoNombre ? styles.inputError : null]}
-            />
-            {errSegundoNombre ? <Text style={styles.fieldError}>{errSegundoNombre}</Text> : null}
+              {/* Campo: Segundo Nombre (No Editable) - Solo si tiene valor */}
+              {form.segundoNombre && (
+                <>
+                  <Text style={styles.fieldLabel}>Segundo Nombre</Text>
+                  <TextInput
+                    placeholder="Ej: Carlos"
+                    placeholderTextColor="#94A3B8"
+                    value={form.segundoNombre}
+                    editable={false}
+                    style={[styles.input, { backgroundColor: '#1E293B', color: '#CBD5E1' }]}
+                  />
+                </>
+              )}
 
-            {/* Campo: Apellido */}
-            <Text style={styles.fieldLabel}>Apellido</Text>
-            <TextInput
-              placeholder="Ej: Pérez"
-              placeholderTextColor="#94A3B8"
-              value={form.apellido}
-              onChangeText={(t) => {
-                // Solo permite letras
-                const filtered = t.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, '');
-                setForm((p) => ({ ...p, apellido: filtered }));
-                setErrApellido('');
-              }}
-              style={[styles.input, errApellido ? styles.inputError : null]}
-            />
-            {errApellido ? <Text style={styles.fieldError}>{errApellido}</Text> : null}
+              {/* Campo: Apellido (No Editable) */}
+              <Text style={styles.fieldLabel}>Apellido</Text>
+              <TextInput
+                placeholder="Ej: Pérez"
+                placeholderTextColor="#94A3B8"
+                value={form.apellido}
+                editable={false}
+                style={[styles.input, { backgroundColor: '#1E293B', color: '#CBD5E1' }]}
+              />
 
-            {/* Campo: Segundo Apellido (Opcional) */}
-            <Text style={styles.fieldLabel}>Segundo Apellido (Opcional)</Text>
-            <TextInput
-              placeholder="Ej: García"
-              placeholderTextColor="#94A3B8"
-              value={form.segundoApellido}
-              onChangeText={(t) => {
-                // Solo permite letras
-                const filtered = t.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑüÜ]/g, '');
-                setForm((p) => ({ ...p, segundoApellido: filtered }));
-                setErrSegundoApellido('');
-              }}
-              style={[styles.input, errSegundoApellido ? styles.inputError : null]}
-            />
-            {errSegundoApellido ? <Text style={styles.fieldError}>{errSegundoApellido}</Text> : null}
+            {/* Campo: Segundo Apellido (No Editable) - Solo si tiene valor */}
+            {form.segundoApellido && (
+              <>
+                <Text style={styles.fieldLabel}>Segundo Apellido</Text>
+                <TextInput
+                  placeholder="Ej: García"
+                  placeholderTextColor="#94A3B8"
+                  value={form.segundoApellido}
+                  editable={false}
+                  style={[styles.input, { backgroundColor: '#1E293B', color: '#CBD5E1' }]}
+                />
+              </>
+            )}
 
-            {/* Campo: Correo Electrónico */}
+            {/* Campo: Correo Electrónico (No Editable) */}
             <Text style={styles.fieldLabel}>Correo Electrónico</Text>
             <TextInput
               placeholder="Ej: juan.perez@gmail.com"
               placeholderTextColor="#94A3B8"
               value={form.correo}
-              onChangeText={(t) => {
-                setForm((p) => ({ ...p, correo: t }));
-                setErrCorreo('');
-              }}
+              editable={false}
               keyboardType="email-address"
-              autoCapitalize="none"
-              style={[styles.input, errCorreo ? styles.inputError : null]}
+              style={[styles.input, { backgroundColor: '#1E293B', color: '#CBD5E1' }]}
             />
-            {errCorreo ? <Text style={styles.fieldError}>{errCorreo}</Text> : null}
+            </View>
 
             {/* Selector: Tipo de Asunto */}
             <View style={styles.dropdownWrapper}>
@@ -360,9 +372,17 @@ export default function SoporteScreen() {
               onPress={handleVerificarReporte}
             >
               {({ pressed }) => (
-                <Text style={[styles.submitButtonText, pressed && styles.submitButtonTextPressed]}>
-                  VERIFICAR ENVÍO
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="check-circle" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.submitButtonText, pressed && styles.submitButtonTextPressed]}>
+                    VERIFICAR ENVÍO
+                  </Text>
+                </View>
               )}
             </Pressable>
           </View>
@@ -408,11 +428,14 @@ export default function SoporteScreen() {
         datos={form}
         onEnviar={handleEnviarReporte}
         onCerrar={() => setConfirmacionVisible(false)}
+        isLoading={isLoading}
       />
       <ReporteExitoso
         visible={exitosoVisible}
         onCerrar={handleCerrarExitoso}
+        message={successMessage}
       />
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

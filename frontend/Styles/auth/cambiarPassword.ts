@@ -5,13 +5,18 @@
 // imagen de fondo + capa oscura + tarjeta semitransparente + animación de entrada.
 
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
   // Imagen de fondo que ocupa toda la pantalla (fondoCodigoVerificacion.png)
   background: {
     flex: 1, // Ocupa todo el espacio disponible
+    ...(Platform.OS === 'web' && {
+      width: '100vw',
+      height: '100vh',
+      minHeight: '100vh',
+    }),
   },
 
   // Capa oscura semitransparente encima del fondo para mejorar legibilidad
@@ -53,6 +58,14 @@ export default StyleSheet.create({
     padding: 28,                                // Relleno interno generoso
     borderWidth: 1,
     borderColor: 'rgba(51, 65, 85, 0.6)',       // Borde sutil semitransparente
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Icono transparente de la empresa centrado en la parte superior de la tarjeta
@@ -179,5 +192,15 @@ export default StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginBottom: 12,
+  },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 });

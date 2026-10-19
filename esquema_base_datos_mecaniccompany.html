@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Esquema de Base de Datos - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Times New Roman", serif;
+            font-size: 12pt;
+            line-height: 2.0;
+            color: #000;
+            background-color: #fff;
+            padding: 40px;
+            max-width: 8.5in;
+            margin: 0 auto;
+        }
+        
+        .container {
+            width: 100%;
+            background-color: #fff;
+        }
+        
+        h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        p {
+            text-align: justify;
+            text-indent: 0.5in;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        .no-indent {
+            text-indent: 0;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24pt 0;
+            line-height: 2.0;
+        }
+        
+        table, th, td {
+            border: 1px solid #000;
+            padding: 8pt;
+            text-align: left;
+        }
+        
+        th {
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        td {
+            text-align: left;
+        }
+        
+        .table-title {
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 6pt;
+        }
+        
+        .enum-section {
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            page-break-after: avoid;
+        }
+        
+        button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #333;
+        }
+        
+        @media print {
+            body {
+                padding: 0.5in;
+            }
+            
+            .button-container {
+                display: none;
+            }
+            
+            h1, h2, h3, p, table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Esquema de Base de Datos MecanicCompany</h1>
+        
+        <h2>1. Introducción</h2>
+        <p>La base de datos de MecanicCompany es una solución relacional implementada en PostgreSQL que gestiona todos los aspectos operacionales de una empresa de mantenimiento vehicular. El esquema consta de 12 entidades principales (tablas) y 4 enumeraciones que definen valores permitidos para ciertos campos. Es importante aclarar que las 12 tablas son las únicas estructuras de persistencia en PostgreSQL; los 4 enums son tipos de datos especiales definidos en Prisma que no constituyen tablas independientes sino restricciones de valores en ciertos campos. La arquitectura está diseñada siguiendo principios de normalización relacional para garantizar integridad referencial, eficiencia de consultas y mantenibilidad del código.</p>
+        
+        <h2>2. Descripción General de Entidades</h2>
+        <p>El sistema MecanicCompany organiza sus datos en torno a varios conceptos clave distribuidos en 12 tablas principales. Las entidades de Usuario incluyen Cliente, Mecanico, Admin, PersonalFinanciero y PersonalInventario, cada una con roles y permisos específicos. Las entidades de Operación incluyen Solicitud (solicitudes de mantenimiento de clientes) y Mantenimiento (registros detallados del trabajo realizado). Las entidades de Negocio incluyen Finanzas (facturas y pagos), Producto (inventario de repuestos), y CompatibilidadProducto (relación entre productos y tipos de vehículos). Finalmente, existen entidades de Soporte como CodigoVerificacion (para verificación de correo) y ReporteSoporte (para gestión de consultas y reclamaciones).</p>
+        
+        <p>Adicional a las 12 tablas, el sistema define 4 enumeraciones (enums) que son tipos de datos especiales utilizados para restringir los valores permitidos en ciertos campos: EstadoLaboral (para mecánicos), EstadoSolicitud (para solicitudes), EstadoFinanzas (para pagos), y MetodoPago (para registros de pago). Estos enums no son tablas independientes sino restricciones de validación a nivel de base de datos que garantizan la integridad de los datos.</p>
+        
+        <h2>3. Entidades de Usuario</h2>
+        
+        <h3>3.1 Tabla: Admin</h3>
+        <p>La tabla Admin almacena información de los administradores del sistema. Los administradores tienen acceso completo a todas las funcionalidades del sistema y pueden gestionar usuarios, ver reportes globales y configurar parámetros del sistema. Cada administrador es identificado de forma única mediante un ID único autogenerado (CUID). Los campos incluyen nombres, apellidos, información de contacto (teléfono y correo), credenciales de acceso (correo empresarial y contraseña hasheada), fotografía de perfil opcional, estado de cuenta (activa o inactiva), y timestamps de creación y actualización automáticos.</p>
+        
+        <div class="table-title">Campos de la tabla Admin:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del administrador</td>
+            </tr>
+            <tr>
+                <td>nombres</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del administrador</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del administrador</td>
+            </tr>
+            <tr>
+                <td>apellidos</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del administrador</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del administrador</td>
+            </tr>
+            <tr>
+                <td>edad</td>
+                <td>Int</td>
+                <td>Opcional</td>
+                <td>Edad del administrador</td>
+            </tr>
+            <tr>
+                <td>telefono</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Número de teléfono de contacto</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Único, Requerido</td>
+                <td>Correo personal del administrador</td>
+            </tr>
+            <tr>
+                <td>correoEmpresarial</td>
+                <td>String</td>
+                <td>Único, Requerido</td>
+                <td>Correo corporativo para acceso al sistema</td>
+            </tr>
+            <tr>
+                <td>contrasena</td>
+                <td>String</td>
+                <td>Requerido, Hasheada</td>
+                <td>Contraseña hasheada con bcrypt-12</td>
+            </tr>
+            <tr>
+                <td>fotoPerfil</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>URL o ruta de la fotografía de perfil</td>
+            </tr>
+            <tr>
+                <td>cuentaActiva</td>
+                <td>Boolean</td>
+                <td>Default: true</td>
+                <td>Indica si la cuenta está habilitada</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del registro</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h3>3.2 Tabla: Cliente</h3>
+        <p>La tabla Cliente contiene información de los clientes que solicitan servicios de mantenimiento. Los clientes pueden crear solicitudes de mantenimiento, ver el estado de sus solicitudes, descargar reportes y calificar el servicio recibido. Cada cliente tiene un identificador único (CUID), información personal completa, credenciales de autenticación, y está relacionado con múltiples solicitudes de mantenimiento mediante una relación uno a muchos.</p>
+        
+        <div class="table-title">Campos de la tabla Cliente:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del cliente</td>
+            </tr>
+            <tr>
+                <td>nombres</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del cliente</td>
+            </tr>
+            <tr>
+                <td>apellidos</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del cliente</td>
+            </tr>
+            <tr>
+                <td>telefono</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Número de teléfono de contacto</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Único, Requerido</td>
+                <td>Correo electrónico del cliente</td>
+            </tr>
+            <tr>
+                <td>contrasena</td>
+                <td>String</td>
+                <td>Requerido, Hasheada</td>
+                <td>Contraseña hasheada con bcrypt-12</td>
+            </tr>
+            <tr>
+                <td>cuentaActiva</td>
+                <td>Boolean</td>
+                <td>Default: true</td>
+                <td>Indica si la cuenta está habilitada</td>
+            </tr>
+            <tr>
+                <td>fotoPerfil</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>URL o ruta de la fotografía de perfil</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del registro</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+            <tr>
+                <td>fechaNacimiento</td>
+                <td>DateTime</td>
+                <td>Opcional</td>
+                <td>Fecha de nacimiento del cliente</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del cliente</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del cliente</td>
+            </tr>
+            <tr>
+                <td>solicitudes</td>
+                <td>Relación</td>
+                <td>1:N</td>
+                <td>Solicitudes asociadas al cliente</td>
+            </tr>
+        </table>
+        
+        <h3>3.3 Tabla: Mecanico</h3>
+        <p>La tabla Mecanico almacena información de los mecánicos que ejecutan los trabajos de mantenimiento. Los mecánicos registran su experiencia, especialidad y disponibilidad. Cada mecánico tiene un identificador único (CUID), información personal completa, información laboral (especialidad, años de experiencia, estado laboral actual), credenciales empresariales, y está relacionado con múltiples solicitudes que le han sido asignadas.</p>
+        
+        <div class="table-title">Campos de la tabla Mecanico:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del mecánico</td>
+            </tr>
+            <tr>
+                <td>nombres</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del mecánico</td>
+            </tr>
+            <tr>
+                <td>apellidos</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del mecánico</td>
+            </tr>
+            <tr>
+                <td>edad</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Edad del mecánico</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Único, Requerido</td>
+                <td>Correo personal del mecánico</td>
+            </tr>
+            <tr>
+                <td>correoEmpresarial</td>
+                <td>String</td>
+                <td>Único, Requerido</td>
+                <td>Correo corporativo para acceso al sistema</td>
+            </tr>
+            <tr>
+                <td>especialidad</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Área de especialización técnica</td>
+            </tr>
+            <tr>
+                <td>anosExperiencia</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Años de experiencia laboral</td>
+            </tr>
+            <tr>
+                <td>estadoLaboral</td>
+                <td>Enum</td>
+                <td>Default: Disponible</td>
+                <td>Estado actual (Disponible, Ocupado, Inactivo)</td>
+            </tr>
+            <tr>
+                <td>cuentaActiva</td>
+                <td>Boolean</td>
+                <td>Default: true</td>
+                <td>Indica si la cuenta está habilitada</td>
+            </tr>
+            <tr>
+                <td>contrasena</td>
+                <td>String</td>
+                <td>Requerido, Hasheada</td>
+                <td>Contraseña hasheada con bcrypt-12</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del registro</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+            <tr>
+                <td>fotoPerfil</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>URL o ruta de la fotografía de perfil</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del mecánico</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del mecánico</td>
+            </tr>
+            <tr>
+                <td>telefono</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Número de teléfono de contacto</td>
+            </tr>
+            <tr>
+                <td>solicitudes</td>
+                <td>Relación</td>
+                <td>1:N</td>
+                <td>Solicitudes asignadas al mecánico</td>
+            </tr>
+        </table>
+        
+        <h3>3.4 Tabla: PersonalFinanciero</h3>
+        <p>La tabla PersonalFinanciero contiene información del personal encargado de la gestión financiera de la empresa. Este personal gestiona facturas, registra pagos, genera reportes financieros y mantiene un registro de cuentas por cobrar. Tiene estructura similar a Admin y Mecanico, con campos de identificación personal, credenciales empresariales y estado de cuenta.</p>
+        
+        <div class="table-title">Campos de la tabla PersonalFinanciero:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del personal</td>
+            </tr>
+            <tr>
+                <td>nombres</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del personal</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del personal</td>
+            </tr>
+            <tr>
+                <td>apellidos</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del personal</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del personal</td>
+            </tr>
+            <tr>
+                <td>edad</td>
+                <td>Int</td>
+                <td>Opcional</td>
+                <td>Edad del personal</td>
+            </tr>
+            <tr>
+                <td>telefono</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Número de teléfono de contacto</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Correo personal del personal financiero</td>
+            </tr>
+            <tr>
+                <td>correoEmpresarial</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Correo corporativo para acceso al sistema</td>
+            </tr>
+            <tr>
+                <td>contrasena</td>
+                <td>String</td>
+                <td>Requerido, Hasheada</td>
+                <td>Contraseña hasheada con bcrypt-12</td>
+            </tr>
+            <tr>
+                <td>cuentaActiva</td>
+                <td>Boolean</td>
+                <td>Default: true</td>
+                <td>Indica si la cuenta está habilitada</td>
+            </tr>
+            <tr>
+                <td>fotoPerfil</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>URL o ruta de la fotografía de perfil</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del registro</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h3>3.5 Tabla: PersonalInventario</h3>
+        <p>La tabla PersonalInventario almacena información del personal responsable de la gestión del inventario de repuestos. Este personal mantiene el catálogo de productos, actualiza niveles de stock, gestiona las órdenes de compra y genera alertas de stock bajo. La estructura es similar a PersonalFinanciero con enfoque en acceso a módulos de inventario.</p>
+        
+        <div class="table-title">Campos de la tabla PersonalInventario:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del personal</td>
+            </tr>
+            <tr>
+                <td>nombres</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del personal</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del personal</td>
+            </tr>
+            <tr>
+                <td>apellidos</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del personal</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del personal</td>
+            </tr>
+            <tr>
+                <td>edad</td>
+                <td>Int</td>
+                <td>Opcional</td>
+                <td>Edad del personal</td>
+            </tr>
+            <tr>
+                <td>telefono</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Número de teléfono de contacto</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Correo personal del personal de inventario</td>
+            </tr>
+            <tr>
+                <td>correoEmpresarial</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Correo corporativo para acceso al sistema</td>
+            </tr>
+            <tr>
+                <td>contrasena</td>
+                <td>String</td>
+                <td>Requerido, Hasheada</td>
+                <td>Contraseña hasheada con bcrypt-12</td>
+            </tr>
+            <tr>
+                <td>cuentaActiva</td>
+                <td>Boolean</td>
+                <td>Default: true</td>
+                <td>Indica si la cuenta está habilitada</td>
+            </tr>
+            <tr>
+                <td>fotoPerfil</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>URL o ruta de la fotografía de perfil</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del registro</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h2>4. Entidades de Operación</h2>
+        
+        <h3>4.1 Tabla: Solicitud</h3>
+        <p>La tabla Solicitud es una entidad central que representa las solicitudes de mantenimiento creadas por clientes. Una solicitud captura toda la información inicial del cliente sobre su vehículo y el problema que presenta. Incluye detalles del cliente (nombre, teléfono, correo), información del vehículo (marca, modelo, año, placa, kilometraje), tipo de servicio solicitado, descripción del problema, ubicación deseada del taller, fecha y hora de cita preferida, y estado actual de la solicitud. La solicitud está relacionada con un Cliente (mediante clienteId) y un Mecanico (mediante mecanicoId) cuando la solicitud es asignada.</p>
+        
+        <div class="table-title">Campos principales de la tabla Solicitud:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único de la solicitud</td>
+            </tr>
+            <tr>
+                <td>clienteId</td>
+                <td>String</td>
+                <td>FK, Opcional</td>
+                <td>Referencia al cliente que crea la solicitud</td>
+            </tr>
+            <tr>
+                <td>mecanicoId</td>
+                <td>String</td>
+                <td>FK, Opcional</td>
+                <td>Referencia al mecánico asignado</td>
+            </tr>
+            <tr>
+                <td>nombreCliente</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Nombre del cliente solicitante</td>
+            </tr>
+            <tr>
+                <td>marca, modelo, anio, placa</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Información del vehículo</td>
+            </tr>
+            <tr>
+                <td>tipoServicio</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Tipo de mantenimiento solicitado</td>
+            </tr>
+            <tr>
+                <td>descripcionProblema</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Descripción detallada del problema</td>
+            </tr>
+            <tr>
+                <td>estado</td>
+                <td>Enum</td>
+                <td>Default: Pendiente</td>
+                <td>Estado: Pendiente, En_proceso, Completado, Rechazado</td>
+            </tr>
+            <tr>
+                <td>createdAt, updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamps de auditoría</td>
+            </tr>
+        </table>
+        
+        <h3>4.2 Tabla: Mantenimiento</h3>
+        <p>La tabla Mantenimiento registra los detalles técnicos del trabajo realizado en un vehículo. Cada registro de mantenimiento está vinculado a una única Solicitud (relación 1:1) mediante solicitudId. Contiene información técnica detallada del trabajo: diagnóstico realizado, trabajos ejecutados, repuestos utilizados, observaciones, costos desglosados (mano de obra y repuestos), fechas de servicio, y fotografía del vehículo capturada durante el proceso. Los costos se almacenan como campos Decimal de 10,2 dígitos para precisión monetaria.</p>
+        
+        <div class="table-title">Campos principales de la tabla Mantenimiento:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del mantenimiento</td>
+            </tr>
+            <tr>
+                <td>solicitudId</td>
+                <td>String</td>
+                <td>FK, Única</td>
+                <td>Referencia única a una solicitud</td>
+            </tr>
+            <tr>
+                <td>diagnostico</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Diagnóstico técnico del problema</td>
+            </tr>
+            <tr>
+                <td>trabajoRealizado</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Descripción de trabajos ejecutados</td>
+            </tr>
+            <tr>
+                <td>repuestosUtilizados</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Lista de repuestos utilizados</td>
+            </tr>
+            <tr>
+                <td>costoManoObra</td>
+                <td>Decimal(10,2)</td>
+                <td>Requerido</td>
+                <td>Costo de la mano de obra</td>
+            </tr>
+            <tr>
+                <td>costoRepuestos</td>
+                <td>Decimal(10,2)</td>
+                <td>Requerido</td>
+                <td>Costo de los repuestos utilizados</td>
+            </tr>
+            <tr>
+                <td>fotoVehiculo</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Fotografía en base64 del vehículo</td>
+            </tr>
+            <tr>
+                <td>finanzas</td>
+                <td>Relación</td>
+                <td>1:1</td>
+                <td>Registro de finanzas asociado</td>
+            </tr>
+        </table>
+        
+        <h2>5. Entidades de Negocio</h2>
+        
+        <h3>5.1 Tabla: Finanzas</h3>
+        <p>La tabla Finanzas mantiene el registro de facturas y pagos. Cada registro está vinculado de forma única a un Mantenimiento (mediante mantenimientoId con restricción onDelete Cascade). La tabla contiene información de la factura (número de factura único, fecha), datos del cliente (nombre, teléfono, correo), información del vehículo (marca, modelo, placa, año, kilometraje), detalles de costos (mano de obra, repuestos, total como Decimal de 12,2 dígitos), estado del pago (Pendiente, Pagado, Cancelado), método de pago utilizado, fecha de pago, observaciones, y URI del comprobante de pago.</p>
+        
+        <div class="table-title">Campos principales de la tabla Finanzas:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único de la factura</td>
+            </tr>
+            <tr>
+                <td>numeroFactura</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Número único de factura</td>
+            </tr>
+            <tr>
+                <td>mantenimientoId</td>
+                <td>String</td>
+                <td>FK, Única</td>
+                <td>Referencia única al mantenimiento</td>
+            </tr>
+            <tr>
+                <td>total</td>
+                <td>Decimal(12,2)</td>
+                <td>Requerido</td>
+                <td>Monto total de la factura</td>
+            </tr>
+            <tr>
+                <td>estado</td>
+                <td>Enum</td>
+                <td>Default: Pendiente</td>
+                <td>Estado: Pendiente, Pagado, Cancelado</td>
+            </tr>
+            <tr>
+                <td>metodoPago</td>
+                <td>Enum</td>
+                <td>Opcional</td>
+                <td>Método: EFECTIVO, TRANSFERENCIA, TARJETA, OTRO</td>
+            </tr>
+            <tr>
+                <td>fechaPago</td>
+                <td>DateTime</td>
+                <td>Opcional</td>
+                <td>Fecha en que se realizó el pago</td>
+            </tr>
+        </table>
+        
+        <h3>5.2 Tabla: Producto</h3>
+        <p>La tabla Producto contiene el catálogo de repuestos y componentes disponibles para usar en los mantenimientos. Cada producto tiene un identificador único (CUID), nombre descriptivo, código SKU único para inventario, información técnica (marca del componente, categoría, número de parte OEM), descripción, niveles de stock (actual, mínimo, crítico para alertas), precios (compra y venta como Decimal de 12,2), ubicación física en el almacén, unidad de medida, y está relacionado con múltiples registros de CompatibilidadProducto que especifican qué vehículos pueden usar este producto.</p>
+        
+        <div class="table-title">Campos de la tabla Producto:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del producto</td>
+            </tr>
+            <tr>
+                <td>nombreProducto</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Nombre descriptivo del repuesto</td>
+            </tr>
+            <tr>
+                <td>codigoSKU</td>
+                <td>String</td>
+                <td>Única, Requerido</td>
+                <td>Código de inventario único</td>
+            </tr>
+            <tr>
+                <td>marcaComponente</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Marca del fabricante del componente</td>
+            </tr>
+            <tr>
+                <td>categoria</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Categoría del producto (motor, frenos, etc.)</td>
+            </tr>
+            <tr>
+                <td>numeroParteOEM</td>
+                <td>String</td>
+                <td>Default: ""</td>
+                <td>Número de parte del fabricante original</td>
+            </tr>
+            <tr>
+                <td>descripcion</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Descripción técnica detallada</td>
+            </tr>
+            <tr>
+                <td>stockActual</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Cantidad disponible en almacén</td>
+            </tr>
+            <tr>
+                <td>stockMinimo</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Cantidad mínima recomendada</td>
+            </tr>
+            <tr>
+                <td>stockCritico</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Cantidad que genera alerta</td>
+            </tr>
+            <tr>
+                <td>precioCompra</td>
+                <td>Decimal(12,2)</td>
+                <td>Requerido</td>
+                <td>Costo de compra unitario</td>
+            </tr>
+            <tr>
+                <td>precioVenta</td>
+                <td>Decimal(12,2)</td>
+                <td>Requerido</td>
+                <td>Precio de venta al cliente</td>
+            </tr>
+            <tr>
+                <td>ubicacion</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Ubicación física en el almacén</td>
+            </tr>
+            <tr>
+                <td>unidadMedida</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Unidad de medida (piezas, metros, etc.)</td>
+            </tr>
+            <tr>
+                <td>compatibilidades</td>
+                <td>Relación</td>
+                <td>1:N</td>
+                <td>Compatibilidades de vehículos</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h3>5.3 Tabla: CompatibilidadProducto</h3>
+        <p>La tabla CompatibilidadProducto representa la relación muchos a muchos entre Producto y tipos de vehículos. Cada registro especifica que un producto particular es compatible con determinadas marcas y modelos de vehículos dentro de un rango de años específico. Esto permite al sistema sugerir repuestos compatibles cuando se registra un mantenimiento para un vehículo específico.</p>
+        
+        <div class="table-title">Campos de la tabla CompatibilidadProducto:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único de compatibilidad</td>
+            </tr>
+            <tr>
+                <td>productoId</td>
+                <td>String</td>
+                <td>FK, Requerido</td>
+                <td>Referencia al producto</td>
+            </tr>
+            <tr>
+                <td>producto</td>
+                <td>Relación</td>
+                <td>FK</td>
+                <td>Relación al modelo Producto</td>
+            </tr>
+            <tr>
+                <td>marca</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Marca del vehículo compatible</td>
+            </tr>
+            <tr>
+                <td>modelo</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Modelo del vehículo compatible</td>
+            </tr>
+            <tr>
+                <td>anoDesde</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Año inicial de compatibilidad</td>
+            </tr>
+            <tr>
+                <td>anoHasta</td>
+                <td>Int</td>
+                <td>Requerido</td>
+                <td>Año final de compatibilidad</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h2>6. Entidades de Soporte</h2>
+        
+        <h3>6.1 Tabla: CodigoVerificacion</h3>
+        <p>La tabla CodigoVerificacion almacena códigos temporales utilizados para la verificación de correos electrónicos. Cuando un usuario se registra o requiere recuperar su contraseña, se genera un código único que expira después de un tiempo determinado (almacenado en expiresAt). El campo usado rastrea si el código ya fue utilizado, previniendo su reutilización.</p>
+        
+        <div class="table-title">Campos de la tabla CodigoVerificacion:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del código</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Correo electrónico del usuario</td>
+            </tr>
+            <tr>
+                <td>codigo</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Código numérico de verificación</td>
+            </tr>
+            <tr>
+                <td>expiresAt</td>
+                <td>DateTime</td>
+                <td>Requerido</td>
+                <td>Fecha y hora de expiración del código</td>
+            </tr>
+            <tr>
+                <td>usado</td>
+                <td>Boolean</td>
+                <td>Default: false</td>
+                <td>Indica si el código fue utilizado</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación</td>
+            </tr>
+        </table>
+        
+        <h3>6.2 Tabla: ReporteSoporte</h3>
+        <p>La tabla ReporteSoporte mantiene un registro de consultas, reclamos, sugerencias y problemas técnicos reportados por usuarios. Cada reporte contiene información del usuario que reporta (nombre, apellido, correo), tipo de asunto (consulta general, problema técnico, sugerencia, reclamo, comprobante, otro), descripción detallada del problema, y estado de resolución (Pendiente, En revisión, Resuelto) con timestamps de auditoría.</p>
+        
+        <div class="table-title">Campos de la tabla ReporteSoporte:</div>
+        <table>
+            <tr>
+                <th>Campo</th>
+                <th>Tipo</th>
+                <th>Restricciones</th>
+                <th>Descripción</th>
+            </tr>
+            <tr>
+                <td>id</td>
+                <td>String</td>
+                <td>PK, @id, CUID</td>
+                <td>Identificador único del reporte</td>
+            </tr>
+            <tr>
+                <td>nombre</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer nombre del usuario que reporta</td>
+            </tr>
+            <tr>
+                <td>segundoNombre</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo nombre del usuario</td>
+            </tr>
+            <tr>
+                <td>apellido</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Primer apellido del usuario</td>
+            </tr>
+            <tr>
+                <td>segundoApellido</td>
+                <td>String</td>
+                <td>Opcional</td>
+                <td>Segundo apellido del usuario</td>
+            </tr>
+            <tr>
+                <td>correo</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Correo electrónico del usuario</td>
+            </tr>
+            <tr>
+                <td>tipoAsunto</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Tipo: Consulta general, Problema técnico, Sugerencia, Reclamo, Comprobante, Otro</td>
+            </tr>
+            <tr>
+                <td>descripcion</td>
+                <td>String</td>
+                <td>Requerido</td>
+                <td>Descripción detallada del problema o consulta</td>
+            </tr>
+            <tr>
+                <td>estado</td>
+                <td>String</td>
+                <td>Default: "Pendiente"</td>
+                <td>Estado: Pendiente, En revisión, Resuelto</td>
+            </tr>
+            <tr>
+                <td>createdAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de creación del reporte</td>
+            </tr>
+            <tr>
+                <td>updatedAt</td>
+                <td>DateTime</td>
+                <td>Auto</td>
+                <td>Timestamp de última actualización</td>
+            </tr>
+        </table>
+        
+        <h2>7. Enumeraciones (Enums) - NO son Tablas</h2>
+        <p>Las enumeraciones son tipos de datos especiales en PostgreSQL y Prisma que definen un conjunto restrictivo de valores permitidos. No son tablas independientes sino tipos de datos que se utilizan en campos específicos de las tablas para garantizar que solo ciertos valores sean almacenados. El sistema MecanicCompany define 4 enumeraciones diferentes.</p>
+        
+        <h3>7.1 EstadoLaboral</h3>
+        <p>La enumeración EstadoLaboral define los posibles estados de disponibilidad de un mecánico. Un mecánico puede estar Disponible (listo para recibir nuevas asignaciones), Ocupado (actualmente trabajando en un mantenimiento), o Inactivo (temporalmente no disponible o de baja).</p>
+        
+        <h3>7.2 EstadoSolicitud</h3>
+        <p>La enumeración EstadoSolicitud representa el ciclo de vida de una solicitud de mantenimiento. Una solicitud comienza en estado Pendiente, pasa a En_proceso cuando es asignada a un mecánico, y finaliza en Completado cuando se termina el trabajo. Si es rechazada por razones técnicas o por decisión del cliente, cambia a Rechazado.</p>
+        
+        <h3>7.3 EstadoFinanzas</h3>
+        <p>La enumeración EstadoFinanzas controla el estado del pago de una factura. Una factura inicia en Pendiente (aguardando pago), cambia a Pagado cuando se recibe el dinero, y puede ser Cancelado si se anula por error o acuerdo.</p>
+        
+        <h3>7.4 MetodoPago</h3>
+        <p>La enumeración MetodoPago especifica el método mediante el cual se pagó una factura. Los métodos soportados son EFECTIVO (pago en efectivo), TRANSFERENCIA (transferencia bancaria), TARJETA (pago con tarjeta de crédito o débito), y OTRO (métodos no categorizados).</p>
+        
+        <h2>8. Relaciones entre Entidades</h2>
+        
+        <h3>8.1 Relaciones Principales (1:N)</h3>
+        <p>Cliente tiene una relación uno a muchos con Solicitud. Un cliente puede crear múltiples solicitudes, pero cada solicitud pertenece a un único cliente. Mecanico también tiene una relación uno a muchos con Solicitud; un mecánico puede ser asignado a múltiples solicitudes. Producto tiene una relación uno a muchos con CompatibilidadProducto, especificando todas las compatibilidades de un producto.</p>
+        
+        <h3>8.2 Relaciones Uno a Uno (1:1)</h3>
+        <p>Solicitud tiene una relación uno a uno con Mantenimiento. Cada solicitud genera exactamente un registro de mantenimiento cuando se completa el trabajo. Mantenimiento tiene una relación uno a uno con Finanzas. Cada mantenimiento genera exactamente una factura. Estas relaciones aseguran integridad: si se elimina un Mantenimiento, su Finanzas asociada se elimina automáticamente (onDelete: Cascade).</p>
+        
+        <h2>9. Integridad y Seguridad</h2>
+        <p>El esquema de base de datos implementa múltiples mecanismos de seguridad e integridad. Las contraseñas se almacenan hasheadas mediante bcrypt versión 12, nunca en texto plano. Los correos están marcados como @unique, previniendo duplicados. Los tipos Decimal de 12,2 garantizan precisión en operaciones monetarias. Las relaciones de clave foránea aseguran que los datos relacionados permanezcan consistentes. El campo cuentaActiva en tablas de usuario permite desactivar acceso sin eliminar datos históricos. Los timestamps createdAt y updatedAt en todas las tablas mantienen un registro de auditoría de cambios.</p>
+        
+        <h2>10. Consideraciones de Rendimiento</h2>
+        <p>Para optimizar el rendimiento de consultas frecuentes, se recomienda crear índices en los siguientes campos: (a) correo en todas las tablas de usuario, para búsquedas de autenticación; (b) placa en Solicitud y Mantenimiento, para consultas por vehículo; (c) codigoSKU en Producto, para búsquedas de inventario; (d) estado en Solicitud y Finanzas, para filtrados por estado; (e) createdAt en todas las tablas, para ordenamientos cronológicos y reportes de período. Estos índices mejoran significativamente la velocidad de consultas sin impactar la escritura de datos de forma severa.</p>
+        
+        <h2>11. Conclusión</h2>
+        <p>El esquema de base de datos de MecanicCompany es una solución bien estructurada que modela de forma completa los procesos de negocio de una empresa de mantenimiento vehicular. Con doce tablas principales, cuatro enumeraciones de tipo de dato, relaciones claramente definidas, y mecanismos robustos de seguridad e integridad, proporciona una base sólida para la aplicación. La normalización relacional garantiza que los datos se almacenan sin redundancia excesiva, mientras que los mecanismos de cascada en eliminaciones aseguran la consistencia. El uso de tipos de datos apropiados (Decimal para dinero, DateTime para auditoría, Enum para opciones limitadas) y restricciones (unique, required, defaults) implementa validaciones a nivel de base de datos. Es importante distinguir entre las 12 tablas físicas que existen en PostgreSQL y los 4 enums que son tipos de datos virtuales utilizados para restricción de valores.</p>
+    </div>
+    
+    <div class="button-container">
+        <button onclick="descargarComoPDF()">⬇️ Descargar como PDF</button>
+    </div>
+    
+    <script>
+        function descargarComoPDF() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

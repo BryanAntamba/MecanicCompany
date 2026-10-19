@@ -6,11 +6,13 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import {
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useFocusEffect } from 'expo-router';
@@ -22,6 +24,8 @@ import FooterCliente from '@/components/footerCliente/footerCliente';
 import DetallesSolicitud from './ModalSeguimientoVehicular/detallesSolicitud';
 import FinalizacionSolicitud from './ModalSeguimientoVehicular/finalizacionSolicitud';
 import styles from '@/Styles/pantallaCliente/seguimientoVehiculo';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
+import { solicitudesApi, type SolicitudBackend } from '@/utils/api';
 
 // Tipo de solicitud
 interface Solicitud {
@@ -41,6 +45,34 @@ interface Solicitud {
   horaCita: string;
   ubicacion: string;
 }
+
+// Función para mapear datos del backend al tipo Solicitud
+const mapearSolicitudBackend = (sol: SolicitudBackend): Solicitud => {
+  // Determinar estado: mapear valores de BD a valores del frontend
+  let estadoMapeado: 'PENDIENTE' | 'EN PROCESO' | 'COMPLETADO' = 'PENDIENTE';
+  if (sol.estado === 'Completada') {
+    estadoMapeado = 'COMPLETADO';
+  } else if (sol.estado === 'EnProgreso') {
+    estadoMapeado = 'EN PROCESO';
+  }
+
+  return {
+    id: sol.id,
+    marca: sol.marca,
+    modelo: sol.modelo,
+    placa: sol.placa,
+    servicio: sol.tipoServicio,
+    fechaSolicitud: sol.createdAt,
+    estado: estadoMapeado,
+    mecanico: sol.mecanico ? `${sol.mecanico.nombres} ${sol.mecanico.apellidos}` : undefined,
+    año: sol.anio,
+    kilometraje: sol.kilometraje,
+    descripcion: sol.descripcionProblema,
+    fechaCita: sol.fechaCita,
+    horaCita: sol.horaCita || '09:00',
+    ubicacion: sol.ubicacionMecanicaNombre || 'No especificada',
+  };
+};
 
 // Datos de ejemplo - En producción vendrían del backend
 const solicitudesEjemplo: Solicitud[] = [
@@ -97,18 +129,72 @@ export default function SeguimientoVehiculoScreen() {
   const scrollRef = useRef<ScrollView>(null);
   const router = useRouter();
   const { user, logout } = useAuth();
-  const { estaLogueado } = useCliente();
+  const { estaLogueado, correoCliente } = useCliente();
+  const { width } = useWindowDimensions();
   
-  // Protección: redirigir si no hay sesión AL MONTAR el componente
-  // (no reaccionar a cambios posteriores para evitar conflictos con logout)
-  const sesionInicialRef = useRef(estaLogueado);
+  // Determinar si estamos en pantalla pequeña
+  const isSmallScreen = width < 640;
+  const isMediumScreen = width < 768;
+
+  // Estado para solicitudes reales del backend
+  const [solicitudesReales, setSolicitudesReales] = useState<Solicitud[]>([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
+  // Protección: redirigir si no hay sesión
   useEffect(() => {
-    if (!sesionInicialRef.current) {
-      // Si no había sesión al montar, redirigir al index
-      router.replace('/PantallaCliente' as any);
+    if (!estaLogueado) {
+      // Usar setTimeout para asegurar que el router esté listo
+      const timer = setTimeout(() => {
+        router.replace('/PantallaCliente' as any);
+      }, 0);
+      return () => clearTimeout(timer);
     }
-  }, [router]);
+  }, [estaLogueado, router]);
+
+  // Cargar solicitudes reales del backend filtradas por correo del cliente
+  useEffect(() => {
+    const cargarSolicitudes = async () => {
+      if (!correoCliente) {
+        console.log('⚠️ No hay correo del cliente');
+        setError('No se pudo identificar tu correo');
+        setCargando(false);
+        return;
+      }
+
+      try {
+        setCargando(true);
+        setError(null);
+        console.log('🔍 Cargando solicitudes para:', correoCliente);
+
+        // Obtener solicitudes del cliente (endpoint público, sin autenticación)
+        const BASE_URL = 'http://192.168.1.12:3000/api';
+        const response = await fetch(`${BASE_URL}/solicitudes/cliente/${encodeURIComponent(correoCliente)}`);
+        
+        if (!response.ok) {
+          throw new Error(`Error ${response.status}: ${response.statusText}`);
+        }
+
+        const respuesta: SolicitudBackend[] = await response.json();
+        console.log('📥 Solicitudes del backend:', respuesta);
+
+        // Mapear solicitudes a tipo local
+        const solicitudesDecliente = respuesta.map(mapearSolicitudBackend);
+
+        console.log(`✅ ${solicitudesDecliente.length} solicitudes encontradas para ${correoCliente}`);
+        setSolicitudesReales(solicitudesDecliente);
+      } catch (err: any) {
+        console.error('❌ Error al cargar solicitudes:', err);
+        setError('Error al cargar las solicitudes. Por favor, recarga la página.');
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    if (estaLogueado && correoCliente) {
+      cargarSolicitudes();
+    }
+  }, [estaLogueado, correoCliente]);
 
   // Estados de filtros
   const [busqueda, setBusqueda] = useState('');
@@ -150,7 +236,7 @@ export default function SeguimientoVehiculoScreen() {
     date ? date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : 'Seleccionar';
 
   // Filtrar y ordenar solicitudes
-  const solicitudesFiltradas = solicitudesEjemplo
+  const solicitudesFiltradas = solicitudesReales
     .filter((sol) => {
       // Filtro de búsqueda (marca, modelo, placa)
       const textoBusqueda = busqueda.toLowerCase();
@@ -216,9 +302,11 @@ export default function SeguimientoVehiculoScreen() {
     }
   };
 
-  // Manejo del botón de retroceso del teléfono
+  // Manejo del botón de retroceso del teléfono (solo en móvil)
   useFocusEffect(
     useCallback(() => {
+      if (Platform.OS === 'web') return;
+
       const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         router.push('/PantallaCliente' as any);
         return true;
@@ -228,9 +316,10 @@ export default function SeguimientoVehiculoScreen() {
   );
 
   return (
-    <View style={styles.page}>
-      <ScrollView
-        ref={scrollRef}
+    <ResponsiveContainer>
+      <View style={styles.page}>
+        <ScrollView
+          ref={scrollRef}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         stickyHeaderIndices={[0]}
@@ -245,14 +334,46 @@ export default function SeguimientoVehiculoScreen() {
             Consulta el estado de todas tus solicitudes de mantenimiento vehicular
           </Text>
 
-          {/* FILTROS */}
+          {/* MENSAJE DE CARGA */}
+          {cargando && (
+            <View style={{ padding: 16, backgroundColor: '#E3F2FD', borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: '#1565C0', fontWeight: '600', textAlign: 'center' }}>
+                🔄 Cargando tus solicitudes...
+              </Text>
+            </View>
+          )}
+
+          {/* MENSAJE DE ERROR */}
+          {error && (
+            <View style={{ padding: 16, backgroundColor: '#FFEBEE', borderRadius: 8, marginBottom: 16 }}>
+              <Text style={{ color: '#C62828', fontWeight: '600', textAlign: 'center' }}>
+                ⚠️ {error}
+              </Text>
+            </View>
+          )}
+
+          {/* MENSAJE SI NO HAY SOLICITUDES */}
+          {!cargando && !error && solicitudesReales.length === 0 && (
+            <View style={{ padding: 20, backgroundColor: '#F5F5F5', borderRadius: 8, marginBottom: 16, alignItems: 'center' }}>
+              <FontAwesome name="inbox" size={32} color="#B0BEC5" style={{ marginBottom: 8 }} />
+              <Text style={{ color: '#78909C', fontWeight: '600', fontSize: 16, textAlign: 'center' }}>
+                No tienes solicitudes aún
+              </Text>
+              <Text style={{ color: '#90A4AE', fontSize: 14, textAlign: 'center', marginTop: 4 }}>
+                Crea una nueva solicitud de servicio
+              </Text>
+            </View>
+          )}
+
+          {/* FILTROS - Solo mostrar si hay datos y no está cargando */}
+          {!cargando && solicitudesReales.length > 0 && (
           <View style={styles.filterContainer}>
             {/* Campo de búsqueda */}
             <Text style={styles.filterLabel}>Buscar Vehículo</Text>
             <View style={styles.searchBox}>
               <FontAwesome name="search" size={16} color="#64748B" style={styles.searchIcon} />
               <TextInput
-                placeholder="Buscar por marca, modelo o placa"
+                placeholder="Busca tu vehiculo"
                 placeholderTextColor="#94A3B8"
                 value={busqueda}
                 onChangeText={setBusqueda}
@@ -260,82 +381,93 @@ export default function SeguimientoVehiculoScreen() {
               />
             </View>
 
-            {/* Selector de orden A-Z / Z-A */}
-            <Text style={styles.filterLabel}>Orden</Text>
-            <Pressable
-              style={styles.filterDropdown}
-              onPress={() => setOrdenDropdownOpen((v) => !v)}
-            >
-              <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-              <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-            </Pressable>
-            {ordenDropdownOpen && (
-              <View style={styles.dropdownList}>
-                {(['A-Z', 'Z-A'] as const).map((option) => (
-                  <Pressable
-                    key={option}
-                    style={[
-                      styles.dropdownItem,
-                      ordenAZ === option && styles.dropdownItemActive,
-                    ]}
-                    onPress={() => {
-                      setOrdenAZ(option);
-                      setOrdenDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>
-                      {ordenAZ === option ? '✓ ' : '    '}
-                    </Text>
-                    <Text style={styles.dropdownItemText}>{option}</Text>
-                  </Pressable>
-                ))}
+            {/* Fila de filtros: Orden y Estado */}
+            <View style={styles.filterRowContainer}>
+              <View style={styles.filterColumn}>
+                <Text style={styles.filterLabel}>Orden</Text>
+                <Pressable
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    setOrdenDropdownOpen((v) => !v);
+                    setEstadoDropdownOpen(false); // Cierra el otro dropdown
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                  <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+                </Pressable>
+                {ordenDropdownOpen && (
+                  <View style={styles.dropdownList}>
+                    {(['A-Z', 'Z-A'] as const).map((option) => (
+                      <Pressable
+                        key={option}
+                        style={[
+                          styles.dropdownItem,
+                          ordenAZ === option && styles.dropdownItemActive,
+                        ]}
+                        onPress={() => {
+                          setOrdenAZ(option);
+                          setOrdenDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>
+                          {ordenAZ === option ? '✓ ' : '    '}
+                        </Text>
+                        <Text style={styles.dropdownItemText}>{option}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
               </View>
-            )}
 
-            {/* Selector de estado */}
-            <Text style={styles.filterLabel}>Estado</Text>
-            <Pressable
-              style={styles.filterDropdown}
-              onPress={() => setEstadoDropdownOpen((v) => !v)}
-            >
-              <Text style={styles.filterDropdownText}>
-                {filtroEstado === 'TODOS' ? 'Todos' : 
-                 filtroEstado === 'PENDIENTE' ? 'Pendiente' :
-                 filtroEstado === 'EN PROCESO' ? 'En proceso' : 'Completado'}
-              </Text>
-              <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-            </Pressable>
-            {estadoDropdownOpen && (
-              <ScrollView 
-                style={styles.dropdownList}
-                nestedScrollEnabled={true}
-                showsVerticalScrollIndicator={true}
-              >
-                {(['TODOS', 'PENDIENTE', 'EN PROCESO', 'COMPLETADO'] as const).map((option) => {
-                  const displayText = option === 'TODOS' ? 'Todos' : 
-                                     option === 'PENDIENTE' ? 'Pendiente' :
-                                     option === 'EN PROCESO' ? 'En proceso' : 'Completado';
-                  return (
-                    <Pressable
-                      key={option}
-                      style={[
-                        styles.dropdownItem,
-                        filtroEstado === option && styles.dropdownItemActive,
-                      ]}
-                      onPress={() => {
-                        setFiltroEstado(option);
-                        setEstadoDropdownOpen(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemCheck}>
-                        {filtroEstado === option ? '✓ ' : '    '}
-                      </Text>
-                      <Text style={styles.dropdownItemText}>{displayText}</Text>
-                    </Pressable>
-                  );
-                })}
-              </ScrollView>
-            )}
+              <View style={styles.filterColumn}>
+                <Text style={styles.filterLabel}>Estado</Text>
+                <Pressable
+                  style={styles.filterDropdown}
+                  onPress={() => {
+                    setEstadoDropdownOpen((v) => !v);
+                    setOrdenDropdownOpen(false); // Cierra el otro dropdown
+                  }}
+                >
+                  <Text style={styles.filterDropdownText}>
+                    {filtroEstado === 'TODOS' ? 'Todos' : 
+                     filtroEstado === 'PENDIENTE' ? 'Pendiente' :
+                     filtroEstado === 'EN PROCESO' ? 'En proceso' : 'Completado'}
+                  </Text>
+                  <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+                </Pressable>
+                {estadoDropdownOpen && (
+                  <ScrollView 
+                    style={styles.dropdownList}
+                    nestedScrollEnabled={true}
+                    showsVerticalScrollIndicator={true}
+                  >
+                    {(['TODOS', 'PENDIENTE', 'EN PROCESO', 'COMPLETADO'] as const).map((option) => {
+                      const displayText = option === 'TODOS' ? 'Todos' : 
+                                         option === 'PENDIENTE' ? 'Pendiente' :
+                                         option === 'EN PROCESO' ? 'En proceso' : 'Completado';
+                      return (
+                        <Pressable
+                          key={option}
+                          style={[
+                            styles.dropdownItem,
+                            filtroEstado === option && styles.dropdownItemActive,
+                          ]}
+                          onPress={() => {
+                            setFiltroEstado(option);
+                            setEstadoDropdownOpen(false);
+                          }}
+                        >
+                          <Text style={styles.dropdownItemCheck}>
+                            {filtroEstado === option ? '✓ ' : '    '}
+                          </Text>
+                          <Text style={styles.dropdownItemText}>{displayText}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+                )}
+              </View>
+            </View>
 
             {/* Filtro de rango de fechas */}
             <Text style={styles.filterLabel}>Rango de Fechas</Text>
@@ -370,8 +502,10 @@ export default function SeguimientoVehiculoScreen() {
               </View>
             </View>
           </View>
+          )}
 
           {/* RESUMEN DE RESULTADOS */}
+          {!cargando && solicitudesReales.length > 0 && (
           <View style={styles.summaryContainer}>
             <View style={styles.summaryCard}>
               <Text style={[styles.summaryNumber, { color: '#FFFFFF' }]}>{totalSolicitudes}</Text>
@@ -390,14 +524,23 @@ export default function SeguimientoVehiculoScreen() {
               <Text style={styles.summaryLabel}>Completados</Text>
             </View>
           </View>
+          )}
 
           {/* LISTA DE SOLICITUDES */}
+          {!cargando && solicitudesReales.length > 0 && (
           <View style={styles.solicitudesContainer}>
             {solicitudesFiltradas.length === 0 ? (
               <Text style={styles.emptyText}>No se encontraron solicitudes</Text>
             ) : (
-              solicitudesFiltradas.map((solicitud) => (
-                <View key={solicitud.id} style={styles.solicitudCard}>
+              <View style={[
+                styles.cardsGrid,
+                isMediumScreen && { flexDirection: 'column' }
+              ]}>
+                {solicitudesFiltradas.map((solicitud) => (
+                  <View key={solicitud.id} style={[
+                    styles.solicitudCard,
+                    isMediumScreen && { maxWidth: 'none', minWidth: 'auto', flex: 'none' as any, width: '100%' }
+                  ]}>
                   <Text style={styles.solicitudTitulo}>{solicitud.marca}</Text>
                   <Text style={styles.solicitudSubtitulo}>{solicitud.modelo}</Text>
 
@@ -446,20 +589,30 @@ export default function SeguimientoVehiculoScreen() {
                     onPress={() => handleVerDetalles(solicitud)}
                   >
                     {({ pressed }) => (
-                      <Text
-                        style={[
-                          styles.verDetallesButtonText,
-                          pressed && styles.verDetallesButtonTextPressed,
-                        ]}
-                      >
-                        VER DETALLES
-                      </Text>
+                      <View style={styles.buttonContent}>
+                        <FontAwesome 
+                          name="file-text-o" 
+                          size={18} 
+                          color={pressed ? '#FFFFFF' : '#000000'} 
+                          style={styles.buttonIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.verDetallesButtonText,
+                            pressed && styles.verDetallesButtonTextPressed,
+                          ]}
+                        >
+                          DETALLES
+                        </Text>
+                      </View>
                     )}
                   </Pressable>
                 </View>
-              ))
+              ))}
+            </View>
             )}
           </View>
+          )}
         </View>
 
         {/* FOOTER */}
@@ -648,6 +801,7 @@ export default function SeguimientoVehiculoScreen() {
           </Pressable>
         </Pressable>
       </Modal>
-    </View>
+      </View>
+    </ResponsiveContainer>
   );
 }

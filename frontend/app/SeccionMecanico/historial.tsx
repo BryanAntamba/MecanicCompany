@@ -9,30 +9,35 @@ import { useCallback, useEffect, useState } from 'react';
 
 // Componentes nativos de React Native
 import {
+  Alert,                // Para mostrar alertas al usuario
   BackHandler,          // Intercepta el botón físico de atrás en Android
   KeyboardAvoidingView, // Evita que el teclado tape los inputs en iOS
   Modal,                // Superposición de contenido sobre la pantalla principal
-  Platform,             // Detecta el sistema operativo (iOS / Android)
+  Platform,             // Detecta el sistema operativo (iOS / Android / Web)
   Pressable,            // Área táctil con feedback de presión
   ScrollView,           // Vista con scroll vertical
   Text,                 // Renderiza texto en pantalla
   TextInput,            // Campo de entrada de texto (usado en modo solo lectura en detalles)
   View,                 // Contenedor genérico
+  useWindowDimensions,  // Hook para obtener dimensiones de pantalla
 } from 'react-native';
 
 // Íconos vectoriales de FontAwesome (search, car, calendar, user, file-text, send, check-circle)
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 
 // Barra de navegación del mecánico con opciones Reportes, Historial y Cerrar sesión
 import NavbarMecanico from '@/components/navbarMecanico/navbarMecanico';
 
-// useFocusEffect: ejecuta un efecto solo mientras la pantalla está en foco
-// useRouter: para navegar entre pantallas
 import { useFocusEffect, useRouter } from 'expo-router';
 
 // Estilos compartidos con ReportesClientes (tarjetas, modales, botones)
-import styles from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesBase from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesWeb from '@/Styles/pantallaMecanico/historial.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 
 // Estilos exclusivos del historial (buscador, texto vacío, valores de detalle)
 import histStyles from '@/Styles/pantallaMecanico/historial';
@@ -80,6 +85,7 @@ type RegistroHistorial = {
   modelo: string;              // Modelo del vehículo
   placa: string;               // Placa del vehículo (campo de búsqueda)
   fechaMantenimiento: string;  // Fecha en que se completó el mantenimiento
+  fechaGeneracionReporte?: string;
   mecanicoNombre: string;      // Nombre del mecánico que realizó el trabajo
   mantenimiento: Mantenimiento;// Datos completos del reporte técnico
 };
@@ -97,9 +103,15 @@ const MOCK_HISTORIAL: RegistroHistorial[] = [];
 export default function HistorialScreen() {
   const router = useRouter();
   const { token, user, logout } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -108,9 +120,8 @@ export default function HistorialScreen() {
   }, []);
 
   // Función para cerrar sesión y limpiar historial
-  const handleSignOut = async () => {
-    await logout();
-    // Navegar al login con parámetro que indica cierre de sesión
+  const handleSignOut = () => {
+    logout();
     router.replace('/(auth)/login?fromLogout=true' as any);
   };
 
@@ -144,47 +155,34 @@ export default function HistorialScreen() {
 
   // Lista de registros del historial (se carga desde el backend)
   const [lista, setLista] = useState<RegistroHistorial[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Cargar historial desde backend
+  const cargarHistorial = useCallback(async () => {
+    if (!token) return;
+    try {
+      setIsLoading(true);
+      const { mantenimientosApi } = await import('@/utils/api');
+      const respuesta = await mantenimientosApi.obtenerHistorial(token);
+      
+      if (respuesta && respuesta.historial) {
+        setLista(respuesta.historial);
+      } else {
+        setLista([]);
+      }
+    } catch (error) {
+      console.error('Error cargando historial:', error);
+      setLista([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [token]);
 
   // Recarga el historial cada vez que la pantalla entra en foco
   useFocusEffect(
     useCallback(() => {
-      // Cargar desde datos simulados
-      const { obtenerSolicitudesSimuladas } = require('@/utils/datosSimulados');
-      const solicitudes = obtenerSolicitudesSimuladas();
-      const registros = solicitudes
-        .filter((s: any) => s.estado === 'Completado')
-        .map((s: any) => ({
-          id: s.id,
-          clienteNombre: s.nombreCliente,
-          clienteCorreo: s.correoCliente,
-          telefono: s.telefono || 'No especificado',
-          marca: s.marca,
-          modelo: s.modelo,
-          placa: s.placa,
-          fechaMantenimiento: s.fechaFinalizacion || s.fechaCita,
-          mecanicoNombre: s.mecanicoAsignado || 'No asignado',
-          mantenimiento: {
-            marca: s.marca,
-            modelo: s.modelo,
-            placa: s.placa,
-            año: s.anio,
-            kilometraje: s.kilometraje,
-            fechaServicio: s.fechaServicio || s.fechaCita,
-            mecanicoAsignado: s.mecanicoAsignado || 'No asignado',
-            diagnostico: s.diagnostico || '',
-            trabajoRealizado: s.trabajoRealizado || '',
-            otroTrabajo: s.otroTrabajo || '',
-            repuestosUtilizados: s.repuestosUtilizados || '',
-            diagnosticoRealizado: s.diagnosticoRealizado || '',
-            costoManoObra: s.costoManoObra || '0',
-            costoRepuestos: s.costoRepuestos || '0',
-            observaciones: s.observaciones || '',
-            fechaInicio: s.fechaInicio || '',
-            fechaFinalizacion: s.fechaFinalizacion || '',
-          },
-        }));
-      setLista(registros);
-    }, []),
+      cargarHistorial();
+    }, [cargarHistorial]),
   );
 
   // Estado: controla si el modal de detalles está visible
@@ -203,17 +201,111 @@ export default function HistorialScreen() {
   // Estado: mensaje de error si el envío falló
   const [sendError, setSendError] = useState('');
 
-  // Llama al backend para reenviar el reporte al correo del cliente (SIMULADO)
+  // Llama al backend para enviar el reporte al correo del cliente
   const reenviarReporte = async () => {
-    if (!sendTarget) return;
+    if (!sendTarget || !token) return;
     setSendLoading(true);
     setSendError('');
     
-    // Simulación de envío exitoso
-    setTimeout(() => {
+    try {
+      const { reportesApi } = await import('@/utils/api');
+      
+      await reportesApi.enviar(sendTarget.id, token);
+      
       setSendLoading(false);
       setSendSuccess(true);
-    }, 500);
+      
+      // Recargar historial después de 1 segundo
+      setTimeout(() => {
+        cargarHistorial();
+      }, 1000);
+    } catch (error: any) {
+      console.error('Error enviando reporte:', error);
+      setSendError(error?.message || 'Error al enviar el reporte');
+      setSendLoading(false);
+    }
+  };
+
+  // Descarga la foto del vehículo
+  const descargarFotoVehiculo = async (registro: RegistroHistorial) => {
+    try {
+      console.log('[historial] Intentando descargar foto de:', registro.placa);
+      console.log('[historial] Datos del reporte:', registro.mantenimiento);
+      console.log('[historial] ¿Tiene foto?', !!registro.mantenimiento?.fotoVehiculo);
+      console.log('[historial] Longitud foto:', registro.mantenimiento?.fotoVehiculo?.length || 0);
+
+      if (!registro.mantenimiento?.fotoVehiculo) {
+        Alert.alert('Información', 'No hay foto del vehículo disponible en este reporte');
+        return;
+      }
+
+      let fotoBase64 = registro.mantenimiento.fotoVehiculo;
+      
+      // Si la foto tiene el prefijo data URI, removerlo
+      if (fotoBase64.startsWith('data:image')) {
+        fotoBase64 = fotoBase64.split(',')[1];
+      }
+      
+      // Crear nombre de archivo con placa y fecha
+      const placa = registro.placa.replace(/[^a-zA-Z0-9]/g, '_');
+      const fecha = new Date().toISOString().split('T')[0];
+      const nombreArchivo = `FOTO_VEHICULO_${placa}_${fecha}.jpg`;
+
+      // En web: descargar directamente
+      if (Platform.OS === 'web') {
+        try {
+          // Convertir base64 a blob
+          const binaryString = atob(fotoBase64);
+          const bytes = new Uint8Array(binaryString.length);
+          for (let i = 0; i < binaryString.length; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+          }
+          const blob = new Blob([bytes], { type: 'image/jpeg' });
+          
+          // Crear URL temporal y simular click
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = nombreArchivo;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+          
+          Alert.alert('Éxito', 'Foto descargada exitosamente');
+        } catch (webError: any) {
+          console.error('[historial] Error descargando en web:', webError);
+          Alert.alert('Error', 'No se pudo descargar la foto');
+        }
+        return;
+      }
+
+      // En móvil: usar FileSystem y Sharing
+      const fileUri = `${FileSystem.documentDirectory}${nombreArchivo}`;
+      
+      console.log('[historial] Guardando archivo en:', fileUri);
+
+      // Convertir base64 a archivo
+      await FileSystem.writeAsStringAsync(fileUri, fotoBase64, {
+        encoding: 'base64',
+      });
+
+      console.log('[historial] Archivo guardado exitosamente');
+
+      // Compartir/Descargar el archivo
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(fileUri, {
+          mimeType: 'image/jpeg',
+          dialogTitle: 'Descargar foto del vehículo',
+          UTI: 'com.compuserve.gif',
+        });
+      } else {
+        Alert.alert('Información', `Foto guardada en: ${fileUri}`);
+      }
+    } catch (error: any) {
+      console.error('[historial] Error descargando foto:', error);
+      Alert.alert('Error', 'No se pudo descargar la foto del vehículo');
+    }
   };
 
   // Funciones auxiliares de calendario
@@ -376,6 +468,10 @@ export default function HistorialScreen() {
             <Text style={styles.summaryNumber}>{reportesEncontrados}</Text>
             <Text style={styles.summaryLabel}>Reportes Encontrados</Text>
           </View>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryNumber}>{totalReportes}</Text>
+            <Text style={styles.summaryLabel}>Completados</Text>
+          </View>
         </View>
 
         {/* Mensaje cuando no hay resultados para la búsqueda actual */}
@@ -384,11 +480,28 @@ export default function HistorialScreen() {
         )}
 
         {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
-        <View style={styles.solicitudesContainer}>
+        <View style={[
+          styles.solicitudesContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
 
         {/* Itera sobre los registros filtrados para renderizar una tarjeta por cada uno */}
         {listaFiltrada.map((r) => (
-          <View key={r.id} style={styles.card}>
+          <View 
+            key={r.id} 
+            style={[
+              styles.card,
+              Platform.OS === 'web' && !isSmallScreen && { 
+                flex: 1, 
+                minWidth: 300, 
+                maxWidth: 'calc(50% - 8px)' 
+              },
+              Platform.OS === 'web' && isSmallScreen && { 
+                width: '100%',
+                maxWidth: '100%'
+              }
+            ]}
+          >
 
             {/* Nombre completo del cliente */}
             <Text style={styles.cardName}>{r.clienteNombre}</Text>
@@ -421,21 +534,48 @@ export default function HistorialScreen() {
                 style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
-                    VISUALIZAR REPORTE
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="eye" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                    <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
+                      VISUALIZAR REPORTE
+                    </Text>
+                  </View>
                 )}
               </Pressable>
 
-              {/* Botón REENVIAR FACTURA */}
+              {/* Botón REENVIAR REPORTE */}
               <Pressable
                 onPress={() => { setSendTarget(r); setSendSuccess(false); setSendModal(true); }}
                 style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
               >
                 {({ pressed }) => (
-                  <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                    REENVIAR FACTURA
-                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="send" size={16} color={pressed ? '#F1F5F9' : '#FFFFFF'} />
+                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                      REENVIAR REPORTE
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+
+              {/* Botón DESCARGAR FOTO */}
+              <Pressable
+                onPress={() => descargarFotoVehiculo(r)}
+                disabled={!r.mantenimiento?.fotoVehiculo}
+                style={({ pressed }) => [
+                  styles.btnTerciary,
+                  !r.mantenimiento?.fotoVehiculo && { opacity: 0.5 },
+                  pressed && !r.mantenimiento?.fotoVehiculo && {},
+                  pressed && r.mantenimiento?.fotoVehiculo && styles.btnTerciaryPressed
+                ]}
+              >
+                {({ pressed }) => (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                    <FontAwesome name="download" size={16} color={pressed && r.mantenimiento?.fotoVehiculo ? '#F1F5F9' : '#FFFFFF'} />
+                    <Text style={[styles.btnTerciaryText, pressed && r.mantenimiento?.fotoVehiculo && styles.btnTerciaryTextPressed]}>
+                      {r.mantenimiento?.fotoVehiculo ? 'DESCARGAR FOTO' : 'SIN FOTO'}
+                    </Text>
+                  </View>
                 )}
               </Pressable>
             </View>
@@ -539,7 +679,9 @@ export default function HistorialScreen() {
       <ConfirmarReenvioReporte
         visible={sendModal && !sendSuccess}
         nombreCliente={sendTarget?.clienteNombre || ''}
+        isLoading={sendLoading}
         onCancelar={() => {
+          if (sendLoading) return; // No permitir cancelar mientras se envía
           setSendModal(false);
           setSendSuccess(false);
           setSendError('');

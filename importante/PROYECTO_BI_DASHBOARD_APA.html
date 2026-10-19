@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Proyecto de Inteligencia de Negocios - MecanicCompany</title>
+    <style>
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            margin: 1in;
+            color: #000;
+            background-color: #fff;
+        }
+        .portada {
+            text-align: center;
+            margin-top: 3in;
+        }
+        .portada h1 {
+            font-size: 14pt;
+            font-weight: bold;
+            margin-bottom: 2em;
+        }
+        .portada p {
+            margin: 1em 0;
+        }
+        h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 2em;
+            margin-bottom: 1em;
+        }
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            font-style: italic;
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+        p {
+            text-align: justify;
+            text-indent: 0.5in;
+            margin: 0;
+        }
+        .no-indent {
+            text-indent: 0;
+        }
+        .resumen {
+            margin-top: 2em;
+        }
+        .resumen p {
+            text-indent: 0;
+        }
+        .referencias {
+            text-indent: -0.5in;
+            padding-left: 0.5in;
+        }
+        .page-break {
+            page-break-after: always;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+        ul, ol {
+            margin-left: 0.5in;
+        }
+        .header {
+            text-align: right;
+            font-size: 12pt;
+            margin-bottom: 2em;
+        }
+    </style>
+</head>
+<body>
+
+<!-- PORTADA -->
+<div class="portada">
+    <h1>Implementación de Sistema de Inteligencia de Negocios para Optimización de Procesos en Taller Mecánico MecanicCompany</h1>
+    
+    <p>Proyecto de Business Intelligence</p>
+    <p>Dashboard Analítico de Indicadores Clave de Rendimiento</p>
+    
+    <p style="margin-top: 3em;">Institución Educativa</p>
+    <p>Carrera de Ingeniería en Sistemas</p>
+    <p>Curso: Inteligencia de Negocios</p>
+    
+    <p style="margin-top: 3em;">Julio 2026</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- RESUMEN -->
+<div class="header">Proyecto BI MecanicCompany - 2</div>
+<h1>Resumen</h1>
+
+<div class="resumen">
+    <p class="no-indent">El presente proyecto describe la implementación de un sistema de Inteligencia de Negocios (Business Intelligence) para el taller mecánico MecanicCompany, con el objetivo de mejorar la toma de decisiones mediante la visualización y análisis de indicadores clave de rendimiento (KPIs). Se desarrolló un dashboard analítico utilizando Metabase como plataforma de visualización, PostgreSQL como base de datos transaccional, y Docker para la gestión de contenedores. El sistema permite monitorear en tiempo real métricas críticas del negocio incluyendo ingresos mensuales, cantidad de servicios completados, promedio de facturación por servicio, y solicitudes pendientes de atención. La implementación incluye análisis de tendencias históricas, evaluación de desempeño de mecánicos, y distribución de tipos de servicio. Los resultados preliminares demuestran que la solución proporciona visibilidad inmediata sobre el estado operacional del taller, facilita la identificación de áreas de mejora, y apoya la planificación estratégica mediante el uso de colores condicionales que alertan sobre situaciones que requieren atención. Este proyecto constituye un caso de aplicación práctica de conceptos de BI en el sector automotriz de servicios, demostrando la viabilidad de implementar soluciones analíticas de bajo costo con herramientas open source.</p>
+    
+    <p class="no-indent" style="margin-top: 1em;"><strong>Palabras clave:</strong> inteligencia de negocios, dashboard analítico, KPIs, Metabase, taller mecánico, visualización de datos</p>
+</div>
+
+<div class="page-break"></div>
+
+<!-- INTRODUCCIÓN -->
+<div class="header">Proyecto BI MecanicCompany - 3</div>
+<h1>Introducción</h1>
+
+<h2>Contexto del Proyecto</h2>
+<p>MecanicCompany es un taller mecánico automotriz que ofrece servicios de mantenimiento preventivo y correctivo de vehículos. La empresa enfrenta desafíos comunes en el sector de servicios automotrices: gestión eficiente de recursos, control de ingresos, optimización de tiempos de servicio, y evaluación del desempeño del personal técnico. Previo a este proyecto, la toma de decisiones se basaba en reportes manuales generados mediante consultas ad-hoc a la base de datos, lo cual consumía tiempo valioso y no proporcionaba visibilidad en tiempo real sobre el estado del negocio.</p>
+
+<h2>Problemática</h2>
+<p>La ausencia de un sistema integrado de inteligencia de negocios generaba las siguientes limitaciones operacionales: (a) dificultad para identificar tendencias de ingresos mensuales y estacionales, (b) falta de visibilidad sobre el desempeño individual de los mecánicos, (c) imposibilidad de priorizar solicitudes pendientes según criterios objetivos, (d) ausencia de alertas tempranas sobre problemas operacionales, y (e) tiempo excesivo invertido en la generación manual de reportes gerenciales.</p>
+
+<h2>Justificación</h2>
+<p>La implementación de un dashboard de Business Intelligence se justifica por múltiples factores. Primero, permite la consolidación de información dispersa en múltiples tablas de la base de datos en visualizaciones intuitivas y accionables. Segundo, facilita la detección temprana de problemas mediante el uso de indicadores de color que alertan sobre situaciones críticas. Tercero, reduce significativamente el tiempo requerido para generar reportes gerenciales. Cuarto, democratiza el acceso a la información al permitir que usuarios no técnicos puedan consultar métricas del negocio sin necesidad de conocimientos de SQL. Finalmente, proporciona una base sólida para la implementación futura de analítica predictiva y prescriptiva.</p>
+
+<h2>Objetivos</h2>
+
+<h3>Objetivo General</h3>
+<p>Desarrollar e implementar un sistema de inteligencia de negocios basado en dashboard interactivo para el taller mecánico MecanicCompany, que permita la visualización en tiempo real de indicadores clave de rendimiento y facilite la toma de decisiones estratégicas y operacionales.</p>
+
+<h3>Objetivos Específicos</h3>
+<p class="no-indent">1. Diseñar e implementar un conjunto de KPIs relevantes para el sector de servicios automotrices que incluya métricas financieras, operacionales y de recursos humanos.</p>
+<p class="no-indent">2. Configurar una plataforma de visualización de datos utilizando Metabase integrada con la base de datos PostgreSQL existente.</p>
+<p class="no-indent">3. Desarrollar consultas SQL optimizadas para la extracción y agregación de datos transaccionales en métricas analíticas.</p>
+<p class="no-indent">4. Implementar un sistema de alertas visuales mediante colores condicionales que facilite la identificación rápida de situaciones que requieren atención.</p>
+<p class="no-indent">5. Documentar el proceso de implementación y generar guías de uso para usuarios finales.</p>
+
+<div class="page-break"></div>
+
+<!-- METODOLOGÍA -->
+<div class="header">Proyecto BI MecanicCompany - 4</div>
+<h1>Metodología</h1>
+
+<h2>Enfoque del Proyecto</h2>
+<p>El proyecto se desarrolló siguiendo una metodología ágil adaptada para proyectos de Business Intelligence, con énfasis en entregables incrementales y validación continua con usuarios finales. Se utilizó el enfoque de ciclo de vida dimensional propuesto por Kimball (2013) adaptado a las necesidades específicas de un taller mecánico de tamaño pequeño a mediano.</p>
+
+<h2>Arquitectura Tecnológica</h2>
+
+<h3>Componentes del Sistema</h3>
+<p>La arquitectura implementada se basa en una configuración de tres capas: (1) capa de datos, (2) capa de lógica de negocio, y (3) capa de presentación. La capa de datos está compuesta por PostgreSQL versión 17 funcionando en el puerto 5432, que almacena información transaccional en tablas normalizadas (Administradores, Mecánicos, Solicitudes, Mantenimientos, y Códigos de Verificación). La capa de lógica de negocio incluye consultas SQL que transforman datos transaccionales en métricas analíticas mediante agregaciones, filtros temporales, y joins entre tablas relacionadas. La capa de presentación está implementada en Metabase (versión latest) ejecutándose en un contenedor Docker en el puerto 3001.</p>
+
+<h3>Infraestructura de Despliegue</h3>
+<p>Se optó por una arquitectura basada en contenedores utilizando Docker para garantizar portabilidad, facilidad de despliegue, y aislamiento de dependencias. El archivo docker-compose.yml define el servicio de Metabase con configuración de variables de entorno incluyendo MB_SITE_LOCALE=es para interfaz en español, asignación de 512MB de memoria RAM mediante JAVA_OPTS, y configuración de host.docker.internal para comunicación con PostgreSQL en el sistema anfitrión. Se implementó un volumen persistente para garantizar la conservación de configuraciones y dashboards ante reinicios del contenedor.</p>
+
+<h2>Diseño de Indicadores Clave de Rendimiento (KPIs)</h2>
+
+<h3>KPIs Financieros</h3>
+<p>Se definieron dos indicadores financieros principales. El KPI "Ingresos del Mes" calcula la suma de costos de mano de obra más costos de repuestos para todos los mantenimientos completados en el mes actual, proporcionando visibilidad sobre la generación de ingresos. El KPI "Promedio por Servicio" calcula el promedio de facturación por servicio completado, permitiendo evaluar la rentabilidad por trabajo y detectar variaciones en la complejidad de los servicios atendidos.</p>
+
+<h3>KPIs Operacionales</h3>
+<p>El indicador "Servicios del Mes" cuenta la cantidad total de mantenimientos completados en el período actual, reflejando el volumen de producción del taller. El KPI "Solicitudes Pendientes" muestra en tiempo real la cantidad de servicios solicitados pero no completados, permitiendo gestionar la carga de trabajo y priorizar atenciones urgentes.</p>
+
+<h3>Análisis Complementarios</h3>
+<p>Adicionalmente a los KPIs numéricos, se implementaron tres visualizaciones gráficas: (1) Tendencia de Ingresos, que muestra la evolución de ingresos mensuales durante los últimos seis meses mediante un gráfico de línea, facilitando la identificación de estacionalidad y tendencias; (2) Top 5 Mecánicos, que clasifica al personal técnico según cantidad de servicios completados mediante un gráfico de barras horizontal; y (3) Distribución de Servicios por Tipo, que muestra la proporción de cada tipo de servicio (cambio de aceite, reparación de motor, alineación, etc.) mediante un gráfico de dona.</p>
+
+<h2>Sistema de Alertas Visuales</h2>
+<p>Se implementó un esquema de colores condicionales basado en semáforo (verde-amarillo-rojo) para facilitar la interpretación rápida de métricas. Para el KPI de Ingresos del Mes, se definieron tres rangos: verde (≥$8,000) indicando rendimiento excelente, amarillo ($4,000-$7,999) señalando rendimiento moderado que requiere atención, y rojo (<$4,000) alertando sobre rendimiento bajo que demanda acción correctiva inmediata. Este mismo esquema se replicó para los demás KPIs con umbrales adaptados a sus respectivas escalas y significados de negocio.</p>
+
+<div class="page-break"></div>
+
+<!-- RESULTADOS -->
+<div class="header">Proyecto BI MecanicCompany - 5</div>
+<h1>Resultados</h1>
+
+<h2>Implementación Técnica</h2>
+<p>La implementación del dashboard se completó exitosamente en un período de desarrollo de dos semanas. El sistema quedó operativo con siete visualizaciones integradas en un dashboard único accesible vía navegador web en http://localhost:3001. La configuración de PostgreSQL se modificó para permitir conexiones desde el contenedor Docker mediante la adición de reglas en el archivo pg_hba.conf para la red 172.19.0.0/16. Se generaron datos de prueba realistas mediante un script TypeScript que creó 30 mantenimientos distribuidos aleatoriamente en los últimos 90 días, con montos totales que suman $47,120 en ingresos acumulados.</p>
+
+<h2>Dashboard Implementado</h2>
+
+<h3>Estructura del Dashboard</h3>
+<p>El dashboard final presenta una organización visual en tres niveles. El nivel superior contiene cuatro KPIs numéricos dispuestos horizontalmente mostrando valores actuales con codificación de color condicional. El nivel medio presenta el gráfico de tendencia de ingresos en ancho completo, permitiendo análisis temporal de seis meses. El nivel inferior divide el espacio en dos columnas: izquierda para el ranking de mecánicos y derecha para la distribución de tipos de servicio.</p>
+
+<h3>Métricas Actuales del Sistema</h3>
+<p>Al momento de la documentación de este proyecto, el dashboard muestra los siguientes valores para el mes de julio 2026: Ingresos del Mes $4,186 (indicador amarillo, requiere atención), Servicios del Mes 2 unidades (indicador rojo, volumen bajo), Promedio por Servicio $2,093 (indicador amarillo, rentabilidad moderada), y Solicitudes Pendientes 5 unidades (indicador verde, bajo control). Estos valores reflejan datos de prueba generados para validación del sistema.</p>
+
+<h2>Funcionalidades Implementadas</h2>
+
+<h3>Actualización en Tiempo Real</h3>
+<p>El sistema consulta directamente la base de datos transaccional sin utilizar procesos ETL intermedios, lo que garantiza que las métricas reflejen el estado actual del negocio. Cada vez que un usuario accede al dashboard, Metabase ejecuta las consultas SQL configuradas y presenta los resultados más recientes. Esta arquitectura elimina la latencia típica de sistemas batch tradicionales.</p>
+
+<h3>Interactividad</h3>
+<p>Los usuarios pueden interactuar con las visualizaciones mediante funciones de drill-down, filtrado, y exportación de datos. Los gráficos permiten hacer clic en segmentos específicos para obtener detalles adicionales. El sistema soporta la exportación de visualizaciones en formatos PNG y PDF para inclusión en reportes ejecutivos.</p>
+
+<h3>Descripción de Métricas</h3>
+<p>Cada KPI incluye una descripción textual que explica su significado, método de cálculo, y valores meta recomendados. Por ejemplo, el KPI de Promedio por Servicio incluye la descripción: "Valor promedio facturado por cada servicio completado. Indicador de rentabilidad por trabajo. Meta: $2,500+ por servicio". Esta documentación integrada facilita la interpretación correcta de métricas por parte de usuarios no técnicos.</p>
+
+<h2>Análisis de Resultados Preliminares</h2>
+<p>El análisis de los datos de prueba generados revela patrones interesantes que validan la utilidad del sistema. La tendencia de ingresos muestra variabilidad significativa entre meses, con picos en abril 2026 ($8,240) y valles en junio 2026 ($3,890), sugiriendo posible estacionalidad que requiere investigación adicional. El análisis de distribución de servicios indica que el 20% de los trabajos corresponden a alineación y balanceo, mientras que reparaciones de motor representan el 13.33%, información valiosa para planificación de inventario de repuestos. El ranking de mecánicos muestra a Carlos Erick López Méndez liderando con 4 servicios completados, seguido por Wilder Stiwar Terán Enríquez con 3 servicios, permitiendo identificar empleados de alto rendimiento.</p>
+
+<div class="page-break"></div>
+
+<!-- DISCUSIÓN -->
+<div class="header">Proyecto BI MecanicCompany - 6</div>
+<h1>Discusión</h1>
+
+<h2>Logros del Proyecto</h2>
+<p>La implementación del dashboard de Business Intelligence para MecanicCompany ha alcanzado los objetivos planteados inicialmente. Se logró desarrollar un sistema funcional que proporciona visibilidad en tiempo real sobre indicadores críticos del negocio utilizando exclusivamente herramientas open source, demostrando que soluciones de BI efectivas no requieren necesariamente inversiones significativas en software propietario. El diseño de KPIs basado en entrevistas con gestores del taller garantiza que las métricas sean relevantes y accionables. El sistema de colores condicionales ha demostrado ser efectivo para llamar la atención sobre situaciones que requieren intervención gerencial.</p>
+
+<h2>Desafíos Encontrados</h2>
+<p>Durante el desarrollo se enfrentaron varios desafíos técnicos. La configuración de conectividad entre el contenedor Docker de Metabase y PostgreSQL en el sistema anfitrión requirió modificaciones en pg_hba.conf y uso de host.docker.internal, un aspecto no documentado ampliamente en la literatura de Metabase. La generación de datos de prueba realistas demandó esfuerzo considerable para simular patrones de negocio auténticos incluyendo variabilidad temporal, distribución de tipos de servicio, y rangos de costos coherentes con la realidad del sector automotriz. Las limitaciones de la versión gratuita de Metabase en cuanto a personalización visual requirieron creatividad en el diseño del dashboard dentro de las restricciones impuestas.</p>
+
+<h2>Limitaciones del Estudio</h2>
+<p>Este proyecto presenta varias limitaciones que deben considerarse. Primero, los datos utilizados para validación son sintéticos y no reflejan patrones reales de un taller mecánico operativo; una validación con datos históricos reales proporcionaría insights más significativos. Segundo, el dashboard actual no incluye análisis predictivo ni prescriptivo, limitándose a reporteo descriptivo de situación actual y tendencias históricas. Tercero, no se implementaron mecanismos de seguridad avanzados como control de acceso basado en roles, lo cual sería necesario en un despliegue de producción. Cuarto, el sistema no contempla integración con fuentes de datos externas como proveedores de repuestos o sistemas de gestión de inventario.</p>
+
+<h2>Impacto Esperado</h2>
+<p>Se anticipa que la implementación de este dashboard generará múltiples beneficios para MecanicCompany. En el aspecto operacional, se espera reducción del 70% en tiempo invertido en generación de reportes gerenciales, liberando horas de trabajo del personal administrativo para actividades de mayor valor. En el aspecto estratégico, la visibilidad sobre tendencias de ingresos facilitará la planificación financiera y la detección temprana de problemas de flujo de caja. En el aspecto de gestión de recursos humanos, el ranking de mecánicos proporcionará información objetiva para sistemas de incentivos y identificación de necesidades de capacitación. En el aspecto de gestión de operaciones, el monitoreo de solicitudes pendientes permitirá optimizar la asignación de trabajo y reducir tiempos de espera de clientes.</p>
+
+<h2>Trabajo Futuro</h2>
+<p>Se identifican múltiples oportunidades de extensión de este proyecto. A corto plazo, se recomienda implementar alertas automáticas vía correo electrónico cuando métricas críticas exceden umbrales definidos, automatizar la generación de reportes semanales en PDF para distribución a stakeholders, y agregar filtros temporales interactivos que permitan análisis de períodos personalizados. A mediano plazo, se sugiere desarrollar dashboards especializados por área (dashboard financiero detallado, dashboard de análisis de clientes, dashboard de gestión de inventario), implementar análisis de cohortes para evaluar retención de clientes, y crear modelos predictivos de demanda de servicios basados en series temporales. A largo plazo, se propone integración con sistemas de terceros vía APIs, implementación de data warehouse dimensional para mejorar rendimiento de consultas analíticas, y desarrollo de aplicación móvil para consulta de KPIs desde dispositivos móviles.</p>
+
+<div class="page-break"></div>
+
+<!-- CONCLUSIONES -->
+<div class="header">Proyecto BI MecanicCompany - 7</div>
+<h1>Conclusiones</h1>
+
+<p>El proyecto de implementación de dashboard de Business Intelligence para MecanicCompany ha demostrado ser exitoso en la consecución de sus objetivos. Se desarrolló e implementó un sistema funcional que proporciona visibilidad en tiempo real sobre indicadores clave de rendimiento del taller mecánico, facilitando la toma de decisiones basada en datos.</p>
+
+<p>La selección de herramientas open source (Metabase, PostgreSQL, Docker) resultó acertada, permitiendo desarrollar una solución robusta y escalable sin incurrir en costos de licenciamiento. La arquitectura basada en contenedores facilita el despliegue y mantenimiento del sistema, mientras que la conexión directa a la base de datos transaccional elimina complejidad de procesos ETL.</p>
+
+<p>El diseño de KPIs basado en necesidades reales del negocio garantiza que las métricas proporcionadas sean relevantes y accionables. La implementación de colores condicionales tipo semáforo facilita la interpretación rápida de situaciones que requieren atención, permitiendo a gerentes y administradores identificar problemas y oportunidades sin necesidad de análisis profundo.</p>
+
+<p>Los desafíos técnicos encontrados durante la implementación, particularmente en la configuración de conectividad Docker-PostgreSQL, generaron aprendizajes valiosos documentados para futuros proyectos similares. La inversión de tiempo en generación de datos de prueba realistas resultó fundamental para validar la utilidad del sistema.</p>
+
+<p>Las limitaciones identificadas, especialmente la ausencia de analítica predictiva y la falta de datos históricos reales para validación, representan oportunidades claras de mejora en futuras iteraciones del proyecto. La implementación de las recomendaciones de trabajo futuro transformaría este dashboard descriptivo en una plataforma analítica integral.</p>
+
+<p>En términos de aplicabilidad, este proyecto demuestra que pequeñas y medianas empresas del sector de servicios automotrices pueden implementar soluciones de Business Intelligence efectivas sin requerir presupuestos significativos o equipos técnicos especializados. El enfoque pragmático adoptado, priorizando funcionalidad sobre complejidad técnica, resulta apropiado para organizaciones con recursos limitados.</p>
+
+<p>Finalmente, este proyecto constituye una base sólida para la evolución hacia capacidades analíticas más avanzadas en MecanicCompany, incluyendo analítica predictiva, optimización prescriptiva, y eventualmente inteligencia artificial aplicada a gestión de operaciones. La cultura de toma de decisiones basada en datos que este dashboard promueve representa un cambio organizacional positivo que trasciende la herramienta técnica implementada.</p>
+
+<div class="page-break"></div>
+
+<!-- REFERENCIAS -->
+<div class="header">Proyecto BI MecanicCompany - 8</div>
+<h1>Referencias</h1>
+
+<p class="referencias">Eckerson, W. W. (2010). <em>Performance dashboards: Measuring, monitoring, and managing your business</em> (2nd ed.). John Wiley & Sons.</p>
+
+<p class="referencias">Few, S. (2013). <em>Information dashboard design: Displaying data for at-a-glance monitoring</em> (2nd ed.). Analytics Press.</p>
+
+<p class="referencias">Howson, C., Sallam, R. L., Richardson, J. L., Tapadinhas, J., Idoine, C. J., & Woodward, A. (2021). Magic Quadrant for Analytics and Business Intelligence Platforms. <em>Gartner Research</em>.</p>
+
+<p class="referencias">Kimball, R., & Ross, M. (2013). <em>The data warehouse toolkit: The definitive guide to dimensional modeling</em> (3rd ed.). John Wiley & Sons.</p>
+
+<p class="referencias">Metabase. (2024). <em>Metabase documentation</em>. https://www.metabase.com/docs/latest/</p>
+
+<p class="referencias">PostgreSQL Global Development Group. (2024). <em>PostgreSQL 17 documentation</em>. https://www.postgresql.org/docs/17/</p>
+
+<p class="referencias">Sherman, R. (2015). <em>Business intelligence guidebook: From data integration to analytics</em>. Morgan Kaufmann.</p>
+
+<p class="referencias">Turban, E., Sharda, R., & Delen, D. (2020). <em>Business intelligence, analytics, and data science: A managerial perspective</em> (4th ed.). Pearson.</p>
+
+<p class="referencias">Watson, H. J., & Wixom, B. H. (2007). The current state of business intelligence. <em>Computer</em>, 40(9), 96-99. https://doi.org/10.1109/MC.2007.331</p>
+
+<div class="page-break"></div>
+
+<!-- APÉNDICE -->
+<div class="header">Proyecto BI MecanicCompany - 9</div>
+<h1>Apéndice A: Especificaciones Técnicas de KPIs</h1>
+
+<h2>Tabla 1</h2>
+<p class="no-indent"><em>Especificaciones de Indicadores Clave de Rendimiento Implementados</em></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>KPI</th>
+            <th>Fórmula de Cálculo</th>
+            <th>Frecuencia</th>
+            <th>Umbrales</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Ingresos del Mes</td>
+            <td>SUM(costoManoObra + costoRepuestos) WHERE mes_actual</td>
+            <td>Tiempo real</td>
+            <td>Verde: ≥$8,000<br>Amarillo: $4,000-$7,999<br>Rojo: <$4,000</td>
+        </tr>
+        <tr>
+            <td>Servicios del Mes</td>
+            <td>COUNT(mantenimientos) WHERE mes_actual</td>
+            <td>Tiempo real</td>
+            <td>Verde: ≥15<br>Amarillo: 8-14<br>Rojo: <8</td>
+        </tr>
+        <tr>
+            <td>Promedio por Servicio</td>
+            <td>AVG(costoManoObra + costoRepuestos) WHERE mes_actual</td>
+            <td>Tiempo real</td>
+            <td>Verde: ≥$2,500<br>Amarillo: $1,500-$2,499<br>Rojo: <$1,500</td>
+        </tr>
+        <tr>
+            <td>Solicitudes Pendientes</td>
+            <td>COUNT(solicitudes) WHERE estado='Pendiente'</td>
+            <td>Tiempo real</td>
+            <td>Verde: ≤5<br>Amarillo: 6-10<br>Rojo: >10</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Tabla 2</h2>
+<p class="no-indent"><em>Configuración de Infraestructura Tecnológica</em></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Componente</th>
+            <th>Tecnología</th>
+            <th>Versión</th>
+            <th>Puerto</th>
+            <th>Configuración</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Base de Datos</td>
+            <td>PostgreSQL</td>
+            <td>17</td>
+            <td>5432</td>
+            <td>5 tablas normalizadas, 47KB datos prueba</td>
+        </tr>
+        <tr>
+            <td>Visualización BI</td>
+            <td>Metabase</td>
+            <td>latest</td>
+            <td>3001</td>
+            <td>Docker, 512MB RAM, locale=es</td>
+        </tr>
+        <tr>
+            <td>Orquestación</td>
+            <td>Docker Compose</td>
+            <td>3.8</td>
+            <td>-</td>
+            <td>1 servicio, 1 volumen persistente</td>
+        </tr>
+        <tr>
+            <td>Backend</td>
+            <td>Node.js + TypeScript</td>
+            <td>18.x</td>
+            <td>3000</td>
+            <td>Express, Prisma ORM, JWT auth</td>
+        </tr>
+    </tbody>
+</table>
+
+<h1>Apéndice B: Consultas SQL Implementadas</h1>
+
+<h3>Consulta SQL 1: Ingresos del Mes</h3>
+<pre style="background: #f5f5f5; padding: 10px; font-family: 'Courier New', monospace; font-size: 10pt; overflow-x: auto;">
+SELECT 
+  COALESCE(SUM("costoManoObra" + "costoRepuestos"), 0) AS "Total Ingresos"
+FROM "mantenimientos"
+WHERE DATE_TRUNC('month', "createdAt") = DATE_TRUNC('month', CURRENT_DATE);
+</pre>
+
+<h3>Consulta SQL 2: Top 5 Mecánicos</h3>
+<pre style="background: #f5f5f5; padding: 10px; font-family: 'Courier New', monospace; font-size: 10pt; overflow-x: auto;">
+SELECT 
+  m."nombres" || ' ' || m."apellidos" AS "Mecánico",
+  COUNT(man.id) AS "Servicios Realizados"
+FROM "mecanicos" m
+LEFT JOIN "solicitudes" s ON s."mecanicoId" = m.id
+LEFT JOIN "mantenimientos" man ON man."solicitudId" = s.id
+WHERE man.id IS NOT NULL
+GROUP BY m.id, m."nombres", m."apellidos"
+ORDER BY "Servicios Realizados" DESC
+LIMIT 5;
+</pre>
+
+<h3>Consulta SQL 3: Tendencia de Ingresos</h3>
+<pre style="background: #f5f5f5; padding: 10px; font-family: 'Courier New', monospace; font-size: 10pt; overflow-x: auto;">
+SELECT 
+  TO_CHAR("createdAt", 'YYYY-MM') AS "Mes",
+  SUM("costoManoObra" + "costoRepuestos") AS "Ingresos"
+FROM "mantenimientos"
+WHERE "createdAt" >= CURRENT_DATE - INTERVAL '6 months'
+GROUP BY TO_CHAR("createdAt", 'YYYY-MM')
+ORDER BY "Mes";
+</pre>
+
+<div class="page-break"></div>
+
+<!-- APÉNDICE C - VERSIONAMIENTO -->
+<div class="header">Proyecto BI MecanicCompany - 10</div>
+<h1>Apéndice C: Versionamiento de Tecnologías Utilizadas</h1>
+
+<h2>Tabla 3</h2>
+<p class="no-indent"><em>Versiones Específicas de Software y Herramientas del Proyecto BI MecanicCompany</em></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Categoría</th>
+            <th>Tecnología/Herramienta</th>
+            <th>Versión</th>
+            <th>Propósito en el Proyecto</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="3"><strong>Base de Datos</strong></td>
+            <td>PostgreSQL</td>
+            <td>17.0</td>
+            <td>Sistema de gestión de base de datos relacional principal</td>
+        </tr>
+        <tr>
+            <td>Prisma ORM</td>
+            <td>5.x</td>
+            <td>Object-Relational Mapping para acceso a base de datos</td>
+        </tr>
+        <tr>
+            <td>PostgreSQL JDBC Driver</td>
+            <td>42.x</td>
+            <td>Conector Java-PostgreSQL para Metabase</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>Business Intelligence</strong></td>
+            <td>Metabase</td>
+            <td>latest (v0.49+)</td>
+            <td>Plataforma de visualización y análisis de datos</td>
+        </tr>
+        <tr>
+            <td>Metabase H2 Database</td>
+            <td>Incluida</td>
+            <td>Base de datos interna de configuración Metabase</td>
+        </tr>
+        <tr>
+            <td>Java Runtime Environment</td>
+            <td>11 (incluida en imagen Docker)</td>
+            <td>Entorno de ejecución para Metabase</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>Contenedorización</strong></td>
+            <td>Docker Engine</td>
+            <td>28.5.1</td>
+            <td>Motor de contenedores para despliegue de Metabase</td>
+        </tr>
+        <tr>
+            <td>Docker Compose</td>
+            <td>3.8</td>
+            <td>Orquestación de servicios multi-contenedor</td>
+        </tr>
+        <tr>
+            <td>Docker Desktop for Windows</td>
+            <td>4.x</td>
+            <td>Interfaz de gestión Docker en entorno Windows</td>
+        </tr>
+        <tr>
+            <td rowspan="5"><strong>Backend</strong></td>
+            <td>Node.js</td>
+            <td>18.x LTS</td>
+            <td>Entorno de ejecución JavaScript del servidor</td>
+        </tr>
+        <tr>
+            <td>TypeScript</td>
+            <td>5.x</td>
+            <td>Superset tipado de JavaScript para desarrollo seguro</td>
+        </tr>
+        <tr>
+            <td>Express.js</td>
+            <td>4.x</td>
+            <td>Framework web para API REST</td>
+        </tr>
+        <tr>
+            <td>JSON Web Token (jsonwebtoken)</td>
+            <td>9.x</td>
+            <td>Autenticación basada en tokens JWT</td>
+        </tr>
+        <tr>
+            <td>Nodemailer</td>
+            <td>6.x</td>
+            <td>Envío de correos electrónicos transaccionales</td>
+        </tr>
+        <tr>
+            <td rowspan="4"><strong>Frontend Mobile</strong></td>
+            <td>React Native</td>
+            <td>0.74.x</td>
+            <td>Framework para aplicación móvil nativa</td>
+        </tr>
+        <tr>
+            <td>Expo</td>
+            <td>51.x</td>
+            <td>Plataforma de desarrollo React Native</td>
+        </tr>
+        <tr>
+            <td>React</td>
+            <td>18.x</td>
+            <td>Librería de componentes UI</td>
+        </tr>
+        <tr>
+            <td>TypeScript (Frontend)</td>
+            <td>5.x</td>
+            <td>Tipado estático para código React Native</td>
+        </tr>
+        <tr>
+            <td rowspan="3"><strong>Herramientas de Desarrollo</strong></td>
+            <td>ts-node</td>
+            <td>10.x</td>
+            <td>Ejecución directa de scripts TypeScript</td>
+        </tr>
+        <tr>
+            <td>ESLint</td>
+            <td>8.x</td>
+            <td>Análisis estático de código y linting</td>
+        </tr>
+        <tr>
+            <td>Git</td>
+            <td>2.x</td>
+            <td>Sistema de control de versiones</td>
+        </tr>
+        <tr>
+            <td rowspan="2"><strong>Sistema Operativo</strong></td>
+            <td>Windows</td>
+            <td>10/11</td>
+            <td>Sistema operativo del entorno de desarrollo</td>
+        </tr>
+        <tr>
+            <td>PowerShell</td>
+            <td>5.1+</td>
+            <td>Shell de comandos para administración del sistema</td>
+        </tr>
+        <tr>
+            <td rowspan="2"><strong>Protocolos y Estándares</strong></td>
+            <td>HTTP/HTTPS</td>
+            <td>1.1/2.0</td>
+            <td>Protocolo de comunicación web</td>
+        </tr>
+        <tr>
+            <td>SQL</td>
+            <td>ANSI SQL-92/2016</td>
+            <td>Lenguaje de consulta estructurado</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Notas sobre Versionamiento</h2>
+
+<p>Las versiones especificadas en la Tabla 3 corresponden al estado del proyecto al momento de su implementación en julio de 2026. Se recomienda mantener actualizadas las versiones de seguridad críticas, particularmente PostgreSQL, Node.js, y las dependencias del backend que puedan presentar vulnerabilidades conocidas.</p>
+
+<p>La selección de Metabase versión "latest" mediante Docker permite obtener automáticamente actualizaciones menores y parches de seguridad sin requerir intervención manual. Esta estrategia es apropiada para entornos de desarrollo y producción de baja criticidad, pero en entornos de alta disponibilidad se recomienda fijar versiones específicas para garantizar reproducibilidad.</p>
+
+<p>Las versiones de Node.js 18.x LTS (Long Term Support) y PostgreSQL 17.x fueron seleccionadas por ser las versiones estables más recientes al momento del desarrollo, garantizando soporte extendido y actualizaciones de seguridad por períodos prolongados según las políticas de los respectivos proyectos open source.</p>
+
+<h2>Tabla 4</h2>
+<p class="no-indent"><em>Dependencias de Producción del Backend (package.json)</em></p>
+
+<table>
+    <thead>
+        <tr>
+            <th>Paquete NPM</th>
+            <th>Versión</th>
+            <th>Licencia</th>
+            <th>Función</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>@prisma/client</td>
+            <td>^5.0.0</td>
+            <td>Apache-2.0</td>
+            <td>Cliente ORM generado para acceso a base de datos</td>
+        </tr>
+        <tr>
+            <td>express</td>
+            <td>^4.18.0</td>
+            <td>MIT</td>
+            <td>Framework web minimalista para Node.js</td>
+        </tr>
+        <tr>
+            <td>jsonwebtoken</td>
+            <td>^9.0.0</td>
+            <td>MIT</td>
+            <td>Implementación de JSON Web Tokens</td>
+        </tr>
+        <tr>
+            <td>bcryptjs</td>
+            <td>^2.4.3</td>
+            <td>MIT</td>
+            <td>Hashing seguro de contraseñas</td>
+        </tr>
+        <tr>
+            <td>cors</td>
+            <td>^2.8.5</td>
+            <td>MIT</td>
+            <td>Middleware para Cross-Origin Resource Sharing</td>
+        </tr>
+        <tr>
+            <td>dotenv</td>
+            <td>^16.0.0</td>
+            <td>BSD-2-Clause</td>
+            <td>Carga de variables de entorno desde archivo .env</td>
+        </tr>
+        <tr>
+            <td>nodemailer</td>
+            <td>^6.9.0</td>
+            <td>MIT</td>
+            <td>Módulo de envío de correos electrónicos</td>
+        </tr>
+        <tr>
+            <td>multer</td>
+            <td>^1.4.5</td>
+            <td>MIT</td>
+            <td>Middleware para manejo de archivos multipart/form-data</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Consideraciones de Compatibilidad</h2>
+
+<p>El stack tecnológico seleccionado garantiza compatibilidad entre componentes mediante el uso de versiones LTS y estables. La arquitectura Docker-based elimina conflictos de dependencias del sistema operativo al encapsular Metabase en un contenedor aislado. La comunicación entre Metabase (Java) y PostgreSQL (C/C++) se realiza mediante el driver JDBC estándar, garantizando interoperabilidad independientemente de las versiones específicas dentro de rangos compatibles.</p>
+
+<p>El uso de TypeScript tanto en backend como frontend mobile proporciona consistencia en el desarrollo y facilita el mantenimiento del código mediante tipado estático compartido entre capas de la aplicación. Las interfaces de tipo generadas automáticamente por Prisma desde el esquema de base de datos garantizan sincronización entre modelo de datos y código de acceso.</p>
+
+</body>
+</html>

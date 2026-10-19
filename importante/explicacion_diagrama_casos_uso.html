@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicación del Diagrama de Casos de Uso - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            color: black;
+            background: white;
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px 60px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40pt;
+        }
+
+        h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-bottom: 12pt;
+        }
+
+        .subtitle {
+            font-size: 12pt;
+            font-style: italic;
+            margin-bottom: 6pt;
+        }
+
+        .date {
+            font-size: 12pt;
+        }
+
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+        }
+
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+        }
+
+        p {
+            text-align: justify;
+            margin-bottom: 12pt;
+            line-height: 2;
+            text-indent: 0.5in;
+        }
+
+        .table-of-contents {
+            background: none;
+            padding: 0;
+            border: none;
+            margin-bottom: 24pt;
+        }
+
+        .table-of-contents h3 {
+            text-align: center;
+            text-indent: 0;
+            margin-bottom: 12pt;
+        }
+
+        .table-of-contents ul {
+            list-style: none;
+            margin-left: 0.5in;
+        }
+
+        .table-of-contents li {
+            margin-bottom: 12pt;
+            line-height: 2;
+            text-indent: -0.25in;
+        }
+
+        .section {
+            margin-bottom: 24pt;
+        }
+
+        .actor-section {
+            background: none;
+            padding: 0;
+            border: none;
+            margin-bottom: 24pt;
+        }
+
+        .actor-section h3 {
+            font-size: 12pt;
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+            text-indent: 0;
+        }
+
+        .actor-section p {
+            margin-bottom: 12pt;
+            text-indent: 0.5in;
+        }
+
+        .use-case-item {
+            background: none;
+            padding: 0;
+            margin-bottom: 12pt;
+            border: none;
+            margin-left: 0.75in;
+            text-indent: -0.25in;
+        }
+
+        .use-case-id {
+            font-weight: bold;
+        }
+
+        .use-case-name {
+            font-weight: bold;
+        }
+
+        .use-case-desc {
+            font-size: 12pt;
+            margin-top: 0;
+            display: block;
+            margin-top: 6pt;
+            margin-left: 0.5in;
+        }
+
+        .flow-diagram {
+            background: none;
+            padding: 12pt 0.75in;
+            border: none;
+            margin: 12pt 0;
+            font-family: 'Courier New', monospace;
+            font-size: 11pt;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+
+        .key-points {
+            background: none;
+            border: none;
+            padding: 0;
+            margin: 12pt 0;
+        }
+
+        .key-points h4 {
+            font-size: 12pt;
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+            text-indent: 0;
+            font-weight: bold;
+        }
+
+        .key-points ul {
+            margin-left: 0.75in;
+        }
+
+        .key-points li {
+            margin-bottom: 6pt;
+            line-height: 2;
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        ul li:before {
+            content: "• ";
+            margin-right: 6pt;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12pt 0;
+        }
+
+        table th, table td {
+            border: 1pt solid black;
+            padding: 8pt;
+            text-align: left;
+            font-size: 11pt;
+        }
+
+        table th {
+            font-weight: bold;
+            background: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40pt;
+            padding-top: 12pt;
+            color: black;
+            font-size: 12pt;
+            border-top: none;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                padding: 40px 60px;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Diagrama de Casos de Uso: Sistema de Gestión de Mantenimiento Vehicular MecanicCompany</h1>
+            <p class="subtitle">Explicación Detallada de Actores y Funcionalidades</p>
+            <p class="date">Octubre de 2026</p>
+        </header>
+
+        <div class="table-of-contents">
+            <h3>Tabla de Contenidos</h3>
+            <ul>
+                <li>1. Introducción</li>
+                <li>2. Definición de Actores</li>
+                <li>3. Descripción de Casos de Uso</li>
+                <li>4. Casos de Uso Compartidos del Sistema</li>
+                <li>5. Flujo Principal del Sistema</li>
+                <li>6. Relaciones entre Casos de Uso</li>
+                <li>7. Conclusiones</li>
+            </ul>
+        </div>
+
+        <!-- SECCIÓN 1: INTRODUCCIÓN -->
+        <div class="section">
+            <h2>1. Introducción</h2>
+            
+            <p>Un diagrama de casos de uso es una representación visual que especifica la funcionalidad de un sistema desde la perspectiva del usuario. Este diagrama ilustra las interacciones entre los diferentes actores (usuarios o sistemas externos) y el sistema MecanicCompany, identificando las acciones que cada actor puede realizar. El diagrama de casos de uso del sistema MecanicCompany contiene un total de 50 casos de uso distribuidos entre 5 actores principales y un conjunto de funcionalidades compartidas del sistema.</p>
+
+            <p>Los elementos principales de este diagrama son: actores, que representan roles o entidades externas que interactúan con el sistema; casos de uso, que representan funcionalidades o acciones específicas; y relaciones, que describen cómo los actores utilizan los casos de uso. El presente documento proporciona una descripción detallada de cada uno de estos elementos, así como sus interrelaciones y el flujo general del sistema.</p>
+        </div>
+
+        <!-- SECCIÓN 2: DEFINICIÓN DE ACTORES -->
+        <div class="section">
+            <h2>2. Definición de Actores</h2>
+
+            <p>Un actor en el contexto de casos de uso es cualquier entidad (usuario o sistema externo) que interactúa con la plataforma MecanicCompany. En este sistema se han identificado cinco actores principales, cada uno con responsabilidades y permisos distintos:</p>
+
+            <div class="actor-section">
+                <h3>Actor 1: Cliente</h3>
+                <p>El cliente es el propietario del vehículo que solicita servicios de mantenimiento. Este actor se identifica con direcciones de correo electrónico del dominio @gmail.com y tiene acceso a funcionalidades específicas relacionadas con la solicitud, seguimiento y evaluación de servicios de mantenimiento. El cliente puede crear nuevas solicitudes de mantenimiento, ver el historial de solicitudes previas, descargar reportes de los servicios realizados, calificar la atención recibida, y recuperar su contraseña en caso de olvidarla. Cuenta con un total de 8 casos de uso específicos.</p>
+            </div>
+
+            <div class="actor-section">
+                <h3>Actor 2: Mecánico</h3>
+                <p>El mecánico es el profesional responsable de realizar los trabajos de mantenimiento y reparación de vehículos. Este actor se identifica con direcciones de correo electrónico del dominio @mecanic.com y posee los mayores permisos dentro del sistema debido a la naturaleza crítica de sus funciones. El mecánico puede ver las solicitudes de mantenimiento asignadas, aceptar o rechazar solicitudes, registrar el trabajo realizado, capturar fotografías del vehículo y daños, registrar las piezas utilizadas, calcular costos, cambiar el estado del mantenimiento, enviar reportes al cliente, consultar el historial de trabajos previos, y recuperar su contraseña. Cuenta con un total de 12 casos de uso específicos.</p>
+            </div>
+
+            <div class="actor-section">
+                <h3>Actor 3: Personal de Inventario</h3>
+                <p>El personal de inventario es responsable de la gestión de productos, piezas y stock disponibles en la empresa. Este actor se identifica con direcciones de correo electrónico del dominio @inventariomecanic.com y tiene acceso a funcionalidades relacionadas exclusivamente con la administración del inventario. El personal de inventario puede iniciar sesión, ver el inventario completo, registrar nuevos productos, actualizar cantidades de stock, buscar productos específicos, consultar productos con bajo stock, generar órdenes de compra, y recuperar su contraseña. Cuenta con un total de 8 casos de uso específicos.</p>
+            </div>
+
+            <div class="actor-section">
+                <h3>Actor 4: Personal Financiero</h3>
+                <p>El personal financiero es responsable de la facturación, gestión de pagos e ingresos del sistema. Este actor se identifica con direcciones de correo electrónico del dominio @finanzasmecanic.com y tiene acceso a funcionalidades relacionadas con la contabilidad y finanzas de la empresa. El personal financiero puede iniciar sesión, ver solicitudes completadas, crear facturas, registrar pagos recibidos, ver el historial de pagos, generar reportes financieros, consultar cuentas por cobrar, y recuperar su contraseña. Cuenta con un total de 8 casos de uso específicos.</p>
+            </div>
+
+            <div class="actor-section">
+                <h3>Actor 5: Administrador del Sistema</h3>
+                <p>El administrador del sistema es responsable de la configuración, mantenimiento y auditoría general de la plataforma. Este actor tiene permisos elevados y acceso a todas las funcionalidades administrativas. El administrador puede iniciar sesión, gestionar cuentas de usuario, ver reportes del sistema, cambiar estados de cuentas, revisar registros de auditoría, configurar parámetros del sistema, consultar estadísticas de uso, y recuperar su contraseña. Cuenta con un total de 8 casos de uso específicos.</p>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 3: DESCRIPCIÓN DE CASOS DE USO POR ACTOR -->
+        <div class="section">
+            <h2>3. Descripción de Casos de Uso por Actor</h2>
+
+            <p>
+                A continuación se detallan todos los casos de uso asociados a cada actor, explicando la funcionalidad de cada uno:
+            </p>
+
+            <h3>3.1 Casos de Uso del Cliente (8 casos)</h3>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-001:</span> <span class="use-case-name">Registrarse</span>
+                <div class="use-case-desc">El cliente crea una nueva cuenta en el sistema proporcionando datos personales, teléfono y correo electrónico. El sistema valida los datos y envía un código de verificación para confirmar el correo.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-002:</span> <span class="use-case-name">Iniciar Sesión</span>
+                <div class="use-case-desc">El cliente accede a la plataforma con sus credenciales (correo y contraseña). El sistema valida la información y genera un token de sesión válido por 24 horas.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-003:</span> <span class="use-case-name">Solicitar Mantenimiento</span>
+                <div class="use-case-desc">El cliente completa un formulario con detalles del vehículo (marca, modelo, placa) y del servicio requerido. Puede seleccionar fecha y hora de la cita, así como la ubicación de la mecánica más cercana.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-004:</span> <span class="use-case-name">Ver Estado de Solicitud</span>
+                <div class="use-case-desc">El cliente visualiza el estado actual de sus solicitudes: Pendiente, En proceso o Completado. Puede ver información del mecánico asignado y detalles del trabajo.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-005:</span> <span class="use-case-name">Ver Historial de Solicitudes</span>
+                <div class="use-case-desc">El cliente consulta el historial completo de todas las solicitudes que ha realizado, incluyendo servicios pasados, costos y fechas.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-006:</span> <span class="use-case-name">Descargar Reporte</span>
+                <div class="use-case-desc">El cliente descarga el reporte técnico completo de un mantenimiento realizado, incluyendo fotos del vehículo, descripción de trabajos, repuestos utilizados y costos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-007:</span> <span class="use-case-name">Calificar Servicio</span>
+                <div class="use-case-desc">Después de completado un mantenimiento, el cliente puede calificar al mecánico y dejar comentarios sobre la calidad del servicio recibido.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-008:</span> <span class="use-case-name">Recuperar Contraseña</span>
+                <div class="use-case-desc">Si olvida su contraseña, el cliente puede solicitar un código de recuperación por correo electrónico y establecer una nueva contraseña de forma segura.</div>
+            </div>
+
+            <h3>3.2 Casos de Uso del Mecánico (12 casos)</h3>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-010:</span> <span class="use-case-name">Iniciar Sesión</span>
+                <div class="use-case-desc">El mecánico accede a su cuenta con correo corporativo y contraseña. El sistema valida las credenciales y lo redirige al panel de control con sus solicitudes pendientes.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-011:</span> <span class="use-case-name">Ver Solicitudes Pendientes</span>
+                <div class="use-case-desc">El mecánico visualiza un listado de todas las solicitudes de mantenimiento que están en estado Pendiente y disponibles para ser asignadas.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-012:</span> <span class="use-case-name">Aceptar Solicitud</span>
+                <div class="use-case-desc">El mecánico acepta una solicitud pendiente, asignándosela a sí mismo. El estado cambia a "En proceso" y el cliente es notificado del mecánico asignado.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-013:</span> <span class="use-case-name">Registrar Mantenimiento</span>
+                <div class="use-case-desc">El mecánico completa un formulario detallado con diagnóstico, trabajos realizados, repuestos utilizados y costos. Este registro es fundamental para generar el reporte del cliente.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-014:</span> <span class="use-case-name">Capturar Fotos del Vehículo</span>
+                <div class="use-case-desc">El mecánico toma fotografías del vehículo antes, durante y después del mantenimiento. Las fotos se almacenan en formato base64 en la base de datos para adjuntar al reporte.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-015:</span> <span class="use-case-name">Registrar Repuestos Utilizados</span>
+                <div class="use-case-desc">El mecánico selecciona los repuestos o componentes que utilizó en el mantenimiento. El sistema obtiene información del inventario como marcas, SKU y costos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-016:</span> <span class="use-case-name">Calcular Costos</span>
+                <div class="use-case-desc">El sistema calcula automáticamente el costo total del mantenimiento: mano de obra + costo de repuestos. El mecánico puede revisar y ajustar si es necesario.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-017:</span> <span class="use-case-name">Cambiar Estado de Solicitud</span>
+                <div class="use-case-desc">El mecánico cambiar el estado de la solicitud de "En proceso" a "Completado" cuando termina el trabajo. También puede rechazar una solicitud si es necesario.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-018:</span> <span class="use-case-name">Enviar Reporte al Cliente</span>
+                <div class="use-case-desc">El mecánico genera y envía el reporte completo por correo al cliente. El reporte incluye fotos, descripción técnica, repuestos utilizados, costos y factura.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-019:</span> <span class="use-case-name">Ver Historial de Trabajos</span>
+                <div class="use-case-desc">El mecánico consulta su historial personal de todos los mantenimientos realizados, incluyendo fechas, clientes, servicios y ratings recibidos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-020:</span> <span class="use-case-name">Rechazar Solicitud</span>
+                <div class="use-case-desc">El mecánico puede rechazar una solicitud asignada si no puede completarla. La solicitud regresa a estado Pendiente para que otro mecánico la acepte.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-021:</span> <span class="use-case-name">Recuperar Contraseña</span>
+                <div class="use-case-desc">El mecánico puede restablecer su contraseña corporativa a través de un proceso seguro con código de verificación enviado por correo.</div>
+            </div>
+
+            <h3>3.3 Casos de Uso del Personal de Inventario (8 casos)</h3>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-022:</span> <span class="use-case-name">Iniciar Sesión</span>
+                <div class="use-case-desc">El personal de inventario accede con sus credenciales corporativas y entra al módulo de gestión de productos y stock.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-023:</span> <span class="use-case-name">Ver Inventario</span>
+                <div class="use-case-desc">Visualiza el listado completo de productos en almacén con información de stock actual, mínimo, crítico, precio y ubicación en el almacén.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-024:</span> <span class="use-case-name">Registrar Producto</span>
+                <div class="use-case-desc">Agrega un nuevo repuesto o componente al inventario con información completa: nombre, SKU, marca, categoría, número de parte OEM, descripción y precios.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-025:</span> <span class="use-case-name">Actualizar Stock</span>
+                <div class="use-case-desc">Modifica la cantidad de productos en stock cuando se reciben nuevas compras o cuando se utilizan en mantenimientos. El sistema registra todos los cambios en auditoría.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-026:</span> <span class="use-case-name">Buscar Producto</span>
+                <div class="use-case-desc">Busca productos por nombre, SKU o código de parte para encontrar rápidamente información de disponibilidad y precio.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-027:</span> <span class="use-case-name">Ver Bajo Stock</span>
+                <div class="use-case-desc">Visualiza productos cuyo stock está por debajo del nivel mínimo establecido, facilitando la identificación de productos que necesitan ser reabastecidos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-028:</span> <span class="use-case-name">Crear Orden de Compra</span>
+                <div class="use-case-desc">Genera órdenes de compra para reabastecer productos con bajo stock. Incluye proveedores, cantidades y fechas de entrega estimadas.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-029:</span> <span class="use-case-name">Recuperar Contraseña</span>
+                <div class="use-case-desc">Restablece la contraseña corporativa mediante proceso seguro de verificación por correo.</div>
+            </div>
+
+            <h3>3.4 Casos de Uso del Personal Financiero (8 casos)</h3>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-030:</span> <span class="use-case-name">Iniciar Sesión</span>
+                <div class="use-case-desc">El personal financiero accede a su área de trabajo con credenciales corporativas para gestionar facturación y pagos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-031:</span> <span class="use-case-name">Ver Solicitudes Completadas</span>
+                <div class="use-case-desc">Consulta el listado de mantenimientos que ya fueron completados por los mecánicos y están listos para facturar.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-032:</span> <span class="use-case-name">Crear Factura</span>
+                <div class="use-case-desc">Genera una factura basada en un mantenimiento completado, incluyendo detalles del cliente, vehículo, servicio, costos y términos de pago.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-033:</span> <span class="use-case-name">Registrar Pago</span>
+                <div class="use-case-desc">Registra los pagos recibidos de los clientes, especificando método de pago (efectivo, transferencia, tarjeta) y adjuntando comprobante si es requerido.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-034:</span> <span class="use-case-name">Ver Historial de Pagos</span>
+                <div class="use-case-desc">Consulta el historial completo de transacciones, facturas emitidas y pagos recibidos de todos los clientes.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-035:</span> <span class="use-case-name">Generar Reportes Financieros</span>
+                <div class="use-case-desc">Crea reportes financieros detallados: ingresos por servicio, cuentas por cobrar, pagos recibidos y proyecciones de flujo de caja.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-036:</span> <span class="use-case-name">Ver Cuentas por Cobrar</span>
+                <div class="use-case-desc">Visualiza las facturas pendientes de pago clasificadas por cliente, monto y fecha de vencimiento.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-037:</span> <span class="use-case-name">Recuperar Contraseña</span>
+                <div class="use-case-desc">Restablece la contraseña corporativa mediante proceso seguro de verificación por correo.</div>
+            </div>
+
+            <h3>3.5 Casos de Uso del Administrador (8 casos)</h3>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-038:</span> <span class="use-case-name">Iniciar Sesión</span>
+                <div class="use-case-desc">El administrador accede con credenciales administrativas para gestionar el sistema completo.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-039:</span> <span class="use-case-name">Gestionar Usuarios</span>
+                <div class="use-case-desc">Crea, edita, desactiva o elimina usuarios del sistema. Puede asignar roles y permisos específicos a cada persona.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-040:</span> <span class="use-case-name">Ver Reportes del Sistema</span>
+                <div class="use-case-desc">Accede a reportes generales del sistema: solicitudes procesadas, ingresos totales, desempeño de mecánicos, y estadísticas de uso.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-041:</span> <span class="use-case-name">Cambiar Estado de Cuentas</span>
+                <div class="use-case-desc">Activa o desactiva cuentas de usuario cuando es necesario, por ejemplo, cuando un empleado se retira de la empresa.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-042:</span> <span class="use-case-name">Ver Auditoría</span>
+                <div class="use-case-desc">Consulta el registro completo de todas las actividades en el sistema: cambios de datos, eliminaciones, creaciones de usuarios, etc., para fines de seguridad y cumplimiento normativo.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-043:</span> <span class="use-case-name">Configurar Sistema</span>
+                <div class="use-case-desc">Ajusta parámetros generales del sistema como horarios de operación, ubicaciones de mecánicas, servicios disponibles y configuración de notificaciones.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-044:</span> <span class="use-case-name">Ver Estadísticas</span>
+                <div class="use-case-desc">Visualiza dashboards con KPIs del negocio: número de solicitudes por período, ingresos, satisfacción de clientes, desempeño por mecánico.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-045:</span> <span class="use-case-name">Recuperar Contraseña</span>
+                <div class="use-case-desc">Restablece la contraseña administrativa mediante proceso seguro de verificación por correo.</div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 4: CASOS DE USO COMPARTIDOS -->
+        <div class="section">
+            <h2>4. Casos de Uso Compartidos del Sistema</h2>
+
+            <p>
+                Además de los casos de uso específicos de cada actor, existen casos de uso compartidos que son utilizados internamente 
+                por múltiples actores. Estos casos de uso representan servicios del sistema que respaldan las funcionalidades principales:
+            </p>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-046:</span> <span class="use-case-name">Autenticar Usuario</span>
+                <div class="use-case-desc">Valida las credenciales de cualquier usuario (cliente, mecánico, personal, administrador) y genera un token JWT válido por 24 horas.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-047:</span> <span class="use-case-name">Validar Datos</span>
+                <div class="use-case-desc">Verifica que todos los datos ingresados cumplan con los requisitos de formato, longitud y contenido. Previene inyección de código y datos inválidos.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-048:</span> <span class="use-case-name">Enviar Email</span>
+                <div class="use-case-desc">Envía correos electrónicos automáticos a clientes con reportes, facturas, notificaciones de estado y códigos de recuperación.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-049:</span> <span class="use-case-name">Registrar Auditoría</span>
+                <div class="use-case-desc">Registra en la base de datos cada acción importante del sistema: cambios de datos, creación/eliminación de registros, cambios de estado, para auditoría y seguridad.</div>
+            </div>
+
+            <div class="use-case-item">
+                <span class="use-case-id">UC-050:</span> <span class="use-case-name">Almacenar Fotos</span>
+                <div class="use-case-desc">Guarda fotos de vehículos en formato base64 en la base de datos, permitiendo que se adjunten a reportes y estén disponibles para descargar.</div>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 5: FLUJO PRINCIPAL -->
+        <div class="section">
+            <h2>5. Flujo Principal del Sistema</h2>
+
+            <p>
+                El diagrama de casos de uso representa el flujo general de operaciones en MecanicCompany. A continuación se describe 
+                el flujo principal que ocurre desde que un cliente solicita un servicio hasta que recibe el reporte completado:
+            </p>
+
+            <div class="flow-diagram">
+                <code>
+1. CLIENTE registra cuenta (UC-001) o inicia sesión (UC-002)
+2. CLIENTE solicita mantenimiento (UC-003)
+3. SISTEMA valida datos (UC-047) y registra auditoría (UC-049)
+4. MECÁNICO recibe solicitud y la aceptar (UC-012)
+5. MECÁNICO registra mantenimiento (UC-013)
+6. MECÁNICO captura fotos (UC-014)
+7. MECÁNICO selecciona repuestos (UC-015)
+8. SISTEMA calcula costos (UC-016)
+9. MECÁNICO cambia estado a "Completado" (UC-017)
+10. SISTEMA registra auditoría (UC-049)
+11. PERSONAL FINANCIERO crea factura (UC-032)
+12. MECÁNICO envía reporte al cliente (UC-018)
+13. SISTEMA envía email con reporte (UC-048)
+14. CLIENTE recibe notificación y descarga reporte (UC-006)
+15. CLIENTE califica servicio (UC-007)
+16. CLIENTE realiza pago
+17. PERSONAL FINANCIERO registra pago (UC-033)
+                </code>
+            </div>
+
+            <p>
+                Este flujo es el proceso estándar de una solicitud exitosa. Sin embargo, el sistema también maneja casos alternativos:
+            </p>
+
+            <ul style="margin-left: 20px; margin-bottom: 12pt;">
+                <li><strong>Rechaso de Solicitud:</strong> Un mecánico puede rechazar una solicitud (UC-020), regresando a estado Pendiente.</li>
+                <li><strong>Recuperación de Contraseña:</strong> Cualquier usuario puede recuperar su contraseña (UC-008, UC-021, UC-029, UC-037, UC-045).</li>
+                <li><strong>Gestión de Inventario:</strong> El personal de inventario actualiza stock constantemente (UC-025) y crea órdenes de compra (UC-028).</li>
+                <li><strong>Auditoría y Control:</strong> El administrador monitorea todas las actividades del sistema a través de auditoría (UC-042).</li>
+            </ul>
+        </div>
+
+        <!-- SECCIÓN 6: RELACIONES Y DEPENDENCIAS -->
+        <div class="section">
+            <h2>6. Relaciones y Dependencias</h2>
+
+            <p>
+                El diagrama de casos de uso muestra relaciones entre casos de uso utilizando dos tipos principales de conexiones:
+            </p>
+
+            <h3>6.1 Relación de Inclusión (<<include>>)</h3>
+
+            <p>
+                Una relación de inclusión indica que un caso de uso <strong>siempre incluye</strong> la funcionalidad de otro caso de uso. 
+                Es obligatoria y ocurre cada vez que se ejecuta el caso de uso principal. Por ejemplo:
+            </p>
+
+            <ul style="margin-left: 20px; margin-bottom: 12pt;">
+                <li><strong>UC-002 (Iniciar Sesión) incluye UC-046 (Autenticar Usuario)</strong> — Siempre que alguien inicia sesión, el sistema debe autenticar sus credenciales.</li>
+                <li><strong>UC-003 (Solicitar Mantenimiento) incluye UC-047 (Validar Datos)</strong> — Los datos del formulario siempre deben validarse.</li>
+                <li><strong>UC-013 (Registrar Mantenimiento) incluye UC-015 (Registrar Repuestos)</strong> — El mantenimiento siempre requiere registrar los repuestos utilizados.</li>
+            </ul>
+
+            <h3>6.2 Relación de Extensión (<<extend>>)</h3>
+
+            <p>
+                Una relación de extensión indica que un caso de uso puede extender opcionalmente la funcionalidad de otro caso de uso bajo 
+                ciertas condiciones. Es opcional y solo ocurre bajo circunstancias específicas. Aunque el diagrama actual no muestra muchas 
+                extensiones, algunos ejemplos serían:
+            </p>
+
+            <ul style="margin-left: 20px; margin-bottom: 12pt;">
+                <li>El caso de uso "Enviar Reporte" podría extender "Registrar Mantenimiento" si se cumplen ciertas condiciones (estado = Completado).</li>
+                <li>El caso de uso "Crear Orden de Compra" podría extender "Ver Bajo Stock" cuando el stock está crítico.</li>
+            </ul>
+
+            <h3>6.3 Matriz de Relaciones Clave</h3>
+
+            <table style="width: 100%; margin-top: 15px; margin-bottom: 15px; border-collapse: collapse;">
+                <thead>
+                    <tr style="background: #667eea; color: white;">
+                        <th style="border: 1px solid #333; padding: 8px;">Caso de Uso</th>
+                        <th style="border: 1px solid #333; padding: 8px;">Incluye</th>
+                        <th style="border: 1px solid #333; padding: 8px;">Razón</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-002</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-046</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">Validar credenciales</td>
+                    </tr>
+                    <tr style="background: #f9f9f9;">
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-003</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-047, UC-049</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">Validar y registrar</td>
+                    </tr>
+                    <tr>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-013</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-015, UC-016</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">Registrar repuestos y costos</td>
+                    </tr>
+                    <tr style="background: #f9f9f9;">
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-018</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">UC-048, UC-049</td>
+                        <td style="border: 1px solid #ccc; padding: 8px;">Enviar email y registrar</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- SECCIÓN 7: CONCLUSIONES -->
+        <div class="section">
+            <h2>7. Conclusiones</h2>
+
+            <p>
+                El diagrama de casos de uso de MecanicCompany proporciona una visión completa de las funcionalidades del sistema desde 
+                la perspectiva de los usuarios. Con <span class="highlight">50 casos de uso</span> distribuidos entre 
+                <span class="highlight">5 actores</span>, el diagrama demuestra que se trata de un sistema integral que cubre:
+            </p>
+
+            <div class="key-points">
+                <h4>🎯 Aspectos Clave Cubiertos:</h4>
+                <ul>
+                    <li><strong>Gestión de Solicitudes:</strong> Desde la creación hasta la completación</li>
+                    <li><strong>Registro de Mantenimientos:</strong> Con fotos, repuestos y costos</li>
+                    <li><strong>Gestión de Inventario:</strong> Control de productos y stock</li>
+                    <li><strong>Facturación y Pagos:</strong> Procesos financieros completos</li>
+                    <li><strong>Administración:</strong> Control de usuarios y auditoría</li>
+                    <li><strong>Seguridad:</strong> Autenticación, validación y registro de actividades</li>
+                </ul>
+            </div>
+
+            <p>
+                Cada caso de uso representa una funcionalidad clara y bien definida que contribuye al objetivo general del sistema: 
+                proporcionar a los clientes un servicio de mantenimiento vehicular transparente, eficiente y de alta calidad.
+            </p>
+
+            <p>
+                El sistema está diseñado para ser escalable, permitiendo la adición de nuevas funcionalidades en el futuro sin afectar 
+                la estructura base. Las relaciones bien definidas entre casos de uso aseguran que el sistema sea coherente y fácil de mantener.
+            </p>
+        </div>
+
+        <div class="footer">
+            <p>Documento generado: Octubre de 2026</p>
+            <p>Sistema MecanicCompany - Documentación de Análisis de Requisitos</p>
+        </div>
+
+    </div>
+</body>
+</html>

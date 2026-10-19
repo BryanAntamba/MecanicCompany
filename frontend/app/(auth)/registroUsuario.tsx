@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   ImageBackground, KeyboardAvoidingView, Platform, Pressable,
-  ScrollView, Text, TextInput, View, Image, Modal, BackHandler
+  ScrollView, Text, TextInput, View, Image, BackHandler, Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 // import DateTimePicker from '@react-native-community/datetimepicker';
 import registroStyles from '@/Styles/auth/RegistroUsuario';
-import confirmacionStyles from '@/Styles/auth/modalAuth/confirmacionRegistro';
 import {
   validarUnNombre,
   validarSegundoNombre,
@@ -17,12 +16,45 @@ import {
   validarContrasena,
   validarConfirmarContrasena,
 } from '@/utils/validaciones';
-import { agregarUsuario, correoYaRegistrado } from '@/utils/datosSimulados';
+import { ResponsiveContainer } from '@/components/ResponsiveContainer';
+
+const BASE_URL = 'http://192.168.1.12:3000/api';
 // import ConfirmacionRegistro from './modalAuth/confirmacionRegistro';
 
 export default function RegistroUsuarioScreen() {
   const router = useRouter();
   const scrollRef = useRef<ScrollView>(null);
+  
+  // Manejar botón atrás - Ir a login (limpiando historial en web)
+  useEffect(() => {
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // En web, usar window.location para limpiar historial
+        window.location.href = '/(auth)/login';
+      } else {
+        router.replace('/(auth)/login' as any);
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        handleBack();
+      };
+
+      window.addEventListener('popstate', handlePopState);
+
+      return () => {
+        window.removeEventListener('popstate', handlePopState);
+      };
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        handleBack();
+        return true;
+      });
+      return () => backHandler.remove();
+    }
+  }, [router]);
 
   // Estados del formulario
   const [nombre, setNombre] = useState('');
@@ -52,13 +84,15 @@ export default function RegistroUsuarioScreen() {
   const [errConfirmar, setErrConfirmar] = useState('');
   const [errGeneral, setErrGeneral] = useState('');
 
-  // Estado de carga y modal
-  const [loading, setLoading] = useState(false);
+  // Estado de carga
+  const [isLoading, setIsLoading] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [modalVisible, setModalVisible] = useState(false);
 
   // Manejo del botón de retroceso: va de regreso al login
   useEffect(() => {
+    // Solo usar BackHandler en plataformas móviles
+    if (Platform.OS === 'web') return;
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       router.replace('/(auth)/login' as any);
       return true;
@@ -201,66 +235,81 @@ export default function RegistroUsuarioScreen() {
       return;
     }
 
-    // Verificar si el correo ya está registrado
-    if (correoYaRegistrado(correo.trim().toLowerCase())) {
-      setErrCorreo('Este correo ya está registrado.');
-      return;
-    }
-
-    setLoading(true);
+    setIsLoading(true);
     setErrGeneral('');
 
     try {
-      // Simular llamada al API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Guardar usuario en datos simulados
-      agregarUsuario({
-        nombre: nombre.trim(),
-        segundoNombre: segundoNombre.trim() || undefined,
-        apellido: apellido.trim(),
-        segundoApellido: segundoApellido.trim() || undefined,
-        fechaNacimiento: fechaNacimiento!,
-        telefono: telefono.trim(),
-        correo: correo.trim().toLowerCase(),
-        contrasena: contrasena,
+      const correoNorm = correo.trim().toLowerCase();
+      
+      // Llamada real al API
+      const response = await fetch(`${BASE_URL}/auth/cliente/registro`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nombres: nombre.trim(),
+          segundoNombre: segundoNombre.trim() || null,
+          apellidos: apellido.trim(),
+          segundoApellido: segundoApellido.trim() || null,
+          telefono: telefono.trim(),
+          correo: correoNorm,
+          contrasena: contrasena,
+          fechaNacimiento: fechaNacimiento?.toISOString(),
+        }),
       });
 
-      // Mostrar modal de confirmación
-      setModalVisible(true);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Error al registrar');
+      }
 
-      // Después de 3 segundos, cerrar modal y navegar al login
-      setTimeout(() => {
-        setModalVisible(false);
-        router.replace('/(auth)/login' as any);
-      }, 3000);
+      const data = await response.json();
+      console.log('[REGISTRO_CLIENTE] ✅ Éxito:', data);
+
+      // Navegar a verificación de código con el correo
+      router.push({
+        pathname: '/(auth)/codigoVerificacion',
+        params: { correo: correoNorm },
+      } as any);
     } catch (err: any) {
-      setErrGeneral(err?.message ?? 'Error al registrar el usuario. Intenta de nuevo.');
+      console.error('[REGISTRO_CLIENTE] ❌ Error:', err);
+      
+      if (err.message.includes('correo')) {
+        setErrCorreo(err.message);
+      } else {
+        setErrGeneral(err?.message ?? 'Error al registrar el usuario. Intenta de nuevo.');
+      }
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoLogin.png')}
-      style={registroStyles.background}
-      resizeMode="cover"
-    >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={registroStyles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoLogin.png')}
+        style={registroStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={registroStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={registroStyles.keyboardView}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={registroStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
           {/* Botón regresar */}
           <Pressable
-            onPress={() => router.replace('/(auth)/login' as any)}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.href = '/(auth)/login';
+              } else {
+                router.replace('/(auth)/login' as any);
+              }
+            }}
             style={registroStyles.backButton}
             hitSlop={8}
           >
@@ -428,14 +477,28 @@ export default function RegistroUsuarioScreen() {
 
             {/* Botón registrarse */}
             <Pressable
-              style={({ pressed }) => [registroStyles.button, pressed && registroStyles.buttonPressed]}
+              style={({ pressed }) => [
+                registroStyles.button,
+                (pressed || isLoading) && registroStyles.buttonPressed,
+                isLoading && { opacity: 0.6 }
+              ]}
               onPress={handleRegistro}
-              disabled={loading}
+              disabled={isLoading}
             >
               {({ pressed }) => (
-                <Text style={[registroStyles.buttonText, pressed && registroStyles.buttonTextPressed]}>
-                  {loading ? 'Registrando...' : 'Registrarse'}
-                </Text>
+                <View style={registroStyles.buttonContent}>
+                  {!isLoading && (
+                    <FontAwesome 
+                      name="user-plus" 
+                      size={20} 
+                      color={pressed ? '#FFFFFF' : '#000000'} 
+                      style={registroStyles.buttonIcon}
+                    />
+                  )}
+                  <Text style={[registroStyles.buttonText, pressed && registroStyles.buttonTextPressed]}>
+                    {isLoading ? 'Registrando...' : 'Registrarse'}
+                  </Text>
+                </View>
               )}
             </Pressable>
 
@@ -445,25 +508,7 @@ export default function RegistroUsuarioScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Modal de confirmación inline */}
-      <Modal
-        visible={modalVisible}
-        transparent={true}
-        animationType="fade"
-      >
-        <View style={confirmacionStyles.modalOverlay}>
-          <View style={confirmacionStyles.modalContent}>
-            <View style={confirmacionStyles.iconContainer}>
-              <FontAwesome name="check" size={40} color="#FFFFFF" />
-            </View>
-            <Text style={confirmacionStyles.title}>Registro exitoso</Text>
-            <Text style={confirmacionStyles.message}>
-              Tu cuenta ha sido creada correctamente. Serás redirigido al inicio de sesión.
-            </Text>
-          </View>
-        </View>
-      </Modal>
     </ImageBackground>
+    </ResponsiveContainer>
   );
 }

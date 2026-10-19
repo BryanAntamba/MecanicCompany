@@ -1,7 +1,7 @@
 // seguimientoVehiculo.ts
 // Estilos para la pantalla de seguimiento vehicular
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
   page: {
@@ -64,6 +64,14 @@ export default StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     gap: 12,
+  },
+  filterRowContainer: {
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    gap: 12,
+  },
+  filterColumn: {
+    flex: 1,
+    zIndex: 1,
   },
   filterHalf: {
     flex: 1,
@@ -170,6 +178,10 @@ export default StyleSheet.create({
   solicitudesContainer: {
     gap: 16,
   },
+  cardsGrid: {
+    flexDirection: 'column',
+    gap: 16,
+  },
   emptyText: {
     fontSize: 16,
     color: '#94A3B8',
@@ -182,6 +194,7 @@ export default StyleSheet.create({
     padding: 20,
     borderWidth: 1,
     borderColor: '#334155',
+    width: '100%',
   },
   solicitudTitulo: {
     fontSize: 22,
@@ -239,6 +252,14 @@ export default StyleSheet.create({
   },
   verDetallesButtonPressed: {
     backgroundColor: '#2563EB',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 6,
   },
   verDetallesButtonText: {
     fontSize: 15,

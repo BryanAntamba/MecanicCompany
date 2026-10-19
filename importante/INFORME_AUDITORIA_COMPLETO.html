@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informe de Auditoría Completo - MecanicCompany</title>
+    <style>
+        /* Formato APA 7ma edición */
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2.0;
+            margin: 2.54cm;
+            color: #000000;
+            background-color: #ffffff;
+        }
+
+        h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: left;
+            margin-top: 24pt;
+            margin-bottom: 0;
+        }
+
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            font-style: italic;
+            text-align: left;
+            margin-top: 0;
+            margin-bottom: 0;
+        }
+
+        p {
+            text-indent: 0.5in;
+            margin: 0;
+            text-align: justify;
+        }
+
+        p.no-indent {
+            text-indent: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11pt;
+            margin-top: 12pt;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 6pt 10pt;
+            text-align: left;
+        }
+
+        th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+
+        ul, ol {
+            margin-left: 1in;
+            padding-left: 0;
+        }
+
+        li {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Informe de Auditoría de Seguridad — MecanicCompany</h1>
+
+    <!-- ============================================================ -->
+    <h2>1.9. Definición de Alcance</h2>
+    <!-- ============================================================ -->
+
+    <p>La presente auditoría cubre la totalidad del sistema MecanicCompany en su versión productiva actual. El alcance comprende los siguientes componentes tecnológicos verificados directamente desde los manifiestos del proyecto:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Componente</th>
+                <th>Tecnología</th>
+                <th>Versión verificada</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Frontend móvil</td>
+                <td>React Native / Expo / Expo Router</td>
+                <td>0.81.5 / 54.0.33 / 6.0.23</td>
+            </tr>
+            <tr>
+                <td>Framework backend</td>
+                <td>Express.js</td>
+                <td>4.19.2</td>
+            </tr>
+            <tr>
+                <td>Lenguaje backend</td>
+                <td>TypeScript</td>
+                <td>5.4.5</td>
+            </tr>
+            <tr>
+                <td>ORM</td>
+                <td>Prisma / @prisma/client</td>
+                <td>5.14.0</td>
+            </tr>
+            <tr>
+                <td>Base de datos</td>
+                <td>PostgreSQL</td>
+                <td>12.0+ (configurado vía Prisma datasource)</td>
+            </tr>
+            <tr>
+                <td>Autenticación</td>
+                <td>JSON Web Tokens (jsonwebtoken)</td>
+                <td>9.0.2</td>
+            </tr>
+            <tr>
+                <td>Seguridad HTTP</td>
+                <td>Helmet.js / CORS / bcryptjs</td>
+                <td>8.2.0 / 2.8.5 / 2.4.3</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>El alcance funcional incluye los módulos de autenticación (registro, inicio de sesión, recuperación de contraseña), gestión de mecánicos, solicitudes de mantenimiento, reportes y la capa de administración. Quedan fuera del alcance las integraciones con terceros no documentadas, la infraestructura de red del proveedor de hosting y los dispositivos físicos de los usuarios finales.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.12. Enfoque de Auditoría</h2>
+    <!-- ============================================================ -->
+
+    <p>La auditoría se desarrolló bajo un enfoque de caja gris, combinando revisión estática de código fuente con pruebas funcionales dirigidas. Como marco de referencia metodológico se emplearon el OWASP Top 10 Web Application Security Risks (2021), el OWASP API Security Top 10 (2023) y el OWASP Mobile Application Security Verification Standard (MASVS v2.0), dado que la aplicación expone una API RESTful consumida exclusivamente desde un cliente móvil.</p>
+
+    <p>El proceso se estructuró en cuatro fases consecutivas: (a) reconocimiento y relevamiento tecnológico, (b) análisis estático del código fuente y configuraciones, (c) pruebas dinámicas sobre los endpoints expuestos, y (d) validación y clasificación de hallazgos. Cada hallazgo fue evaluado según su probabilidad de ocurrencia, impacto potencial y facilidad de explotación, asignándole un nivel de severidad: Crítico, Alto, Medio, Bajo o Informativo.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.13. Reconocimiento</h2>
+    <!-- ============================================================ -->
+
+    <p>La fase de reconocimiento consistió en el análisis pasivo de la arquitectura del sistema a partir de los artefactos disponibles: manifiestos de dependencias (<em>package.json</em>), esquema de base de datos (<em>prisma/schema.prisma</em>), definición de rutas y controladores, y archivos de configuración del servidor. Este enfoque permite identificar la superficie de ataque sin interactuar activamente con el entorno de producción.</p>
+
+    <p>Del análisis se determinó que el sistema expone los siguientes grupos de endpoints REST: <code>/auth</code> (autenticación y gestión de sesión), <code>/mecanicos</code> (operaciones CRUD sobre personal mecánico con soporte de carga de imágenes), <code>/solicitudes</code> (gestión del ciclo de vida de solicitudes de mantenimiento), <code>/mantenimientos</code> (registro y seguimiento de trabajos), y <code>/reportes</code> (consultas agregadas protegidas por rol). Se identificaron también dependencias con posibles implicaciones de seguridad: el uso de <em>multer</em> (v2.1.1) para carga de archivos, <em>nodemailer</em> (v6.9.13) para comunicaciones por correo electrónico y <em>express-rate-limit</em> (v8.5.2) como mecanismo de protección contra abuso de peticiones.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.20. Auditoría de Cumplimiento de Aplicativo Móvil</h2>
+    <!-- ============================================================ -->
+
+    <p>La auditoría de cumplimiento del aplicativo móvil evaluó el cliente React Native (v0.81.5) gestionado con Expo (v54.0.33) frente a los controles establecidos en el OWASP MASVS v2.0, específicamente en las categorías de Almacenamiento (MASVS-STORAGE), Criptografía (MASVS-CRYPTO), Autenticación y Gestión de Sesión (MASVS-AUTH), Comunicaciones de Red (MASVS-NETWORK) e Interacción con la Plataforma (MASVS-PLATFORM).</p>
+
+    <p>Se verificó el manejo de tokens JWT en el contexto de <em>AsyncStorage</em>, la ausencia o presencia de ofuscación de código en el bundle generado, la configuración de las comunicaciones HTTPS hacia el backend, y el tratamiento de datos sensibles en los componentes de interfaz de usuario. Los resultados de esta evaluación se consolidan en la sección de hallazgos con su respectivo nivel de severidad y evidencia de soporte.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.21. Compliance</h2>
+    <!-- ============================================================ -->
+
+    <p>El análisis de cumplimiento normativo evaluó el grado de adherencia del sistema MecanicCompany a los marcos de referencia aplicables a aplicaciones web y móviles. Se consideraron el OWASP Top 10 (2021) como estándar mínimo de seguridad para aplicaciones web/API, el OWASP MASVS v2.0 para el componente móvil y los principios generales de protección de datos personales alineados con prácticas de privacidad por diseño.</p>
+
+    <p>La evaluación determinó niveles de cumplimiento por dominio. En materia de gestión de acceso e identidad, el sistema implementa autenticación basada en JWT con control de roles; no obstante, se identificaron áreas de mejora en la gestión del ciclo de vida de los tokens. En lo referente a protección de datos en tránsito, las comunicaciones se realizan sobre HTTPS. La validación de entradas en el backend hace uso de la librería <em>Zod</em> (v3.23.8), lo que establece una primera línea de defensa frente a inyecciones. Los hallazgos detallados con su mapeo normativo se presentan en la sección correspondiente del informe.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.22. Validación de Hallazgos</h2>
+    <!-- ============================================================ -->
+
+    <p>Cada hallazgo identificado durante las fases de análisis estático y dinámico fue sometido a un proceso de validación con el propósito de descartar falsos positivos y confirmar la explotabilidad real de la vulnerabilidad en el contexto del sistema auditado. La validación se llevó a cabo mediante tres mecanismos complementarios: revisión cruzada del código fuente afectado, reproducción controlada del escenario de ataque en un entorno aislado y evaluación del impacto en el contexto del negocio.</p>
+
+    <p>Los hallazgos validados fueron clasificados de acuerdo con la metodología CVSS v3.1 (Common Vulnerability Scoring System), asignándoles una puntuación base que refleja la criticidad de cada vulnerabilidad de forma independiente del entorno. Solo los hallazgos que superaron el proceso de validación fueron incluidos en el presente informe. Aquellos casos en los que la vulnerabilidad teórica no pudo ser reproducida o dependía de condiciones no alcanzables en el entorno actual fueron catalogados como informativos o descartados con la justificación técnica correspondiente.</p>
+
+    <!-- ============================================================ -->
+    <h2>1.24. Recomendaciones</h2>
+    <!-- ============================================================ -->
+
+    <p>Con base en los hallazgos documentados a lo largo del proceso de auditoría, se recomienda priorizar la implementación de un mecanismo formal de renovación y revocación de tokens de autenticación. Si bien el sistema utiliza JSON Web Tokens para gestionar las sesiones de los usuarios, la ausencia de una lista de revocación o de un esquema de token de refresco expone la plataforma a situaciones en las que un token comprometido podría seguir siendo válido hasta su vencimiento natural. Adoptar este control reduciría de forma significativa la ventana de exposición ante un eventual robo de credenciales o secuestro de sesión (OWASP Foundation, 2021).</p>
+
+    <p>Adicionalmente, se recomienda establecer una política de seguridad para la funcionalidad de carga de archivos gestionada por la librería Multer. En su configuración actual, las restricciones sobre el tipo y tamaño de los archivos permitidos no están suficientemente definidas en el código revisado, lo que podría dar lugar a la subida de contenido no autorizado o al consumo descontrolado de almacenamiento. Se sugiere incorporar validaciones explícitas de tipo MIME, límites de tamaño por archivo y un proceso de análisis del contenido antes de su persistencia en el servidor (OWASP Foundation, 2023).</p>
+
+    <p>Finalmente, se recomienda reforzar la estrategia de almacenamiento de información sensible en el cliente móvil. El uso de <em>AsyncStorage</em> para persistir el token de sesión en dispositivos Android e iOS implica que dicha información queda almacenada en texto plano en el sistema de archivos del dispositivo, accesible ante un escenario de dispositivo comprometido o con permisos de superusuario. Como alternativa, se sugiere evaluar el uso de soluciones de almacenamiento seguro provistas por la plataforma, como el <em>Keychain</em> en iOS o el <em>Keystore</em> en Android, disponibles a través de librerías compatibles con el ecosistema Expo (OWASP Foundation, 2024).</p>
+
+    <!-- ============================================================ -->
+    <h2>1.25. Reglas de Compromiso</h2>
+    <!-- ============================================================ -->
+
+    <p>Las reglas de compromiso establecen los acuerdos formales entre el equipo auditor y el equipo de desarrollo respecto al tratamiento de las vulnerabilidades identificadas durante la auditoría. Estas reglas delimitan qué hallazgos fueron remediados dentro del alcance del proyecto, cuáles permanecen pendientes por depender de decisiones de infraestructura externas al código fuente, y cuáles fueron aceptados como riesgo residual con justificación técnica documentada.</p>
+
+    <h3>1.25.1. Hallazgos remediados — Datos hardcodeados en el código fuente</h3>
+
+    <p>El análisis estático automatizado ejecutado mediante la herramienta <em>react_vuln_scanner.py</em> identificó un total de 17 vulnerabilidades distribuidas en dos categorías: 12 instancias clasificadas como OWASP A02 - Secrets (credenciales y datos sensibles hardcodeados) y 5 instancias clasificadas como OWASP A02 - Crypto Failure (uso de protocolo HTTP en lugar de HTTPS). La siguiente tabla resume los archivos afectados por datos hardcodeados y el estado de remediación:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Archivo afectado</th>
+                <th>Líneas detectadas</th>
+                <th>Naturaleza del hallazgo</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>backend/src/controllers/auth.controller.ts</code></td>
+                <td>30, 67, 154</td>
+                <td>Referencias a secretos JWT con patrón de asignación directa</td>
+                <td>Remediado — migrado a <code>process.env.JWT_SECRET</code></td>
+            </tr>
+            <tr>
+                <td><code>backend/src/middlewares/auth.middleware.ts</code></td>
+                <td>27</td>
+                <td>Verificación de JWT</td>
+                <td>Falso positivo confirmado — ya usaba <code>process.env.JWT_SECRET</code></td>
+            </tr>
+            <tr>
+                <td><code>frontend/app/(auth)/cambiarPassword.tsx</code></td>
+                <td>16</td>
+                <td>URL de API referenciada directamente en pantalla</td>
+                <td>Remediado — centralizado en <code>utils/api.ts</code></td>
+            </tr>
+            <tr>
+                <td><code>frontend/app/(auth)/codigoVerificacion.tsx</code></td>
+                <td>43</td>
+                <td>URL de API referenciada directamente en pantalla</td>
+                <td>Remediado — centralizado en <code>utils/api.ts</code></td>
+            </tr>
+            <tr>
+                <td><code>frontend/app/(auth)/login.tsx</code></td>
+                <td>40</td>
+                <td>URL de API referenciada directamente en pantalla</td>
+                <td>Remediado — centralizado en <code>utils/api.ts</code></td>
+            </tr>
+            <tr>
+                <td><code>frontend/utils/api.ts</code></td>
+                <td>75, 171, 212, 250, 260</td>
+                <td>Variables locales con patrones detectados por el escáner</td>
+                <td>Revisado — corresponden a variables de uso interno sin exposición de secretos reales</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>La remediación de las credenciales hardcodeadas en el backend consistió en reemplazar todos los valores literales por referencias a variables de entorno gestionadas mediante el archivo <em>.env</em> y la librería <em>dotenv</em> (v16.4.5). En el frontend, las pantallas individuales que referenciaban directamente la URL del servidor fueron refactorizadas para consumir exclusivamente la constante <code>BASE_URL</code> definida de forma centralizada en <code>utils/api.ts</code>, reduciendo la superficie de cambio ante futuros cambios de entorno.</p>
+
+    <h3>1.25.2. Hallazgos no remediados — Dependencia de infraestructura de servidor</h3>
+
+    <p>Las cinco instancias clasificadas como OWASP A02 - Crypto Failure corresponden al uso de URL con protocolo HTTP en lugar de HTTPS. Estos hallazgos no pudieron ser remediados en el presente ciclo debido a que su resolución depende de decisiones de infraestructura que trascienden el código fuente de la aplicación. La siguiente tabla detalla los archivos afectados y la justificación técnica de la no remediación:</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Archivo afectado</th>
+                <th>Líneas</th>
+                <th>Hallazgo</th>
+                <th>Razón de no remediación</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>frontend/utils/api.ts</code></td>
+                <td>6, 7, 9</td>
+                <td><code>BASE_URL = 'http://192.168.1.12:3000/api'</code></td>
+                <td>La IP local de red es requerida por Expo Go durante el desarrollo en dispositivos físicos. HTTPS sobre IP local privada requiere certificados autofirmados no compatibles con el ecosistema Expo en su configuración estándar. En producción esta URL debe reemplazarse por el dominio público con TLS habilitado.</td>
+            </tr>
+            <tr>
+                <td><code>backend/src/server.ts</code></td>
+                <td>7, 8</td>
+                <td>Mensajes <code>console.log</code> con URLs HTTP</td>
+                <td>Corresponden exclusivamente a mensajes informativos en consola durante el arranque del servidor. No representan tráfico HTTP real ni exponen datos en producción. El servidor en producción debe situarse detrás de un proxy inverso (Nginx o similar) que gestione la terminación TLS.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p>El equipo de desarrollo acepta formalmente el riesgo residual asociado a estos dos hallazgos para el entorno de desarrollo local, con el compromiso de implementar HTTPS completo mediante un dominio registrado y certificado SSL/TLS válido antes del despliegue en el entorno de producción (OWASP Foundation, 2021).</p>
+
+    <!-- ============================================================ -->
+    <h2>1.26. Compliance — Normas de Seguridad de Implementación Permanente</h2>
+    <!-- ============================================================ -->
+
+    <p>Esta sección establece el conjunto de normas y controles de seguridad que el equipo de desarrollo de MecanicCompany se compromete a mantener de forma permanente en todas las versiones futuras del sistema. Estas normas no son opcionales ni están sujetas a revisión por plazos; constituyen la línea base de seguridad obligatoria del proyecto y deben ser verificadas en cada ciclo de revisión de código.</p>
+
+    <h3>Gestión de secretos y credenciales</h3>
+
+    <p>Ningún valor sensible, incluyendo claves JWT, contraseñas de base de datos, claves de correo electrónico o identificadores de servicios externos, podrá ser incluido directamente en el código fuente. Todo secreto deberá residir en variables de entorno definidas en archivos <em>.env</em> excluidos del control de versiones mediante <em>.gitignore</em>. El cumplimiento de esta norma será verificable ejecutando la herramienta <em>react_vuln_scanner.py</em> incluida en el repositorio, que deberá reportar cero instancias de tipo A02 - Secrets en cada revisión (OWASP Foundation, 2021).</p>
+
+    <h3>Cifrado de comunicaciones</h3>
+
+    <p>Toda comunicación entre el cliente móvil y el servidor backend en entornos de prueba, preproducción y producción deberá realizarse exclusivamente sobre HTTPS con TLS versión 1.2 o superior. Las URLs con protocolo HTTP son admisibles únicamente en el entorno de desarrollo local cuando se utilice Expo Go con IP de red privada, y deberán ser reemplazadas de forma automatizada antes de cualquier despliegue. El header de seguridad <em>Strict-Transport-Security</em> deberá estar habilitado a través de Helmet.js en todos los entornos accesibles públicamente (Mozilla Foundation, 2024).</p>
+
+    <h3>Control de acceso y autenticación</h3>
+
+    <p>La autenticación de todos los endpoints protegidos deberá verificarse mediante el middleware centralizado de JWT. No se permitirá la existencia de rutas que manejen datos de usuarios o mecánicos sin validación de token activa. El secret de firma JWT deberá tener una longitud mínima de 32 caracteres aleatorios y rotarse periódicamente. El control de roles deberá evaluarse en el backend, nunca basándose exclusivamente en información enviada desde el cliente (OWASP Foundation, 2021).</p>
+
+    <h3>Validación de entradas</h3>
+
+    <p>Toda entrada recibida desde el cliente, incluyendo cuerpos de petición, parámetros de ruta y cabeceras de autorización, deberá ser validada mediante esquemas Zod definidos explícitamente antes de ser procesada por los controladores. No se permitirá el uso de datos del cliente sin pasar por la capa de validación. Esta práctica mitiga las categorías OWASP A03 (Inyección) y A08 (Fallas de integridad de software y datos) de forma preventiva (OWASP Foundation, 2021).</p>
+
+    <h3>Seguridad de archivos cargados</h3>
+
+    <p>La funcionalidad de carga de archivos gestionada por Multer deberá operar siempre con restricciones explícitas de tipo MIME y tamaño máximo de archivo. Se prohíbe la configuración de Multer sin filtros de tipo de archivo (<em>fileFilter</em>). Los archivos recibidos deberán almacenarse en rutas no accesibles directamente desde la web o, en su defecto, con nombres de archivo generados de forma aleatoria para evitar la predicción de URLs (OWASP Foundation, 2023).</p>
+
+    <h3>Auditoría continua</h3>
+
+    <p>El repositorio incluye las herramientas <em>react_vuln_scanner.py</em>, <em>owasp_auditor.py</em> y <em>resource_monitor.py</em>. Se establece como norma que dichas herramientas sean ejecutadas y sus resultados revisados antes de cada fusión de código hacia la rama principal. Los reportes generados (<em>owasp_report.json</em>) deberán mantenerse en el repositorio como evidencia histórica del estado de seguridad del sistema en cada versión auditada (OWASP Foundation, 2021).</p>
+
+    <br/>
+
+    <h2>Referencias</h2>
+
+    <p class="no-indent">OWASP Foundation. (2021). <em>OWASP Top 10:2021 — The ten most critical web application security risks</em>. https://owasp.org/www-project-top-ten/</p>
+
+    <p class="no-indent">OWASP Foundation. (2023). <em>OWASP API Security Top 10 — 2023 edition</em>. https://owasp.org/www-project-api-security/</p>
+
+    <p class="no-indent">OWASP Foundation. (2024). <em>OWASP Mobile Application Security Verification Standard (MASVS) v2.0</em>. https://mas.owasp.org/MASVS/</p>
+
+    <p class="no-indent">Mozilla Foundation. (2024). <em>HTTP Strict Transport Security (HSTS)</em>. Mozilla Developer Network. https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Strict-Transport-Security</p>
+
+</body>
+</html>

@@ -21,7 +21,12 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro",
+      "meta": {
+        "name": "Mecanic Company",
+        "description": "Sistema de gestión de mantenimiento vehicular"
+      }
     },
     "plugins": [
       "expo-router",

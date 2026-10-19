@@ -6,17 +6,22 @@ import {
   Alert,
   BackHandler,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
   TextInput,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
 import * as ScreenCapture from 'expo-screen-capture';
 import NavbarMecanico from '@/components/navbarMecanico/navbarMecanico';
-import styles from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesBase from '@/Styles/pantallaMecanico/ReportesClientes';
+import stylesWeb from '@/Styles/pantallaMecanico/ReportesClientes.web';
+
+const styles = Platform.OS === 'web' ? stylesWeb : stylesBase;
 import { useAuth } from '@/context/AuthContext';
 import { 
   obtenerSolicitudesSimuladas, 
@@ -24,6 +29,7 @@ import {
   eliminarSolicitud,
   type SolicitudMantenimiento 
 } from '@/utils/datosSimulados';
+import { solicitudesApi, finanzasApi, reportesApi } from '@/utils/api';
 
 // Importar modales
 import EditarSolicitud from './modalesReporte/editarSolicitud';
@@ -34,16 +40,24 @@ import ConfirmacionReporte from './modalReporteMatenimiento/confirmacionReporte'
 import EnvioExitoso from './modalReporteMatenimiento/envioExitoso';
 import VisualizarSolicitud from './modalesReporte/visualizarSolicitud';
 import RegistroEnProceso from './modalesReporte/registroEnProceso';
+import ConfirmacionReportePDF from './modalReportePDF/confirmacionReportePDF';
+import ReporteExitoso from './modalReportePDF/reporteExitoso';
 
 // Tipos
-type EstadoSolicitud = 'Pendiente' | 'En_proceso' | 'Completado';
+type EstadoSolicitud = 'Pendiente' | 'En_proceso' | 'Completado' | 'Rechazado';
 
 export default function ReportesClientesScreen() {
   const router = useRouter();
-  const { logout } = useAuth();
+  const { logout, token, user } = useAuth();
+  const { width } = useWindowDimensions();
+  
+  // Determinar breakpoints
+  const isSmallScreen = width < 1024;
 
-  // Bloquear capturas de pantalla
+  // Bloquear capturas de pantalla (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     const preventCapture = async () => {
       await ScreenCapture.preventScreenCaptureAsync();
     };
@@ -51,8 +65,10 @@ export default function ReportesClientesScreen() {
     // No llamamos allowScreenCaptureAsync() al desmontar para mantener el bloqueo activo
   }, []);
 
-  // BackHandler
+  // BackHandler (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       logout();
       BackHandler.exitApp();
@@ -68,7 +84,7 @@ export default function ReportesClientesScreen() {
   // Estados de filtros
   const [busqueda, setBusqueda] = useState('');
   const [ordenAZ, setOrdenAZ] = useState<'A-Z' | 'Z-A'>('A-Z');
-  const [filtroEstado, setFiltroEstado] = useState<'TODOS' | EstadoSolicitud>('TODOS');
+  const [filtroEstado, setFiltroEstado] = useState<'TODOS' | 'Pendiente' | 'En_proceso' | ''>('Pendiente');
   const [fechaMinima, setFechaMinima] = useState<Date | null>(null);
   const [fechaMaxima, setFechaMaxima] = useState<Date | null>(null);
 
@@ -95,22 +111,80 @@ export default function ReportesClientesScreen() {
   const [modalConfirmacionReporteVisible, setModalConfirmacionReporteVisible] = useState(false);
   const [modalEnvioExitosoVisible, setModalEnvioExitosoVisible] = useState(false);
   const [modalRegistroEnProcesoVisible, setModalRegistroEnProcesoVisible] = useState(false);
+  const [modalConfirmacionPDFVisible, setModalConfirmacionPDFVisible] = useState(false);
+  const [modalReporteExitosoVisible, setModalReporteExitosoVisible] = useState(false);
+  
+  // Estado para almacenar repuestos seleccionados
+  const [repuestosSeleccionados, setRepuestosSeleccionados] = useState<any[]>([]);
 
-  // Cargar solicitudes simuladas
+  // Cargar solicitudes desde el backend
   useEffect(() => {
-    const cargarSolicitudes = () => {
+    const cargarSolicitudes = async () => {
       try {
-        const solicitudesData = obtenerSolicitudesSimuladas();
-        setSolicitudes(solicitudesData);
-      } catch (error) {
-        Alert.alert('Error', 'No se pudieron cargar las solicitudes.');
+        if (!token) {
+          console.warn('[ReportesClientes] No hay token disponible');
+          setCargando(false);
+          return;
+        }
+
+        console.log('[ReportesClientes] 🔄 Cargando solicitudes del backend...');
+        const solicitudesBackend = await solicitudesApi.listar(token);
+        
+        // Mapear SolicitudBackend a SolicitudMantenimiento (incluyendo datos del mantenimiento si existe)
+        const solicitudesMapeadas: SolicitudMantenimiento[] = solicitudesBackend.map(s => {
+          // Crear objeto base con todos los campos de solicitud
+          const solicitudBase: SolicitudMantenimiento = {
+            id: s.id,
+            nombreCliente: s.nombreCliente,
+            telefono: s.telefono,
+            correoCliente: s.correoCliente,
+            marca: s.marca,
+            modelo: s.modelo,
+            anio: s.anio,
+            placa: s.placa,
+            kilometraje: s.kilometraje,
+            tipoServicio: s.tipoServicio,
+            descripcionProblema: s.descripcionProblema,
+            fechaCita: s.fechaCita,
+            horaCita: s.horaCita,
+            estado: (s.estado as 'Pendiente' | 'En_proceso' | 'Completado') || 'Pendiente',
+            createdAt: s.createdAt,
+            mecanicoAsignado: s.mecanico ? `${s.mecanico.nombres} ${s.mecanico.apellidos}` : undefined,
+            // Incluir objeto mantenimiento completo (CRÍTICO para obtener el ID)
+            mantenimiento: s.mantenimiento || undefined,
+          };
+          
+          // Si hay mantenimiento, añadir también sus campos dispersados
+          if (s.mantenimiento) {
+            solicitudBase.diagnostico = s.mantenimiento.diagnostico;
+            solicitudBase.trabajoRealizado = s.mantenimiento.trabajoRealizado;
+            solicitudBase.otroTrabajo = s.mantenimiento.otroTrabajo;
+            solicitudBase.diagnosticoRealizado = s.mantenimiento.diagnosticoRealizado;
+            solicitudBase.observaciones = s.mantenimiento.observaciones;
+            solicitudBase.costoManoObra = s.mantenimiento.costoManoObra?.toString() || '0';
+            solicitudBase.costoRepuestos = s.mantenimiento.costoRepuestos?.toString() || '0';
+            solicitudBase.fechaServicio = s.mantenimiento.fechaServicio;
+            solicitudBase.fechaInicio = s.mantenimiento.fechaInicio;
+            solicitudBase.fechaFinalizacion = s.mantenimiento.fechaFinalizacion;
+            solicitudBase.repuestosUtilizados = s.mantenimiento.repuestosUtilizados;
+          }
+          
+          return solicitudBase;
+        });
+
+        console.log(`[ReportesClientes] ✅ ${solicitudesMapeadas.length} solicitudes cargadas`);
+        console.log('[ReportesClientes] Primera solicitud:', solicitudesMapeadas[0]);
+        setSolicitudes(solicitudesMapeadas);
+      } catch (error: any) {
+        console.error('[ReportesClientes] ❌ Error al cargar solicitudes:', error?.message);
+        Alert.alert('Error', 'No se pudieron cargar las solicitudes. Intenta de nuevo.');
       } finally {
         setCargando(false);
       }
     };
 
     cargarSolicitudes();
-  }, []);
+  }, [token]);
 
   // Funciones auxiliares
   const buildCalendarDays = (monthStart: Date): (Date | null)[] => {
@@ -137,7 +211,16 @@ export default function ReportesClientesScreen() {
         s.correoCliente.toLowerCase().includes(textoBusqueda);
 
       // Filtro de estado
-      const coincideEstado = filtroEstado === 'TODOS' || s.estado === filtroEstado;
+      // Si filtroEstado es 'TODOS', solo mostrar Pendiente y En_proceso (excluir Completado)
+      if (filtroEstado === 'TODOS') {
+        if (s.estado === 'Completado') return false;
+      } else {
+        // Si filtroEstado es específico, debe coincidir
+        if (s.estado !== filtroEstado) return false;
+      }
+      
+      // Si filtroEstado es 'Pendiente', solo mostrar solicitudes sin mecánico asignado
+      if (filtroEstado === 'Pendiente' && s.mecanicoId) return false;
 
       // Filtro de fechas
       let coincideFecha = true;
@@ -158,7 +241,7 @@ export default function ReportesClientesScreen() {
         }
       }
 
-      return coincideBusqueda && coincideEstado && coincideFecha;
+      return coincideBusqueda && coincideFecha;
     })
     .sort((a, b) => {
       const nombreA = a.nombreCliente;
@@ -166,11 +249,11 @@ export default function ReportesClientesScreen() {
       return ordenAZ === 'A-Z' ? nombreA.localeCompare(nombreB) : nombreB.localeCompare(nombreA);
     });
 
-  // Calcular totales
-  const totalReportes = solicitudes.length;
-  const totalPendientes = solicitudes.filter((s) => s.estado === 'Pendiente').length;
-  const totalEnProceso = solicitudes.filter((s) => s.estado === 'En_proceso').length;
-  const totalCompletados = solicitudes.filter((s) => s.estado === 'Completado').length;
+  // Calcular totales (filtrados por mecánico actual)
+  const mecanicId = (user as any)?.id;
+  const totalReportes = mecanicId ? solicitudes.filter((s) => s.mecanicoId === mecanicId).length : solicitudes.length;
+  const totalPendientes = solicitudes.filter((s) => s.estado === 'Pendiente' && !s.mecanicoId).length;
+  const totalEnProceso = mecanicId ? solicitudes.filter((s) => s.estado === 'En_proceso' && s.mecanicoId === mecanicId).length : solicitudes.filter((s) => s.estado === 'En_proceso').length;
 
   // Handlers
   const handleVisualizarSolicitud = (solicitud: SolicitudMantenimiento) => {
@@ -185,6 +268,8 @@ export default function ReportesClientesScreen() {
 
   const handleRegistroMantenimiento = (solicitud: SolicitudMantenimiento) => {
     setSolicitudSeleccionada(solicitud);
+    // Limpiar repuestos antes de abrir el modal
+    setRepuestosSeleccionados([]);
     setModalMantenimientoVisible(true);
   };
 
@@ -212,25 +297,163 @@ export default function ReportesClientesScreen() {
     );
   };
 
-  const handleSuccessMantenimiento = (solicitudActualizada: any) => {
+  const handleSuccessMantenimiento = (solicitudActualizada: any, repuestos: any[]) => {
+    console.log('[handleSuccessMantenimiento] Solicitud actualizada recibida:', solicitudActualizada);
+    console.log('[handleSuccessMantenimiento] ¿Tiene mantenimiento?', solicitudActualizada?.mantenimiento);
+    
     setSolicitudes((prev) =>
-      prev.map((s) => (s.id === solicitudActualizada.id ? { ...s, ...solicitudActualizada } : s))
+      prev.map((s) => {
+        if (s.id === solicitudActualizada.id) {
+          // Merge cuidadoso: preservar mantenimiento si viene en la actualización
+          const solicitudMerged: SolicitudMantenimiento = {
+            ...s,  // Copiar todos los campos existentes
+            ...solicitudActualizada,  // Sobrescribir con actualizaciones (incluyendo mantenimiento)
+            // CRÍTICO: Asegurar que mantenimiento no se pierda
+            mantenimiento: solicitudActualizada.mantenimiento || s.mantenimiento,
+          };
+          console.log('[handleSuccessMantenimiento] Solicitud merged:', solicitudMerged);
+          console.log('[handleSuccessMantenimiento] Mantenimiento del merged:', solicitudMerged.mantenimiento);
+          return solicitudMerged;
+        }
+        return s;
+      })
     );
+    // Guardar los repuestos para pasarlos al modal de confirmación
+    setRepuestosSeleccionados(repuestos);
   };
 
-  const handleEnviarReporte = (solicitud: SolicitudMantenimiento) => {
-    setSolicitudSeleccionada(solicitud);
-    setModalConfirmacionReporteVisible(true);
+  const handleRechazar = async (solicitud: SolicitudMantenimiento) => {
+    try {
+      console.log('[handleRechazar] ❌ Rechazando solicitud:', solicitud.id);
+      
+      if (!token) {
+        Alert.alert('Error', 'Sesión expirada');
+        return;
+      }
+
+      // Actualizar en backend
+      await solicitudesApi.actualizar(
+        solicitud.id,
+        { estado: 'Rechazado' as any },
+        token
+      );
+
+      console.log('[handleRechazar] ✅ Solicitud rechazada');
+
+      // Actualizar en estado local
+      setSolicitudes(prev =>
+        prev.map(s =>
+          s.id === solicitud.id ? { ...s, estado: 'Rechazado' as any } : s
+        )
+      );
+
+      Alert.alert('Solicitud Rechazada', 'La solicitud ha sido marcada como rechazada');
+    } catch (error: any) {
+      console.error('[handleRechazar] Error:', error);
+      Alert.alert('Error', 'No se pudo rechazar la solicitud');
+    }
+  };
+
+  const handleEnviarReporte = async (solicitud: SolicitudMantenimiento) => {
+    try {
+      console.log('[handleEnviarReporte] 📧 Enviando reporte para solicitud:', solicitud.id);
+      
+      if (!solicitud || !solicitud.id) {
+        Alert.alert('Error', 'No se pudo identificar la solicitud');
+        return;
+      }
+
+      // Crear la factura antes de enviar
+      const mantenimientoData = (solicitud as any).mantenimiento;
+      if (mantenimientoData) {
+        const costoManoObraFinal = parseFloat(mantenimientoData.costoManoObra || '0');
+        const costoTotalRepuestos = parseFloat(mantenimientoData.costoRepuestos || '0');
+        
+        const nuevoFinanza = {
+          mantenimientoId: mantenimientoData.id,
+          clienteNombre: solicitud.nombreCliente,
+          clienteTelefono: solicitud.telefono,
+          clienteCorreo: solicitud.correoCliente,
+          vehiculo: `${solicitud.marca} ${solicitud.modelo} ${solicitud.anio}`,
+          marca: solicitud.marca,
+          modelo: solicitud.modelo,
+          placa: solicitud.placa,
+          anio: solicitud.anio,
+          kilometraje: solicitud.kilometraje,
+          servicio: mantenimientoData.trabajoRealizado || 'Mantenimiento',
+          mecanico: mantenimientoData.mecanicoAsignado || 'No asignado',
+          costoManoObra: costoManoObraFinal,
+          costoRepuestos: costoTotalRepuestos,
+        };
+
+        console.log('[handleEnviarReporte] 💰 Creando factura:', nuevoFinanza);
+        await finanzasApi.crear(nuevoFinanza, token);
+        console.log('✅ Factura creada');
+      }
+
+      // Enviar el email
+      console.log('[handleEnviarReporte] 📬 Enviando email al cliente');
+      await reportesApi.enviar(solicitud.id, token);
+      console.log('✅ Email enviado');
+
+      // Actualizar estado a Completado
+      const datosActualizar = {
+        ...solicitud,
+        estado: 'Completado',
+      };
+      
+      await solicitudesApi.actualizar(solicitud.id, datosActualizar, token);
+      console.log('✅ Estado actualizado a Completado');
+
+      // Actualizar en el estado local
+      setSolicitudes((prev) =>
+        prev.map((s) =>
+          s.id === solicitud.id ? { ...s, estado: 'Completado' } : s
+        )
+      );
+
+      // Navegar al historial del mecánico
+      Alert.alert('Éxito', 'El reporte ha sido enviado al correo del cliente', [
+        {
+          text: 'OK',
+          onPress: () => {
+            // Navegar al historial del mecánico
+            console.log('[handleEnviarReporte] 📋 Navegando al historial');
+            // Aquí irías al historial, pero como estamos en ReportesClientes, 
+            // probablemente solo necesitas actualizar la pantalla
+          },
+        },
+      ]);
+    } catch (error: any) {
+      console.error('[handleEnviarReporte] Error:', error);
+      Alert.alert('Error', `No se pudo enviar el reporte: ${error?.message || 'Error desconocido'}`);
+    }
   };
 
   const handleConfirmarEnvioReporte = () => {
     setModalConfirmacionReporteVisible(false);
     setModalEnvioExitosoVisible(true);
+    // Limpiar repuestos después de enviar
+    setRepuestosSeleccionados([]);
   };
+
+  const handleGenerarAutorizacion = (solicitud: SolicitudMantenimiento) => {
+    console.log('handleGenerarAutorizacion llamado con solicitud:', solicitud);
+    setSolicitudSeleccionada(solicitud);
+    setModalConfirmacionPDFVisible(true);
+    console.log('Modal PDF visible establecido a true');
+  };
+
+  const handleConfirmarGenerarPDF = () => {
+    console.log('handleConfirmarGenerarPDF llamado');
+    setModalConfirmacionPDFVisible(false);
+    setModalReporteExitosoVisible(true);
+  };
+
 
   // Verificar si el reporte está completo (solo verificar el estado)
   const reporteCompleto = (solicitud: SolicitudMantenimiento) => {
-    return solicitud.estado === 'Completado';
+    return solicitud.estado === 'En_proceso';  // El botón ENVIAR REPORTE solo está habilitado si estado es En_proceso
   };
 
   // Determinar el texto del botón de mantenimiento
@@ -240,15 +463,14 @@ export default function ReportesClientesScreen() {
         solicitud.repuestosUtilizados || solicitud.diagnosticoRealizado ||
         solicitud.costoManoObra || solicitud.costoRepuestos || solicitud.observaciones ||
         solicitud.fechaInicio || solicitud.fechaFinalizacion) {
-      return 'EDITAR REGISTRO DE MANTENIMIENTO';
+      return 'EDITAR MANTENIMIENTO';
     }
     return 'REGISTRO MANTENIMIENTO';
   };
 
   // Función para cerrar sesión y limpiar historial
-  const handleSignOut = async () => {
-    await logout();
-    // Navegar al login con parámetro que indica cierre de sesión
+  const handleSignOut = () => {
+    logout();
     router.replace('/(auth)/login?fromLogout=true' as any);
   };
 
@@ -276,61 +498,75 @@ export default function ReportesClientesScreen() {
             />
           </View>
 
-          {/* Orden A-Z / Z-A */}
-          <Text style={styles.filterLabel}>Orden</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setOrdenDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
-            <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {ordenDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['A-Z', 'Z-A'] as const).map((option) => (
-                <Pressable
-                  key={option}
-                  style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
-                  onPress={() => {
-                    setOrdenAZ(option);
-                    setOrdenDropdownOpen(false);
-                  }}
-                >
-                  <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
-                  <Text style={styles.dropdownItemText}>{option}</Text>
-                </Pressable>
-              ))}
+          {/* Fila de filtros: Orden y Estado */}
+          <View style={styles.filterRowContainer}>
+            {/* Filtro Orden */}
+            <View style={styles.filterColumn}>
+              <Text style={styles.filterLabel}>Orden</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setOrdenDropdownOpen((v) => !v);
+                setEstadoDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>{ordenAZ}</Text>
+                <Text style={styles.dropdownArrow}>{ordenDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {ordenDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['A-Z', 'Z-A'] as const).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[styles.dropdownItem, ordenAZ === option && styles.dropdownItemActive]}
+                      onPress={() => {
+                        setOrdenAZ(option);
+                        setOrdenDropdownOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemCheck}>{ordenAZ === option ? '✓ ' : '    '}</Text>
+                      <Text style={styles.dropdownItemText}>{option}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
             </View>
-          )}
 
-          {/* Estado de Mantenimiento */}
-          <Text style={styles.filterLabel}>Estado de Mantenimiento</Text>
-          <Pressable style={styles.filterDropdown} onPress={() => setEstadoDropdownOpen((v) => !v)}>
-            <Text style={styles.filterDropdownText}>
-              {filtroEstado === 'TODOS' ? 'Todos' :
-               filtroEstado === 'Pendiente' ? 'Pendiente' :
-               filtroEstado === 'En_proceso' ? 'En Proceso' : 'Completado'}
-            </Text>
-            <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
-          </Pressable>
-          {estadoDropdownOpen && (
-            <View style={styles.dropdownList}>
-              {(['TODOS', 'Pendiente', 'En_proceso', 'Completado'] as const).map((option) => {
-                const displayText = option === 'TODOS' ? 'Todos' :
-                                   option === 'En_proceso' ? 'En Proceso' : option;
-                return (
-                  <Pressable
-                    key={option}
-                    style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
-                    onPress={() => {
-                      setFiltroEstado(option);
-                      setEstadoDropdownOpen(false);
-                    }}
-                  >
-                    <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
-                    <Text style={styles.dropdownItemText}>{displayText}</Text>
-                  </Pressable>
-                );
-              })}
+            {/* Filtro Estado */}
+            <View style={styles.filterColumn}>
+              <Text style={styles.filterLabel}>Estado de Mantenimiento</Text>
+              <Pressable style={styles.filterDropdown} onPress={() => {
+                setEstadoDropdownOpen((v) => !v);
+                setOrdenDropdownOpen(false);
+              }}>
+                <Text style={styles.filterDropdownText}>
+                  {filtroEstado === 'TODOS' ? 'Todos' :
+                   filtroEstado === 'Pendiente' ? 'Pendiente' :
+                   filtroEstado === 'En_proceso' ? 'En Proceso' :
+                   filtroEstado === 'Rechazado' ? 'Rechazado' : 'Todos'}
+                </Text>
+                <Text style={styles.dropdownArrow}>{estadoDropdownOpen ? '▲' : '▼'}</Text>
+              </Pressable>
+              {estadoDropdownOpen && (
+                <View style={styles.dropdownList}>
+                  {(['TODOS', 'Pendiente', 'En_proceso', 'Rechazado'] as const).map((option) => {
+                    const displayText = option === 'TODOS' ? 'Todos' :
+                                       option === 'En_proceso' ? 'En Proceso' : option;
+                    return (
+                      <Pressable
+                        key={option}
+                        style={[styles.dropdownItem, filtroEstado === option && styles.dropdownItemActive]}
+                        onPress={() => {
+                          setFiltroEstado(option);
+                          setEstadoDropdownOpen(false);
+                        }}
+                      >
+                        <Text style={styles.dropdownItemCheck}>{filtroEstado === option ? '✓ ' : '    '}</Text>
+                        <Text style={styles.dropdownItemText}>{displayText}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
             </View>
-          )}
+          </View>
 
           {/* Rango de fechas */}
           <Text style={styles.filterLabel}>Rango de Fechas de Registro</Text>
@@ -376,10 +612,6 @@ export default function ReportesClientesScreen() {
             <Text style={styles.summaryNumber}>{totalEnProceso}</Text>
             <Text style={styles.summaryLabel}>En Proceso</Text>
           </View>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryNumber}>{totalCompletados}</Text>
-            <Text style={styles.summaryLabel}>Completados</Text>
-          </View>
         </View>
 
         {/* INDICADOR DE CARGA */}
@@ -395,9 +627,26 @@ export default function ReportesClientesScreen() {
         )}
 
         {/* LISTA DE SOLICITUDES */}
-        <View style={styles.solicitudesContainer}>
+        <View style={[
+          styles.solicitudesContainer,
+          Platform.OS === 'web' && !isSmallScreen && { flexDirection: 'row', flexWrap: 'wrap' }
+        ]}>
           {solicitudesFiltradas.map((solicitud) => (
-            <View key={solicitud.id} style={styles.card}>
+            <View 
+              key={solicitud.id} 
+              style={[
+                styles.card,
+                Platform.OS === 'web' && !isSmallScreen && { 
+                  flex: 1, 
+                  minWidth: 300, 
+                  maxWidth: 'calc(50% - 8px)' 
+                },
+                Platform.OS === 'web' && isSmallScreen && { 
+                  width: '100%',
+                  maxWidth: '100%'
+                }
+              ]}
+            >
               {/* Contenido de la cartilla */}
               <View style={styles.cardContent}>
                 {/* Nombre completo */}
@@ -428,6 +677,7 @@ export default function ReportesClientesScreen() {
                       solicitud.estado === 'Pendiente' && styles.badgePendiente,
                       solicitud.estado === 'En_proceso' && styles.badgeProceso,
                       solicitud.estado === 'Completado' && styles.badgeCompletado,
+                      solicitud.estado === 'Rechazado' && styles.badgeRechazado,
                     ]}
                   >
                     <Text style={styles.badgeText}>
@@ -442,9 +692,17 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPrimaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
-                      VISUALIZAR SOLICITUD
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="eye" 
+                        size={16} 
+                        color={pressed ? '#FFFFFF' : '#000000'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnPrimaryText, pressed && styles.btnPrimaryTextPressed]}>
+                        VISUALIZAR SOLICITUD
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -453,20 +711,36 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                      EDITAR SOLICITUD
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="edit" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
+                        EDITAR SOLICITUD
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
                 <Pressable
                   onPress={() => handleRegistroMantenimiento(solicitud)}
-                  style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnSecondaryPressed]}
+                  style={({ pressed }) => [styles.btnTerciary, pressed && styles.btnTerciaryPressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnSecondaryText, pressed && styles.btnSecondaryTextPressed]}>
-                      {getTextoBotonMantenimiento(solicitud)}
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="wrench" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnTerciaryText, pressed && styles.btnTerciaryTextPressed]}>
+                        {getTextoBotonMantenimiento(solicitud)}
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
@@ -475,13 +749,21 @@ export default function ReportesClientesScreen() {
                   style={({ pressed }) => [styles.btnDelete, pressed && styles.btnDeletePressed]}
                 >
                   {({ pressed }) => (
-                    <Text style={[styles.btnDeleteText, pressed && styles.btnDeleteTextPressed]}>
-                      ELIMINAR
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="trash" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text style={[styles.btnDeleteText, pressed && styles.btnDeleteTextPressed]}>
+                        ELIMINAR
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
 
-                {/* Botón ENVIAR FACTURA */}
+                {/* Botón ENVIAR REPORTE */}
                 <Pressable
                   onPress={() => handleEnviarReporte(solicitud)}
                   disabled={!reporteCompleto(solicitud)}
@@ -492,17 +774,89 @@ export default function ReportesClientesScreen() {
                   ]}
                 >
                   {({ pressed }) => (
-                    <Text
-                      style={[
-                        styles.btnEnviarReporteText,
-                        !reporteCompleto(solicitud) && styles.btnEnviarReporteTextLocked,
-                        pressed && reporteCompleto(solicitud) && styles.btnEnviarReporteTextPressed,
-                      ]}
-                    >
-                      ENVIAR FACTURA
-                    </Text>
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="send" 
+                        size={16} 
+                        color={
+                          !reporteCompleto(solicitud) 
+                            ? '#64748B' 
+                            : pressed 
+                              ? '#F1F5F9' 
+                              : '#FFFFFF'
+                        } 
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.btnEnviarReporteText,
+                          !reporteCompleto(solicitud) && styles.btnEnviarReporteTextLocked,
+                          pressed && reporteCompleto(solicitud) && styles.btnEnviarReporteTextPressed,
+                        ]}
+                      >
+                        ENVIAR REPORTE
+                      </Text>
+                    </View>
                   )}
                 </Pressable>
+
+                {/* Botón GENERAR AUTORIZACIÓN */}
+                <Pressable
+                  onPress={() => handleGenerarAutorizacion(solicitud)}
+                  style={({ pressed }) => [
+                    styles.btnGenerarAutorizacion,
+                    pressed && styles.btnGenerarAutorizacionPressed,
+                  ]}
+                >
+                  {({ pressed }) => (
+                    <View style={styles.buttonContent}>
+                      <FontAwesome 
+                        name="file-text" 
+                        size={16} 
+                        color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.btnGenerarAutorizacionText,
+                          pressed && styles.btnGenerarAutorizacionTextPressed,
+                        ]}
+                      >
+                        GENERAR AUTORIZACIÓN
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+
+                {/* Botón RECHAZAR - Solo para solicitudes Pendiente */}
+                {solicitud.estado === 'Pendiente' && (
+                  <Pressable
+                    onPress={() => handleRechazar(solicitud)}
+                    style={({ pressed }) => [
+                      styles.btnRechazar,
+                      pressed && styles.btnRechazarPressed,
+                    ]}
+                  >
+                    {({ pressed }) => (
+                      <View style={styles.buttonContent}>
+                        <FontAwesome 
+                          name="times-circle" 
+                          size={16} 
+                          color={pressed ? '#F1F5F9' : '#FFFFFF'} 
+                          style={styles.buttonIcon}
+                        />
+                        <Text
+                          style={[
+                            styles.btnRechazarText,
+                            pressed && styles.btnRechazarTextPressed,
+                          ]}
+                        >
+                          RECHAZAR
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                )}
               </View>
             </View>
           ))}
@@ -609,9 +963,11 @@ export default function ReportesClientesScreen() {
       <RegistroMantenimiento
         visible={modalMantenimientoVisible}
         solicitud={solicitudSeleccionada}
-        onClose={() => setModalMantenimientoVisible(false)}
+        onClose={() => {
+          setModalMantenimientoVisible(false);
+          // NO limpiar repuestos aquí porque se necesitan para el modal de confirmación
+        }}
         onSuccess={handleSuccessMantenimiento}
-        onShowSuccessModal={() => setModalRegistroEnProcesoVisible(true)}
       />
 
       <ConfirmacionSolicitud
@@ -630,7 +986,11 @@ export default function ReportesClientesScreen() {
       <ConfirmacionReporte
         visible={modalConfirmacionReporteVisible}
         solicitud={solicitudSeleccionada}
-        onCancelar={() => setModalConfirmacionReporteVisible(false)}
+        repuestosSeleccionados={repuestosSeleccionados}
+        onCancelar={() => {
+          setModalConfirmacionReporteVisible(false);
+          setRepuestosSeleccionados([]);
+        }}
         onConfirmar={handleConfirmarEnvioReporte}
       />
 
@@ -638,7 +998,67 @@ export default function ReportesClientesScreen() {
         visible={modalEnvioExitosoVisible}
         nombreCliente={solicitudSeleccionada?.nombreCliente || ''}
         correoCliente={solicitudSeleccionada?.correoCliente || ''}
-        onCerrar={() => setModalEnvioExitosoVisible(false)}
+        onCerrar={() => {
+          setModalEnvioExitosoVisible(false);
+          // Limpiar repuestos cuando se cierra el modal de éxito
+          setRepuestosSeleccionados([]);
+          // Recargar solicitudes para actualizar lista
+          const cargarSolicitudes = async () => {
+            try {
+              if (!token) return;
+              const solicitudesBackend = await solicitudesApi.listar(token);
+              const solicitudesMapeadas = solicitudesBackend.map(s => ({
+                id: s.id,
+                nombreCliente: s.nombreCliente,
+                telefono: s.telefono,
+                correoCliente: s.correoCliente,
+                marca: s.marca,
+                modelo: s.modelo,
+                anio: s.anio,
+                placa: s.placa,
+                kilometraje: s.kilometraje,
+                tipoServicio: s.tipoServicio,
+                descripcionProblema: s.descripcionProblema,
+                fechaCita: s.fechaCita,
+                horaCita: s.horaCita,
+                estado: (s.estado as 'Pendiente' | 'En_proceso' | 'Completado') || 'Pendiente',
+                createdAt: s.createdAt,
+                mecanicoAsignado: s.mecanico ? `${s.mecanico.nombres} ${s.mecanico.apellidos}` : undefined,
+                mantenimiento: s.mantenimiento || undefined,
+                ...(s.mantenimiento && {
+                  diagnostico: s.mantenimiento.diagnostico,
+                  trabajoRealizado: s.mantenimiento.trabajoRealizado,
+                  otroTrabajo: s.mantenimiento.otroTrabajo,
+                  diagnosticoRealizado: s.mantenimiento.diagnosticoRealizado,
+                  observaciones: s.mantenimiento.observaciones,
+                  costoManoObra: s.mantenimiento.costoManoObra?.toString() || '0',
+                  costoRepuestos: s.mantenimiento.costoRepuestos?.toString() || '0',
+                  fechaServicio: s.mantenimiento.fechaServicio,
+                  fechaInicio: s.mantenimiento.fechaInicio,
+                  fechaFinalizacion: s.mantenimiento.fechaFinalizacion,
+                  repuestosUtilizados: s.mantenimiento.repuestosUtilizados,
+                }),
+              }));
+              setSolicitudes(solicitudesMapeadas);
+            } catch (error) {
+              console.error('Error recargando solicitudes:', error);
+            }
+          };
+          cargarSolicitudes();
+        }}
+      />
+
+      <ConfirmacionReportePDF
+        visible={modalConfirmacionPDFVisible}
+        solicitud={solicitudSeleccionada}
+        onCancelar={() => setModalConfirmacionPDFVisible(false)}
+        onConfirmar={handleConfirmarGenerarPDF}
+      />
+
+      <ReporteExitoso
+        visible={modalReporteExitosoVisible}
+        nombreCliente={solicitudSeleccionada?.nombreCliente || ''}
+        onCerrar={() => setModalReporteExitosoVisible(false)}
       />
 
       <RegistroEnProceso

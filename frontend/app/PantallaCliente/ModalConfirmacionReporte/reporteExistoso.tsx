@@ -9,9 +9,17 @@ import styles from '@/Styles/pantallaCliente/modalConfirmacionSoporte/reporteExi
 interface ReporteExitosoProps {
   visible: boolean;
   onCerrar: () => void;
+  message?: string;
 }
 
-const ReporteExitoso: React.FC<ReporteExitosoProps> = ({ visible, onCerrar }) => {
+const ReporteExitoso: React.FC<ReporteExitosoProps> = ({ 
+  visible, 
+  onCerrar, 
+  message = 'Tu reporte fue enviado exitosamente. Nos pondremos en contacto contigo lo antes posible.' 
+}) => {
+  // Determinar si es un error o éxito por el contenido del mensaje
+  const isError = message.toLowerCase().includes('error');
+  
   return (
     <Modal
       visible={visible}
@@ -22,11 +30,11 @@ const ReporteExitoso: React.FC<ReporteExitosoProps> = ({ visible, onCerrar }) =>
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
           <View style={styles.iconContainer}>
-            <FontAwesome name="check" size={40} color="#FFFFFF" />
+            <FontAwesome name={isError ? "exclamation-circle" : "check"} size={40} color="#FFFFFF" />
           </View>
-          <Text style={styles.title}>Reporte Enviado</Text>
+          <Text style={styles.title}>{isError ? 'Error al Enviar' : 'Reporte Enviado'}</Text>
           <Text style={styles.message}>
-            Tu reporte fue enviado exitosamente. Nos pondremos en contacto contigo lo antes posible.
+            {message}
           </Text>
           <Pressable
             style={({ pressed }) => [
@@ -36,9 +44,17 @@ const ReporteExitoso: React.FC<ReporteExitosoProps> = ({ visible, onCerrar }) =>
             onPress={onCerrar}
           >
             {({ pressed }) => (
-              <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
-                CERRAR
-              </Text>
+              <View style={styles.buttonContent}>
+                <FontAwesome 
+                  name="times-circle" 
+                  size={18} 
+                  color={pressed ? '#FFFFFF' : '#000000'} 
+                  style={styles.buttonIcon}
+                />
+                <Text style={[styles.closeButtonText, pressed && styles.closeButtonTextPressed]}>
+                  CERRAR
+                </Text>
+              </View>
             )}
           </Pressable>
         </View>

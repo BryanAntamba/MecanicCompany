@@ -1,7 +1,7 @@
 // confirmacionSolicitud.ts
 // Estilos para el modal de confirmación de solicitud enviada
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
   overlay: {
@@ -10,6 +10,10 @@ export default StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      position: 'fixed' as any,
+      zIndex: 9999,
+    }),
   },
   modal: {
     backgroundColor: '#1E293B',
@@ -18,6 +22,13 @@ export default StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 420,
+      '@media (max-width: 640px)': {
+        maxWidth: '90%',
+        padding: 24,
+      },
+    }),
   },
   iconContainer: {
     marginBottom: 24,
@@ -81,5 +92,13 @@ export default StyleSheet.create({
   },
   closeButtonTextPressed: {
     color: '#FFFFFF',
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 });

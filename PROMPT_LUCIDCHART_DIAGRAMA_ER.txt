@@ -1,0 +1,314 @@
+PROMPT PARA LUCIDCHART - DIAGRAMA ENTIDAD-RELACIÓN (ER) MecanicCompany
+================================================================================
+
+IMPORTANTE: Este diagrama muestra 12 TABLAS PostgreSQL y sus RELACIONES
+(No incluir los 4 enums como tablas - solo usarlos en campos específicos)
+
+================================================================================
+ENTIDADES DE USUARIO (Color: AZUL) - 5 Tablas
+================================================================================
+
+TABLA 1: Admin
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombres (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ apellidos (String, NOT NULL)
+├─ segundoApellido (String, NULL)
+├─ edad (Int, NULL)
+├─ telefono (String, NULL)
+├─ correo (String, UNIQUE, NOT NULL)
+├─ correoEmpresarial (String, UNIQUE, NOT NULL)
+├─ contrasena (String, NOT NULL)
+├─ fotoPerfil (String, NULL)
+├─ cuentaActiva (Boolean, DEFAULT: true)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 2: Cliente
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombres (String, NOT NULL)
+├─ apellidos (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ segundoApellido (String, NULL)
+├─ telefono (String, NOT NULL)
+├─ correo (String, UNIQUE, NOT NULL)
+├─ contrasena (String, NOT NULL)
+├─ fotoPerfil (String, NULL)
+├─ fechaNacimiento (DateTime, NULL)
+├─ cuentaActiva (Boolean, DEFAULT: true)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 3: Mecanico
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombres (String, NOT NULL)
+├─ apellidos (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ segundoApellido (String, NULL)
+├─ edad (Int, NOT NULL)
+├─ telefono (String, NULL)
+├─ correo (String, UNIQUE, NOT NULL)
+├─ correoEmpresarial (String, UNIQUE, NOT NULL)
+├─ especialidad (String, NOT NULL)
+├─ anosExperiencia (Int, NOT NULL)
+├─ estadoLaboral (Enum: Disponible|Ocupado|Inactivo, DEFAULT: Disponible)
+├─ cuentaActiva (Boolean, DEFAULT: true)
+├─ contrasena (String, NOT NULL)
+├─ fotoPerfil (String, NULL)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 4: PersonalFinanciero
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombres (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ apellidos (String, NOT NULL)
+├─ segundoApellido (String, NULL)
+├─ edad (Int, NULL)
+├─ telefono (String, NULL)
+├─ correo (String, UNIQUE, NOT NULL)
+├─ correoEmpresarial (String, UNIQUE, NOT NULL)
+├─ contrasena (String, NOT NULL)
+├─ fotoPerfil (String, NULL)
+├─ cuentaActiva (Boolean, DEFAULT: true)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 5: PersonalInventario
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombres (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ apellidos (String, NOT NULL)
+├─ segundoApellido (String, NULL)
+├─ edad (Int, NULL)
+├─ telefono (String, NULL)
+├─ correo (String, UNIQUE, NOT NULL)
+├─ correoEmpresarial (String, UNIQUE, NOT NULL)
+├─ contrasena (String, NOT NULL)
+├─ fotoPerfil (String, NULL)
+├─ cuentaActiva (Boolean, DEFAULT: true)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+================================================================================
+ENTIDADES DE OPERACIÓN (Color: VERDE) - 2 Tablas
+================================================================================
+
+TABLA 6: Solicitud
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombreCliente (String, NOT NULL)
+├─ telefono (String, NOT NULL)
+├─ correoCliente (String, NOT NULL)
+├─ marca (String, NOT NULL)
+├─ modelo (String, NOT NULL)
+├─ anio (String, NOT NULL)
+├─ placa (String, NOT NULL)
+├─ kilometraje (String, NOT NULL)
+├─ tipoServicio (String, NOT NULL)
+├─ otroServicio (String, DEFAULT: "")
+├─ descripcionProblema (String, NOT NULL)
+├─ fechaCita (String, NOT NULL)
+├─ horaCita (String, NOT NULL)
+├─ provincia (String, DEFAULT: "")
+├─ ubicacionMecanicaId (String, DEFAULT: "")
+├─ ubicacionMecanicaNombre (String, DEFAULT: "")
+├─ ubicacionMecanicaDireccion (String, DEFAULT: "")
+├─ estado (Enum: Pendiente|En_proceso|Completado|Rechazado, DEFAULT: Pendiente)
+├─ clienteId (String, FK, NULL) ──→ Cliente.id
+├─ mecanicoId (String, FK, NULL) ──→ Mecanico.id
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 7: Mantenimiento
+├─ id (String, PK, CUID) [Subrayado]
+├─ solicitudId (String, FK, UNIQUE, NOT NULL) ──→ Solicitud.id (1:1)
+├─ marca (String, NOT NULL)
+├─ modelo (String, NOT NULL)
+├─ placa (String, NOT NULL)
+├─ mecanicoAsignado (String, NOT NULL)
+├─ diagnostico (String, NOT NULL)
+├─ trabajoRealizado (String, NOT NULL)
+├─ otroTrabajo (String, DEFAULT: "")
+├─ repuestosUtilizados (String, NOT NULL)
+├─ diagnosticoRealizado (String, NOT NULL)
+├─ observaciones (String, NOT NULL)
+├─ costoManoObra (Decimal 10.2, NOT NULL)
+├─ costoRepuestos (Decimal 10.2, NOT NULL)
+├─ fechaServicio (String, NOT NULL)
+├─ fechaInicio (String, NOT NULL)
+├─ fechaFinalizacion (String, NOT NULL)
+├─ fotoVehiculo (String, NULL) [Almacenado como base64]
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+================================================================================
+ENTIDADES DE NEGOCIO (Color: NARANJA) - 3 Tablas
+================================================================================
+
+TABLA 8: Finanzas
+├─ id (String, PK, CUID) [Subrayado]
+├─ numeroFactura (String, UNIQUE, NOT NULL)
+├─ mantenimientoId (String, FK, UNIQUE, NOT NULL) ──→ Mantenimiento.id (1:1, onDelete: Cascade)
+├─ clienteNombre (String, NOT NULL)
+├─ clienteTelefono (String, NOT NULL)
+├─ clienteCorreo (String, NOT NULL)
+├─ vehiculo (String, NOT NULL)
+├─ marca (String, NOT NULL)
+├─ modelo (String, NOT NULL)
+├─ placa (String, NOT NULL)
+├─ anio (String, NOT NULL)
+├─ kilometraje (String, NOT NULL)
+├─ servicio (String, NOT NULL)
+├─ mecanico (String, NOT NULL)
+├─ costoManoObra (Decimal 12.2, NOT NULL)
+├─ costoRepuestos (Decimal 12.2, NOT NULL)
+├─ total (Decimal 12.2, NOT NULL)
+├─ estado (Enum: Pendiente|Pagado|Cancelado, DEFAULT: Pendiente)
+├─ metodoPago (Enum: EFECTIVO|TRANSFERENCIA|TARJETA|OTRO, NULL)
+├─ fechaPago (DateTime, NULL)
+├─ observacion (String, NULL)
+├─ comprobanteUri (String, NULL)
+├─ fechaFactura (DateTime, AUTO)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 9: Producto
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombreProducto (String, NOT NULL)
+├─ codigoSKU (String, UNIQUE, NOT NULL)
+├─ marcaComponente (String, NOT NULL)
+├─ categoria (String, NOT NULL)
+├─ numeroParteOEM (String, DEFAULT: "")
+├─ descripcion (String, NOT NULL)
+├─ stockActual (Int, NOT NULL)
+├─ stockMinimo (Int, NOT NULL)
+├─ stockCritico (Int, NOT NULL)
+├─ precioCompra (Decimal 12.2, NOT NULL)
+├─ precioVenta (Decimal 12.2, NOT NULL)
+├─ ubicacion (String, NOT NULL)
+├─ unidadMedida (String, NOT NULL)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+TABLA 10: CompatibilidadProducto
+├─ id (String, PK, CUID) [Subrayado]
+├─ productoId (String, FK, NOT NULL) ──→ Producto.id (1:N, onDelete: Cascade)
+├─ marca (String, NOT NULL)
+├─ modelo (String, NOT NULL)
+├─ anoDesde (Int, NOT NULL)
+├─ anoHasta (Int, NOT NULL)
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+================================================================================
+ENTIDADES DE SOPORTE (Color: PÚRPURA) - 2 Tablas
+================================================================================
+
+TABLA 11: CodigoVerificacion
+├─ id (String, PK, CUID) [Subrayado]
+├─ correo (String, NOT NULL)
+├─ codigo (String, NOT NULL)
+├─ expiresAt (DateTime, NOT NULL)
+├─ usado (Boolean, DEFAULT: false)
+└─ createdAt (DateTime, AUTO)
+
+TABLA 12: ReporteSoporte
+├─ id (String, PK, CUID) [Subrayado]
+├─ nombre (String, NOT NULL)
+├─ segundoNombre (String, NULL)
+├─ apellido (String, NOT NULL)
+├─ segundoApellido (String, NULL)
+├─ correo (String, NOT NULL)
+├─ tipoAsunto (String, NOT NULL) [Valores: "Consulta general", "Problema técnico", "Sugerencia", "Reclamo", "Comprobante", "Otro"]
+├─ descripcion (String, NOT NULL)
+├─ estado (String, DEFAULT: "Pendiente") [Valores: "Pendiente", "En revisión", "Resuelto"]
+├─ createdAt (DateTime, AUTO)
+└─ updatedAt (DateTime, AUTO)
+
+================================================================================
+RELACIONES ENTRE TABLAS (SUMMARY)
+================================================================================
+
+RELACIONES 1:N (Uno a Muchos):
+  1. Cliente ──(1:N)──> Solicitud
+  2. Mecanico ──(1:N)──> Solicitud
+  3. Producto ──(1:N)──> CompatibilidadProducto
+
+RELACIONES 1:1 (Uno a Uno):
+  1. Solicitud ──(1:1)──> Mantenimiento
+  2. Mantenimiento ──(1:1)──> Finanzas
+
+RESTRICCIONES onDelete Cascade:
+  - Mantenimiento → Finanzas (si se elimina mantenimiento, se elimina factura)
+  - Producto → CompatibilidadProducto (si se elimina producto, se eliminan compatibilidades)
+
+================================================================================
+INSTRUCCIONES DE DISEÑO
+================================================================================
+
+1. LAYOUT:
+   ┌─────────────────────┐
+   │  USUARIO (AZUL)     │
+   │  5 Tablas           │
+   └─────────────────────┘
+           ↓
+   ┌─────────────────────┐
+   │  OPERACIÓN (VERDE)  │
+   │  2 Tablas           │
+   └─────────────────────┘
+           ↓
+   ┌──────────────────────────────┐
+   │  NEGOCIO (NARANJA)           │
+   │  3 Tablas                    │
+   └──────────────────────────────┘
+           ↓
+   ┌─────────────────────┐
+   │  SOPORTE (PÚRPURA)  │
+   │  2 Tablas           │
+   └─────────────────────┘
+
+2. ESTILOS:
+   - Líneas sólidas para FK normales
+   - Líneas gruesas para 1:1
+   - Líneas punteadas para FK opcionales (NULL)
+   - Flechas simples para 1:N
+   - Flechas dobles para 1:1
+
+3. NOTACIÓN:
+   - Usar Crow's Foot (patas de cuervo) si está disponible
+   - Mostrar cardinalidad en cada relación
+   - Etiquetar relaciones con nombres descriptivos
+
+4. COLORES:
+   - Usuario: Azul (#1976D2)
+   - Operación: Verde (#2E7D32)
+   - Negocio: Naranja (#E65100)
+   - Soporte: Púrpura (#7B1FA2)
+
+5. NOTAS IMPORTANTES:
+   - Los 4 ENUMS NO son tablas, son tipos de datos (no dibujar como tablas)
+   - TOTAL: 12 TABLAS (no 16)
+   - Incluir leyenda explicando simbologías
+   - Usar fuente clara y legible (Arial 10pt)
+   - Asegurar que no haya superposiciones de líneas
+
+================================================================================
+RESUMEN FINAL
+================================================================================
+
+✓ 12 TABLAS TOTALES
+  - 5 Tablas de Usuario
+  - 2 Tablas de Operación
+  - 3 Tablas de Negocio
+  - 2 Tablas de Soporte
+
+✓ 4 ENUMERACIONES (tipos de datos, NO tablas)
+  - EstadoLaboral (Disponible, Ocupado, Inactivo)
+  - EstadoSolicitud (Pendiente, En_proceso, Completado, Rechazado)
+  - EstadoFinanzas (Pendiente, Pagado, Cancelado)
+  - MetodoPago (EFECTIVO, TRANSFERENCIA, TARJETA, OTRO)
+
+✓ 5 RELACIONES PRINCIPALES (3 x 1:N + 2 x 1:1)
+✓ 2 RESTRICCIONES CASCADE
+
+================================================================================

@@ -8,6 +8,9 @@ import styles from '@/Styles/pantallaCliente/modalFormularioSolicitud/verificaci
 interface VerificacionFormularioProps {
   visible: boolean;
   datos: {
+    nombre: string;
+    correo: string;
+    telefono: string;
     marca: string;
     modelo: string;
     año: string;
@@ -20,6 +23,8 @@ interface VerificacionFormularioProps {
     hora: string;
     provincia: string;
     ubicacion: string;
+    motivoEmergencia?: string; // Solo si es domingo
+    esDomingo?: boolean; // Indicador de si la cita es domingo
   };
   onConfirmar: () => void;
   onCancelar: () => void;
@@ -51,6 +56,27 @@ export default function VerificacionFormulario({
 
           {/* Contenido scrolleable */}
           <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Tus Datos</Text>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Nombre Completo:</Text>
+                <Text style={styles.fieldValue}>{datos.nombre}</Text>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Correo Electrónico:</Text>
+                <Text style={styles.fieldValue}>{datos.correo}</Text>
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.fieldLabel}>Teléfono:</Text>
+                <Text style={styles.fieldValue}>{datos.telefono}</Text>
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información del Vehículo</Text>
 
@@ -113,6 +139,14 @@ export default function VerificacionFormulario({
                 <Text style={styles.fieldValue}>{datos.hora}</Text>
               </View>
 
+              {/* Mostrar motivo de emergencia solo si es domingo */}
+              {datos.esDomingo && datos.motivoEmergencia && (
+                <View style={styles.field}>
+                  <Text style={styles.fieldLabel}>Motivo de Emergencia (Domingo):</Text>
+                  <Text style={styles.fieldValue}>{datos.motivoEmergencia}</Text>
+                </View>
+              )}
+
               <View style={styles.field}>
                 <Text style={styles.fieldLabel}>Provincia de la Cita:</Text>
                 <Text style={styles.fieldValue}>{datos.provincia}</Text>
@@ -127,30 +161,66 @@ export default function VerificacionFormulario({
 
           {/* Botones */}
           <View style={styles.buttonContainer}>
+            {/* Botón de prueba simple */}
             <Pressable
               style={({ pressed }) => [
                 styles.confirmButton,
                 pressed && styles.confirmButtonPressed,
               ]}
-              onPress={onConfirmar}
+              onPress={() => {
+                console.log('🟢 Botón CONFIRMAR SOLICITUD presionado');
+                console.log('🟢 onConfirmar es:', typeof onConfirmar);
+                try {
+                  onConfirmar();
+                  console.log('✅ onConfirmar ejecutado sin errores');
+                } catch (error) {
+                  console.error('❌ Error al ejecutar onConfirmar:', error);
+                }
+              }}
             >
               {({ pressed }) => (
-                <Text
-                  style={[
-                    styles.confirmButtonText,
-                    pressed && styles.confirmButtonTextPressed,
-                  ]}
-                >
-                  CONFIRMAR SOLICITUD
-                </Text>
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="check-square-o" 
+                    size={20} 
+                    color={pressed ? '#FFFFFF' : '#000000'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text
+                    style={[
+                      styles.confirmButtonText,
+                      pressed && styles.confirmButtonTextPressed,
+                    ]}
+                  >
+                    CONFIRMAR SOLICITUD
+                  </Text>
+                </View>
               )}
             </Pressable>
 
             <Pressable
-              style={styles.cancelButton}
-              onPress={onCancelar}
+              style={({ pressed }) => [
+                styles.cancelButton,
+                pressed && styles.cancelButtonPressed,
+              ]}
+              onPress={() => {
+                console.log('🟡 Botón CANCELAR presionado');
+                onCancelar();
+              }}
             >
-              <Text style={styles.cancelButtonText}>CANCELAR</Text>
+              {({ pressed }) => (
+                <View style={styles.buttonContent}>
+                  <FontAwesome 
+                    name="times-circle" 
+                    size={18} 
+                    color={pressed ? '#CBD5E1' : '#F1F5F9'} 
+                    style={styles.buttonIcon}
+                  />
+                  <Text style={[styles.cancelButtonText, pressed && styles.cancelButtonTextPressed]}>
+                    CANCELAR
+                  </Text>
+                </View>
+              )}
             </Pressable>
           </View>
         </View>

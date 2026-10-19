@@ -6,15 +6,18 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { FontAwesome } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import loginStyles from '@/Styles/auth/login';
 import { validarContrasena, validarCredencial } from '@/utils/validaciones';
 import { useAuth } from '@/context/AuthContext';
 import { verificarUsuario } from '@/utils/datosSimulados';
 import { useCliente } from '@/context/ClienteContext';
+import ResponsiveContainer from '@/components/ResponsiveContainer';
+import { API_URL } from '@/config';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, setSession } = useAuth();
   const { iniciarSesionCliente } = useCliente();
   // Detectar si viene de un cierre de sesión o de cambio de contraseña exitoso
   const params = useLocalSearchParams<{ fromLogout?: string; fromPasswordReset?: string }>();
@@ -37,6 +40,11 @@ export default function LoginScreen() {
   const opacityAnim = useRef(new Animated.Value(0)).current;
   const scrollRef = useRef<ScrollView>(null);
 
+  // Detectar si completamos el password reset desde sessionStorage
+  const passwordResetCompletedRef = useRef(
+    Platform.OS === 'web' && sessionStorage.getItem('passwordResetCompleted') === 'true'
+  );
+
   useEffect(() => {
     Animated.parallel([
       Animated.timing(slideAnim, { toValue: 0, duration: 500, useNativeDriver: true }),
@@ -44,25 +52,73 @@ export default function LoginScreen() {
     ]).start();
   }, []);
 
-  // BackHandler para retroceder
+  // Si completamos password reset, bloquear COMPLETAMENTE el retroceso
   useEffect(() => {
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-      // Usar los ref para mantener el valor original incluso después de limpiar parámetros
-      const esDesdeLogout = fromLogoutRef.current;
-      const esDesdePasswordReset = fromPasswordResetRef.current;
+    if (Platform.OS === 'web' && passwordResetCompletedRef.current) {
+      // Limpiar la bandera
+      sessionStorage.removeItem('passwordResetCompleted');
       
-      if (esDesdeLogout || esDesdePasswordReset) {
-        // Ir directo al index
-        router.replace('/PantallaCliente' as any);
-        return true; // Consumir el evento
-      } else {
-        // Navegación normal
-        router.back();
-        return true; // Consumir el evento
-      }
-    });
+      // Bloquear el retroceso permanentemente en esta sesión
+      const blockBack = (e: PopStateEvent) => {
+        e.preventDefault();
+        // Mantener en la página actual
+        window.history.pushState(null, '', window.location.href);
+        // Opcionalmente, redirigir al index
+        window.location.href = '/PantallaCliente';
+      };
+      
+      // Agregar múltiples entradas para "absorber" intentos de retroceso
+      window.history.pushState(null, '', window.location.href);
+      window.history.pushState(null, '', window.location.href);
+      window.history.pushState(null, '', window.location.href);
+      
+      window.addEventListener('popstate', blockBack);
+      
+      return () => {
+        window.removeEventListener('popstate', blockBack);
+      };
+    }
+  }, []);
 
-    return () => backHandler.remove();
+  // BackHandler para retroceder - Bloquear completamente
+  useEffect(() => {
+    const esDesdePasswordReset = passwordResetCompletedRef.current;
+    
+    const handleBack = () => {
+      if (Platform.OS === 'web') {
+        // No hacer nada, bloquear el retroceso
+        // Mantener en la página actual agregando entrada al historial
+        window.history.pushState(null, '', window.location.href);
+      } else {
+        // En móvil, bloquear también (no permitir salir del login)
+        return true; // Esto consume el evento sin hacer nada
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      // Si NO venimos de password reset, agregar el listener normal
+      if (!esDesdePasswordReset) {
+        const handlePopState = (e: PopStateEvent) => {
+          e.preventDefault();
+          handleBack();
+        };
+
+        // Agregar entrada inicial para prevenir retroceso
+        window.history.pushState(null, '', window.location.href);
+        window.addEventListener('popstate', handlePopState);
+
+        return () => {
+          window.removeEventListener('popstate', handlePopState);
+        };
+      }
+    } else {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+        // En móvil, ir a PantallaCliente
+        router.replace('/PantallaCliente' as any);
+        return true;
+      });
+      return () => backHandler.remove();
+    }
   }, [router]);
 
   const validar = (): boolean => {
@@ -81,131 +137,173 @@ export default function LoginScreen() {
     try {
       const correoLower = email.trim().toLowerCase();
       
-      // Si es un correo @gmail.com, verificar en datosSimulados (usuarios clientes)
+      console.log('[LOGIN] 🚀 Intentando login con:', correoLower);
+      
+      // Si es correo @gmail.com, usar endpoint de cliente
       if (correoLower.endsWith('@gmail.com')) {
-        const usuario = verificarUsuario(correoLower, password);
+        console.log('[LOGIN] 📱 Cliente detectado - usando endpoint /auth/cliente/login');
         
-        if (usuario) {
-          // Guardar sesión del cliente
-          const nombreCompleto = `${usuario.nombre} ${usuario.apellido}`;
-          await iniciarSesionCliente(correoLower, nombreCompleto);
-          
-          // Usuario cliente encontrado, redirigir a pantalla de cliente
-          router.replace('/PantallaCliente' as any);
-        } else {
-          setErrGeneral('Correo o contraseña incorrectos.');
-        }
-      } else {
-        // Si es @mecanic.com, usar la API real (mecánicos y admin)
-        const user = await login(correoLower, password);
+        const response = await fetch(`${API_URL}/auth/cliente/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ correo: correoLower, contrasena: password }),
+        });
 
-        // Redirige según el rol
-        if (user.esAdmin) {
-          router.replace('/Admin/GestionUsuarios' as any);
-        } else {
-          router.replace('/SeccionMecanico/ReportesClientes' as any);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Credenciales inválidas');
         }
+
+        const data = await response.json();
+        console.log('[LOGIN] ✅ Login exitoso! Cliente:', data.cliente);
+
+        // Inicializar contexto de cliente con TODOS los datos incluyendo teléfono
+        const nombreCompleto = `${data.cliente.nombres} ${data.cliente.apellidos}`;
+        
+        // Parsear nombres y apellidos
+        const partsNombres = (data.cliente.nombres || '').trim().split(/\s+/);
+        const partsApellidos = (data.cliente.apellidos || '').trim().split(/\s+/);
+        
+        const nombrePrimero = partsNombres[0] || '';
+        const nombreSegundo = partsNombres[1] || '';
+        const apellidoPrimero = partsApellidos[0] || '';
+        const apellidoSegundo = partsApellidos[1] || '';
+        
+        console.log('[LOGIN] 📱 Guardando en contexto - Nombre:', nombreCompleto, 'Teléfono:', data.cliente.telefono);
+        await iniciarSesionCliente(correoLower, nombreCompleto, nombrePrimero, nombreSegundo, apellidoPrimero, apellidoSegundo, data.cliente.telefono || '');
+        
+        // Guardar token en AsyncStorage para persistencia
+        await AsyncStorage.setItem('jwtToken', data.token);
+
+        // Ir a PantallaCliente (dashboard del cliente)
+        console.log('[LOGIN] ➡️ Redirigiendo a PantallaCliente');
+        router.replace('/PantallaCliente' as any);
+      } else {
+        // Para empleados y otros, usar el login del AuthContext
+        console.log('[LOGIN] 👔 Empleado detectado - usando AuthContext login');
+        const user = await login(correoLower, password);
+        
+        console.log('[LOGIN] ✅ Login exitoso! Rol:', user.rol);
+        
+        // Ir al index que hará la redirección correcta según el rol
+        console.log('[LOGIN] ➡️ Redirigiendo a /');
+        router.replace('/' as any);
       }
+      
     } catch (err: any) {
-      setErrGeneral(err?.message ?? 'Correo o contraseña incorrectos.');
+      console.error('[LOGIN] ❌ Error:', err);
+      setErrGeneral(err?.message || 'Ingrese una credencial válida.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ImageBackground
-      source={require('../../assets/images/fondoLogin.png')}
-      style={loginStyles.background}
-      resizeMode="cover"
-    >
-      <View style={loginStyles.overlay} />
-      
-      <KeyboardAvoidingView
-        style={loginStyles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    <ResponsiveContainer>
+      <ImageBackground
+        source={require('../../assets/images/fondoLogin.png')}
+        style={loginStyles.background}
+        resizeMode="cover"
       >
-        <ScrollView
-          ref={scrollRef}
-          contentContainerStyle={loginStyles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
+        <View style={loginStyles.overlay} />
+        
+        <KeyboardAvoidingView
+          style={loginStyles.keyboardView}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         >
-          {/* Botón regresar */}
-          <Pressable
-            onPress={() => router.push('/PantallaCliente' as any)}
-            style={loginStyles.backButton}
-            hitSlop={8}
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={loginStyles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
-          </Pressable>
-
-          <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
-
-            <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
-            <Text style={loginStyles.title}>INICIAR SESIÓN</Text>
-            <Text style={loginStyles.subtitle}>Ingresa tus credenciales para acceder al sistema.</Text>
-
-            {/* Campo: credencial (correo) */}
-            <Text style={loginStyles.fieldLabel}>Credencial</Text>
-            <TextInput
-              style={[loginStyles.input, errEmail ? loginStyles.inputError : null]}
-              placeholder="correo@ejemplo.com"
-              placeholderTextColor="#94A3B8"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              value={email}
-              onChangeText={(t) => { setEmail(t); setErrEmail(''); setErrGeneral(''); }}
-            />
-            {errEmail ? <Text style={loginStyles.errorText}>{errEmail}</Text> : null}
-
-            {/* Campo: contraseña */}
-            <Text style={loginStyles.fieldLabel}>Contraseña</Text>
-            <View style={[loginStyles.passwordRow, errPassword ? loginStyles.inputError : null]}>
-              <TextInput
-                style={loginStyles.passwordInput}
-                placeholder="Ingresa tu contraseña"
-                placeholderTextColor="#94A3B8"
-                secureTextEntry={!showPassword}
-                value={password}
-                onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
-              />
-              <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
-                <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
-              </Pressable>
-            </View>
-            {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
-
-            {/* Enlace registro */}
-            <Pressable onPress={() => router.replace('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
-              <Text style={loginStyles.forgotText}>Registrarse</Text>
-            </Pressable>
-
-            {/* Enlace recuperación */}
-            <Pressable onPress={() => router.push('/(auth)/restablecimientoPassword' as any)} style={loginStyles.forgotRow}>
-              <Text style={loginStyles.forgotText}>¿Olvidaste tu contraseña?</Text>
-            </Pressable>
-
-            {/* Botón iniciar sesión */}
+            {/* Botón regresar */}
             <Pressable
-              style={({ pressed }) => [loginStyles.button, pressed && loginStyles.buttonPressed]}
-              onPress={handleLogin}
-              disabled={loading}
+              onPress={() => {
+                // Usar router.replace para no perder sesión de clientes en memoria
+                router.replace('/PantallaCliente' as any);
+              }}
+              style={loginStyles.backButton}
+              hitSlop={8}
             >
-              {({ pressed }) => (
-                <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
-                  {loading ? 'Ingresando...' : 'Iniciar sesión'}
-                </Text>
-              )}
+              <FontAwesome name="arrow-left" size={24} color="#F8FAFC" />
             </Pressable>
 
-            {/* Error general de credenciales — centrado debajo del botón */}
-            {errGeneral ? <Text style={loginStyles.errorTextCentered}>{errGeneral}</Text> : null}
+            <Animated.View style={[loginStyles.card, { opacity: opacityAnim, transform: [{ translateY: slideAnim }] }]}>
 
-          </Animated.View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </ImageBackground>
+              <Image source={require('../../assets/images/iconoTransparente.png')} contentFit="contain" style={loginStyles.logo} />
+              <Text style={loginStyles.title}>INICIAR SESIÓN</Text>
+              <Text style={loginStyles.subtitle}>Ingresa tus credenciales para acceder al sistema.</Text>
+
+              {/* Campo: credencial (correo) */}
+              <Text style={loginStyles.fieldLabel}>Credencial</Text>
+              <TextInput
+                style={[loginStyles.input, errEmail ? loginStyles.inputError : null]}
+                placeholder="correo@ejemplo.com"
+                placeholderTextColor="#94A3B8"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                value={email}
+                onChangeText={(t) => { setEmail(t); setErrEmail(''); setErrGeneral(''); }}
+              />
+              {errEmail ? <Text style={loginStyles.errorText}>{errEmail}</Text> : null}
+
+              {/* Campo: contraseña */}
+              <Text style={loginStyles.fieldLabel}>Contraseña</Text>
+              <View style={[loginStyles.passwordRow, errPassword ? loginStyles.inputError : null]}>
+                <TextInput
+                  style={loginStyles.passwordInput}
+                  placeholder="Ingresa tu contraseña"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={!showPassword}
+                  value={password}
+                  onChangeText={(t) => { setPassword(t); setErrPassword(''); setErrGeneral(''); }}
+                />
+                <Pressable onPress={() => setShowPassword((v) => !v)} style={loginStyles.eyeBtn} hitSlop={8}>
+                  <FontAwesome name={showPassword ? 'eye-slash' : 'eye'} size={20} color="#64748B" />
+                </Pressable>
+              </View>
+              {errPassword ? <Text style={loginStyles.errorText}>{errPassword}</Text> : null}
+
+              {/* Enlace registro */}
+              <Pressable onPress={() => router.push('/(auth)/registroUsuario' as any)} style={loginStyles.forgotRow}>
+                <Text style={loginStyles.forgotText}>Registrarse</Text>
+              </Pressable>
+
+              {/* Enlace recuperación */}
+              <Pressable onPress={() => router.push('/(auth)/restablecimientoPassword' as any)} style={loginStyles.forgotRow}>
+                <Text style={loginStyles.forgotText}>¿Olvidaste tu contraseña?</Text>
+              </Pressable>
+
+              {/* Botón iniciar sesión */}
+              <Pressable
+                style={({ pressed }) => [loginStyles.button, pressed && loginStyles.buttonPressed]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                {({ pressed }) => (
+                  <View style={loginStyles.buttonContent}>
+                    <FontAwesome 
+                      name="sign-in" 
+                      size={20} 
+                      color={pressed ? '#FFFFFF' : '#000000'}
+                      style={loginStyles.buttonIcon}
+                    />
+                    <Text style={[loginStyles.buttonText, pressed && loginStyles.buttonTextPressed]}>
+                      {loading ? 'Ingresando...' : 'Iniciar sesión'}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+
+              {/* Error general de credenciales — centrado debajo del botón */}
+              {errGeneral ? <Text style={loginStyles.errorTextCentered}>{errGeneral}</Text> : null}
+
+            </Animated.View>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </ImageBackground>
+    </ResponsiveContainer>
   );
 }

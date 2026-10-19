@@ -1,0 +1,210 @@
+PROMPT PARA LUCIDCHART - DIAGRAMA DEL PROCESO DE NEGOCIO MECANICCOMPANY
+=====================================================================
+
+Crea un diagrama de flujo profesional del proceso de negocio principal de MecanicCompany, una plataforma digital de servicios de mantenimiento automotriz.
+
+ESTILO VISUAL:
+- Usa colores corporativos: Azul #1E3A8A (principal), Gris #475569 (secundario), Verde #16A34A (completado), Amarillo #F59E0B (en proceso)
+- Diseño moderno y profesional tipo swimlane (carriles por actor)
+- Iconos de mecánica/automotriz cuando sea posible
+
+ACTORES DEL PROCESO (Swimlanes horizontales):
+1. Cliente
+2. Sistema (App Móvil/Backend)
+3. Administrador
+4. Mecánico
+5. Sistema BI (Metabase)
+
+FLUJO DEL PROCESO:
+
+═══════════════════════════════════════════════════════════════════
+FASE 1: SOLICITUD DEL CLIENTE
+═══════════════════════════════════════════════════════════════════
+
+[CLIENTE]
+├─ INICIO (círculo verde)
+├─ Abre App Móvil MecanicCompany
+├─ Completa formulario de solicitud:
+│  • Datos del vehículo (marca, modelo, año, placa, km)
+│  • Tipo de servicio requerido
+│  • Descripción del problema
+│  • Datos de contacto (nombre, teléfono, email)
+│  • Fecha y hora preferida
+└─ Envía solicitud (botón)
+
+[SISTEMA]
+├─ Recibe datos vía API REST
+├─ Valida información
+├─ Crea registro en PostgreSQL
+├─ Estado: "Pendiente"
+├─ Genera timestamp de creación
+└─ Envía confirmación al cliente
+
+═══════════════════════════════════════════════════════════════════
+FASE 2: RECEPCIÓN Y ASIGNACIÓN
+═══════════════════════════════════════════════════════════════════
+
+[ADMINISTRADOR]
+├─ Accede a Panel Administrativo
+├─ Visualiza solicitudes pendientes
+├─ Revisa detalles:
+│  • Tipo de servicio
+│  • Complejidad estimada
+│  • Urgencia del cliente
+│
+├─ Consulta disponibilidad de mecánicos
+├─ ¿Decisión: Mecánico disponible con especialidad?
+│
+│  [SÍ]
+│  ├─ Selecciona mecánico óptimo
+│  ├─ Asigna solicitud (vincula mecanicoId)
+│  └─ Confirma asignación
+│
+│  [NO]
+│  ├─ Contacta al cliente
+│  └─ Reprograma cita
+│
+[SISTEMA]
+├─ Actualiza estado laboral mecánico → "Ocupado"
+├─ Vincula mecanicoId a solicitudId
+├─ Envía notificación push al mecánico
+└─ Registra fecha/hora de asignación
+
+═══════════════════════════════════════════════════════════════════
+FASE 3: EJECUCIÓN DEL SERVICIO
+═══════════════════════════════════════════════════════════════════
+
+[MECÁNICO]
+├─ Recibe notificación en app móvil
+├─ Revisa detalles de solicitud
+├─ Fecha programada llega
+│
+├─ Recibe vehículo del cliente
+├─ Actualiza estado → "En Proceso"
+├─ Registra hora de inicio
+│
+├─ DIAGNÓSTICO:
+│  ├─ Inspección completa del vehículo
+│  ├─ Identifica fallas y necesidades
+│  └─ Estima trabajos requeridos
+│
+├─ EJECUCIÓN DE TRABAJOS:
+│  ├─ Mantenimiento preventivo
+│  ├─ Reparaciones correctivas
+│  └─ Reemplazo de componentes
+│
+├─ REGISTRO EN SISTEMA:
+│  ├─ Diagnóstico realizado
+│  ├─ Descripción trabajos ejecutados
+│  ├─ Listado de repuestos utilizados
+│  ├─ Observaciones técnicas
+│  ├─ Costo mano de obra
+│  ├─ Costo repuestos
+│  └─ Registra hora de finalización
+│
+└─ Actualiza estado → "Completado"
+
+═══════════════════════════════════════════════════════════════════
+FASE 4: GENERACIÓN DE REPORTE Y CIERRE
+═══════════════════════════════════════════════════════════════════
+
+[SISTEMA]
+├─ Detecta estado "Completado"
+├─ GENERA REPORTE AUTOMÁTICO:
+│  ├─ Datos del vehículo
+│  ├─ Diagnóstico completo
+│  ├─ Trabajos realizados
+│  ├─ Repuestos utilizados
+│  ├─ Desglose de costos
+│  └─ Observaciones del mecánico
+│
+├─ Envía reporte vía email (SMTP Resend)
+├─ Actualiza estado laboral mecánico → "Disponible"
+└─ Almacena en historial permanente (PostgreSQL)
+
+[CLIENTE]
+├─ Recibe email con reporte técnico
+├─ Revisa documentación completa
+└─ Retira vehículo
+
+═══════════════════════════════════════════════════════════════════
+FASE 5: ANÁLISIS Y MEJORA CONTINUA
+═══════════════════════════════════════════════════════════════════
+
+[SISTEMA BI - METABASE]
+├─ Extrae datos de PostgreSQL (usuario readonly)
+├─ Actualiza dashboards en tiempo real:
+│  │
+│  ├─ DASHBOARD OPERACIONAL:
+│  │  ├─ KPI: Ingresos totales del mes
+│  │  ├─ KPI: Cantidad de servicios
+│  │  ├─ KPI: Ticket promedio
+│  │  ├─ Gráfico: Tendencia de ingresos
+│  │  └─ Top 5 mecánicos
+│  │
+│  ├─ DASHBOARD PRODUCTIVIDAD:
+│  │  ├─ Ranking de mecánicos
+│  │  ├─ Servicios por mecánico/mes
+│  │  └─ Eficiencia (tiempo vs ingresos)
+│  │
+│  ├─ DASHBOARD FINANCIERO:
+│  │  ├─ Análisis de márgenes
+│  │  ├─ Crecimiento mensual
+│  │  └─ Embudo de conversión
+│  │
+│  └─ DASHBOARD CLIENTES:
+│     ├─ Top 10 marcas atendidas
+│     ├─ Modelos más frecuentes
+│     └─ Demanda por día de semana
+│
+[ADMINISTRADOR/GERENTE]
+├─ Consulta dashboards en Metabase
+├─ Analiza KPIs y tendencias
+├─ TOMA DECISIONES:
+│  ├─ Optimización de precios
+│  ├─ Capacitación de mecánicos
+│  ├─ Ajuste de inventario de repuestos
+│  └─ Estrategias comerciales
+│
+└─ FIN DEL PROCESO (círculo rojo)
+
+═══════════════════════════════════════════════════════════════════
+ELEMENTOS VISUALES IMPORTANTES:
+═══════════════════════════════════════════════════════════════════
+
+SÍMBOLOS:
+- Inicio/Fin: Círculos (verde/rojo)
+- Procesos: Rectángulos redondeados
+- Decisiones: Rombos
+- Bases de datos: Cilindros (PostgreSQL)
+- Documentos: Rectángulos con esquina doblada (reportes)
+- Notificaciones: Iconos de campana
+- Email: Iconos de sobre
+
+ANOTACIONES:
+- Agrega nota: "Reducción 70% en tiempo de recepción vs métodos tradicionales"
+- Agrega nota: "Reporte enviado inmediatamente (vs 24-48h tradicional)"
+- Agrega nota: "Trazabilidad 100% en base de datos PostgreSQL"
+
+COLORES POR ESTADO:
+- Verde #16A34A: Solicitud completada
+- Amarillo #F59E0B: En proceso
+- Azul #1E3A8A: Pendiente
+- Gris #475569: Procesos del sistema
+
+CONEXIONES:
+- Usa flechas direccionales gruesas
+- Etiqueta las decisiones (SÍ/NO)
+- Muestra flujo de datos entre sistema y usuarios
+
+═══════════════════════════════════════════════════════════════════
+
+RESULTADO ESPERADO: Un diagrama profesional tipo swimlane que muestre claramente:
+1. Los 5 actores del proceso (Cliente, Sistema, Admin, Mecánico, BI)
+2. Las 5 fases del flujo de servicio
+3. Puntos de decisión críticos
+4. Interacciones entre actores
+5. Flujo de datos y transformación de estados
+6. Generación automática de reportes y análisis BI
+
+El diagrama debe ser comprensible para stakeholders no técnicos pero suficientemente detallado para documentar el proceso completo del negocio.

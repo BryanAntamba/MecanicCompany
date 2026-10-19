@@ -3,13 +3,18 @@
 // Patrón visual: mismo diseño que login.tsx con imagen de fondo + capa oscura
 // pero adaptado para formulario más largo con múltiples campos
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default StyleSheet.create({
 
   // Imagen de fondo que ocupa toda la pantalla
   background: {
     flex: 1,
+    ...(Platform.OS === 'web' && {
+      width: '100vw',
+      height: '100vh',
+      minHeight: '100vh',
+    }),
   },
 
   // KeyboardAvoidingView: ocupa toda la pantalla para gestionar el desplazamiento del teclado
@@ -75,6 +80,14 @@ export default StyleSheet.create({
     padding: 28,
     borderWidth: 1,
     borderColor: 'rgba(43, 54, 70, 0.6)',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+      '@media (max-width: 640px)': {
+        maxWidth: '100%',
+      },
+    }),
   },
 
   // Label de cada campo del formulario
@@ -192,5 +205,15 @@ export default StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
     marginTop: 12,
+  },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
 });

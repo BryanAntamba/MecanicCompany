@@ -1,6 +1,3 @@
-// Schema de Prisma para MecanicCompany
-// Base de datos: PostgreSQL
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,204 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ─── ENUMS ────────────────────────────────────────────────────────────────────
+model Admin {
+  id                String   @id @default(cuid())
+  nombres           String
+  segundoNombre     String?
+  apellidos         String
+  segundoApellido   String?
+  edad              Int?
+  telefono          String?
+  correo            String   @unique
+  correoEmpresarial String   @unique
+  contrasena        String
+  fotoPerfil        String?
+  cuentaActiva      Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("admins")
+}
+
+model Cliente {
+  id              String      @id @default(cuid())
+  nombres         String
+  apellidos       String
+  telefono        String
+  correo          String      @unique
+  contrasena      String
+  cuentaActiva    Boolean     @default(true)
+  fotoPerfil      String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  fechaNacimiento DateTime?
+  segundoApellido String?
+  segundoNombre   String?
+  solicitudes     Solicitud[]
+
+  @@map("clientes")
+}
+
+model Mecanico {
+  id                String        @id @default(cuid())
+  nombres           String
+  apellidos         String
+  edad              Int
+  correo            String        @unique
+  correoEmpresarial String        @unique
+  especialidad      String
+  anosExperiencia   Int
+  estadoLaboral     EstadoLaboral @default(Disponible)
+  cuentaActiva      Boolean       @default(true)
+  contrasena        String
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  fotoPerfil        String?
+  segundoApellido   String?
+  segundoNombre     String?
+  telefono          String?
+  solicitudes       Solicitud[]
+
+  @@map("mecanicos")
+}
+
+model Solicitud {
+  id                  String          @id @default(cuid())
+  nombreCliente       String
+  telefono            String
+  correoCliente       String
+  marca               String
+  modelo              String
+  anio                String
+  placa               String
+  kilometraje         String
+  tipoServicio        String
+  otroServicio        String          @default("")
+  descripcionProblema String
+  fechaCita           String
+  horaCita            String
+  provincia           String          @default("")
+  ubicacionMecanicaId String          @default("")
+  ubicacionMecanicaNombre String       @default("")
+  ubicacionMecanicaDireccion String    @default("")
+  estado              EstadoSolicitud @default(Pendiente)
+  mecanicoId          String?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  clienteId           String?
+  mantenimiento       Mantenimiento?
+  cliente             Cliente?        @relation(fields: [clienteId], references: [id])
+  mecanico            Mecanico?       @relation(fields: [mecanicoId], references: [id])
+
+  @@map("solicitudes")
+}
+
+model Mantenimiento {
+  id                   String    @id @default(cuid())
+  solicitudId          String    @unique
+  marca                String
+  modelo               String
+  placa                String
+  mecanicoAsignado     String
+  diagnostico          String
+  trabajoRealizado     String
+  otroTrabajo          String    @default("")
+  repuestosUtilizados  String
+  diagnosticoRealizado String
+  observaciones        String
+  costoManoObra        Decimal   @db.Decimal(10, 2)
+  costoRepuestos       Decimal   @db.Decimal(10, 2)
+  fechaServicio        String
+  fechaInicio          String
+  fechaFinalizacion    String
+  fotoVehiculo         String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  solicitud            Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
+  finanzas             Finanzas?
+
+  @@map("mantenimientos")
+}
+
+model Finanzas {
+  id                  String                @id @default(cuid())
+  numeroFactura       String                @unique
+  mantenimientoId     String                @unique
+  clienteNombre       String
+  clienteTelefono     String
+  clienteCorreo       String
+  vehiculo            String
+  marca               String
+  modelo              String
+  placa               String
+  anio                String
+  kilometraje         String
+  servicio            String
+  mecanico            String
+  costoManoObra       Decimal               @db.Decimal(12, 2)
+  costoRepuestos      Decimal               @db.Decimal(12, 2)
+  total               Decimal               @db.Decimal(12, 2)
+  estado              EstadoFinanzas        @default(Pendiente)
+  metodoPago          MetodoPago?
+  fechaPago           DateTime?
+  observacion         String?
+  comprobanteUri      String?
+  fechaFactura        DateTime              @default(now())
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  mantenimiento       Mantenimiento         @relation(fields: [mantenimientoId], references: [id], onDelete: Cascade)
+
+  @@map("finanzas")
+}
+
+model PersonalFinanciero {
+  id                String   @id @default(cuid())
+  nombres           String
+  segundoNombre     String?
+  apellidos         String
+  segundoApellido   String?
+  edad              Int?
+  telefono          String?
+  correo            String   @unique
+  correoEmpresarial String   @unique
+  contrasena        String
+  cuentaActiva      Boolean  @default(true)
+  fotoPerfil        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("personal_financiero")
+}
+
+model PersonalInventario {
+  id                String   @id @default(cuid())
+  nombres           String
+  segundoNombre     String?
+  apellidos         String
+  segundoApellido   String?
+  edad              Int?
+  telefono          String?
+  correo            String   @unique
+  correoEmpresarial String   @unique
+  contrasena        String
+  cuentaActiva      Boolean  @default(true)
+  fotoPerfil        String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("personal_inventario")
+}
+
+model CodigoVerificacion {
+  id        String   @id @default(cuid())
+  correo    String
+  codigo    String
+  expiresAt DateTime
+  usado     Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("codigos_verificacion")
+}
 
 enum EstadoLaboral {
   Disponible
@@ -22,135 +216,70 @@ enum EstadoSolicitud {
   Pendiente
   En_proceso
   Completado
+  Rechazado
 }
 
-// ─── MODELOS ──────────────────────────────────────────────────────────────────
-
-// Administrador del sistema — tabla separada de mecánicos
-// Solo tiene credenciales básicas, sin campos operativos de taller
-model Admin {
-  id                  String    @id @default(cuid())
-  nombres             String
-  apellidos           String
-  correo              String    @unique  // Correo personal
-  correoEmpresarial   String    @unique  // Correo de acceso @mecanic.com
-  contrasena          String             // Almacenada con bcrypt
-
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-
-  @@map("admins")
+enum EstadoFinanzas {
+  Pendiente
+  Pagado
+  Cancelado
 }
 
-// Mecánicos: usuarios operativos del taller que inician sesión con correo @mecanic.com
-model Mecanico {
-  id                  String        @id @default(cuid())
-  nombres             String
-  apellidos           String
-  edad                Int
-  correo              String        @unique  // Correo personal (gmail)
-  correoEmpresarial   String        @unique  // Correo de acceso @mecanic.com
-  especialidad        String
-  anosExperiencia     Int
-  estadoLaboral       EstadoLaboral @default(Disponible)
-  cuentaActiva        Boolean       @default(true)
-  contrasena          String        // Almacenada con bcrypt
-  fotoPerfil          String?       // Ruta relativa al archivo subido (ej: /uploads/mecanicos/foto.jpg)
-
-  // Relaciones
-  solicitudes         Solicitud[]   // Solicitudes asignadas a este mecánico
-
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
-
-  @@map("mecanicos")
+enum MetodoPago {
+  EFECTIVO
+  TRANSFERENCIA
+  TARJETA
+  OTRO
 }
 
-// Solicitudes de servicio enviadas por clientes desde la app
-model Solicitud {
-  id                  String          @id @default(cuid())
+model ReporteSoporte {
+  id            String   @id @default(cuid())
+  nombre        String
+  segundoNombre String?
+  apellido      String
+  segundoApellido String?
+  correo        String
+  tipoAsunto    String   // "Consulta general", "Problema técnico", "Sugerencia", "Reclamo", "Comprobante", "Otro"
+  descripcion   String
+  estado        String   @default("Pendiente") // "Pendiente", "En revisión", "Resuelto"
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  // Datos del cliente (no tiene cuenta en el sistema)
-  nombreCliente       String
-  telefono            String
-  correoCliente       String
-
-  // Datos del vehículo
-  marca               String
-  modelo              String
-  anio                String
-  placa               String
-  kilometraje         String
-
-  // Datos del servicio solicitado
-  tipoServicio        String
-  otroServicio        String          @default("")
-  descripcionProblema String
-  fechaCita           String
-  horaCita            String
-
-  // Estado de la solicitud
-  estado              EstadoSolicitud @default(Pendiente)
-
-  // Mecánico asignado (puede ser null hasta que se asigne)
-  mecanicoId          String?
-  mecanico            Mecanico?       @relation(fields: [mecanicoId], references: [id])
-
-  // Registro de mantenimiento (se crea cuando el mecánico atiende la solicitud)
-  mantenimiento       Mantenimiento?
-
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
-
-  @@map("solicitudes")
+  @@map("reportes_soporte")
 }
 
-// Registro técnico del mantenimiento realizado por el mecánico
-model Mantenimiento {
-  id                    String    @id @default(cuid())
+model Producto {
+  id                   String                    @id @default(cuid())
+  nombreProducto       String
+  codigoSKU            String                    @unique
+  marcaComponente      String
+  categoria            String
+  numeroParteOEM       String                    @default("")
+  descripcion          String
+  stockActual          Int
+  stockMinimo          Int
+  stockCritico         Int
+  precioCompra         Decimal                   @db.Decimal(12, 2)
+  precioVenta          Decimal                   @db.Decimal(12, 2)
+  ubicacion            String
+  unidadMedida         String
+  compatibilidades     CompatibilidadProducto[]
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
 
-  // Relación 1-1 con Solicitud
-  solicitudId           String    @unique
-  solicitud             Solicitud @relation(fields: [solicitudId], references: [id], onDelete: Cascade)
-
-  // Datos del vehículo al momento del servicio
-  marca                 String
-  modelo                String
-  placa                 String
-
-  // Trabajo realizado
-  mecanicoAsignado      String    // Nombre para el reporte (denormalizado)
-  diagnostico           String
-  trabajoRealizado      String
-  otroTrabajo           String    @default("")
-  repuestosUtilizados   String
-  diagnosticoRealizado  String
-  observaciones         String
-
-  // Costos
-  costoManoObra         Decimal   @db.Decimal(10, 2)
-  costoRepuestos        Decimal   @db.Decimal(10, 2)
-
-  // Fechas del servicio
-  fechaServicio         String
-  fechaInicio           String
-  fechaFinalizacion     String
-
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@map("mantenimientos")
+  @@map("productos")
 }
 
-// Códigos de verificación para recuperación de contraseña
-model CodigoVerificacion {
+model CompatibilidadProducto {
   id        String   @id @default(cuid())
-  correo    String                    // Correo al que se envió el código
-  codigo    String                    // Código de 6 dígitos
-  expiresAt DateTime                  // Expira en 15 minutos
-  usado     Boolean  @default(false)  // true = ya fue verificado
-
+  productoId String
+  producto  Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  marca     String
+  modelo    String
+  anoDesde  Int
+  anoHasta  Int
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@map("codigos_verificacion")
+  @@map("compatibilidades_productos")
 }

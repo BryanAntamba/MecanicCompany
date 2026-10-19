@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explicación de Arquitectura - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: "Times New Roman", serif;
+            font-size: 12pt;
+            line-height: 2.0;
+            color: #000;
+            background-color: #fff;
+            padding: 40px;
+            max-width: 8.5in;
+            margin: 0 auto;
+        }
+        
+        .container {
+            width: 100%;
+            background-color: #fff;
+        }
+        
+        h1 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        h3 {
+            font-size: 12pt;
+            font-weight: bold;
+            margin-top: 12pt;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        p {
+            text-align: justify;
+            text-indent: 0.5in;
+            margin-bottom: 12pt;
+            line-height: 2.0;
+        }
+        
+        p:first-of-type {
+            text-indent: 0.5in;
+        }
+        
+        .section-title {
+            font-weight: bold;
+            display: inline;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24pt 0;
+            line-height: 2.0;
+        }
+        
+        table, th, td {
+            border: 1px solid #000;
+            padding: 8pt;
+            text-align: left;
+        }
+        
+        th {
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        td {
+            text-align: left;
+        }
+        
+        .button-container {
+            text-align: center;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            page-break-after: avoid;
+        }
+        
+        button {
+            background-color: #000;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #333;
+        }
+        
+        @media print {
+            body {
+                padding: 0.5in;
+            }
+            
+            .button-container {
+                display: none;
+            }
+            
+            h1, h2, h3, p, table {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Arquitectura del Sistema MecanicCompany</h1>
+        
+        <h2>1. Introducción a la Arquitectura</h2>
+        <p>El sistema MecanicCompany implementa una arquitectura de tres capas (Three-Tier Architecture) con una capa adicional de servicios externos. Esta arquitectura es robusta, escalable y sigue los mejores estándares de desarrollo de aplicaciones empresariales. La separación en capas permite que cada componente pueda desarrollarse, probarse y mantenerse de forma independiente, facilitando la evolución futura del sistema.</p>
+        
+        <h2>2. Descripción de Capas</h2>
+        
+        <h3>Capa de Presentación (Frontend)</h3>
+        <p>La capa de presentación es la interfaz a través de la cual los usuarios interactúan con el sistema. MecanicCompany utiliza React Native con Expo versión 54.0.8, escrito en TypeScript 5.4.5, lo que permite crear una aplicación que funciona tanto en dispositivos móviles (iOS y Android) como en navegadores web.</p>
+        
+        <p>Los componentes principales de esta capa incluyen: (a) Rutas y Navegación, implementadas con expo-router versión 6.23 para manejo eficiente de pantallas; (b) Manejo de Estado, utilizando React Navigation 7.1.8 para gestionar la pila de navegación; y (c) Almacenamiento Local, con AsyncStorage para dispositivos móviles y sessionStorage para navegadores web, permitiendo que los usuarios mantengan su sesión activa.</p>
+        
+        <p>Esta capa es responsable de validar datos en el lado del cliente, mostrar errores amigables y proporcionar una experiencia de usuario optimizada. La comunicación entre el frontend y el backend se realiza mediante peticiones HTTP REST.</p>
+        
+        <h3>Capa de Lógica de Negocios (Backend)</h3>
+        <p>El backend de MecanicCompany es un servidor Node.js construido con Express versión 4.19.2, también desarrollado en TypeScript 5.4.5. Este servidor implementa toda la lógica empresarial del sistema y expone una API REST que el frontend consume.</p>
+        
+        <p>Los componentes principales de esta capa incluyen autenticación y seguridad. La implementación de JWT (JSON Web Tokens) proporciona autenticación stateless, mientras que la validación de credenciales utiliza contraseñas hasheadas mediante bcrypt con salt de 12 iteraciones. Un middleware de autenticación verifica cada petición entrante para asegurar que el usuario esté autorizado.</p>
+        
+        <p>Los controladores por dominio manejan diferentes áreas funcionales del sistema. El Controlador de Solicitudes gestiona la creación, lectura y actualización de solicitudes de mantenimiento. El Controlador de Mantenimientos registra trabajos realizados, fotos y costos. El Controlador de Inventario maneja productos y niveles de stock. El Controlador de Finanzas administra facturas y pagos. Finalmente, el Controlador de Administración gestiona usuarios y configuración del sistema.</p>
+        
+        <p>Los servicios internos complementan la funcionalidad. El Servicio de Validación verifica que los datos cumplan reglas de negocio. El Servicio de Email proporciona integración con Nodemailer OAuth para enviar correos electrónicos automáticos. El Servicio de Auditoría registra todas las operaciones críticas para cumplimiento normativo. El Servicio de Almacenamiento de Fotos gestiona imágenes en formato base64.</p>
+        
+        <h3>Capa de Persistencia (Base de Datos)</h3>
+        <p>La persistencia de datos se logra mediante PostgreSQL, una base de datos relacional robusta y confiable, alojada localmente en el puerto 5432. El acceso a la base de datos se realiza a través de Prisma versión 5.14.0, un ORM (Object-Relational Mapping) moderno que proporciona type safety y una interfaz fluida para trabajar con datos.</p>
+        
+        <p>La estructura de datos principal incluye múltiples entidades. Los Usuarios abarcan Clientes, Mecánicos, Personal de Inventario, Personal Financiero y Administradores, cada uno con roles y permisos específicos. Las Solicitudes son registros de solicitudes de mantenimiento con estado (Pendiente, En Proceso, Completado, Rechazado). Los Mantenimientos contienen detalles técnicos de los trabajos realizados, incluyendo diagnóstico y acciones tomadas. Los Productos constituyen un catálogo de repuestos y componentes disponibles. El Inventario registra niveles de stock y movimientos de entrada y salida. Las Finanzas incluyen facturas, pagos registrados e información de cuentas por cobrar. La Auditoría mantiene un registro histórico de todas las operaciones del sistema.</p>
+        
+        <p>Las características de almacenamiento incluyen almacenamiento de fotografías en formato base64 dentro de campos TEXT, lo que permite su inclusión directa en reportes PDF. Los índices de base de datos, pendientes de implementación, serán necesarios en campos de búsqueda frecuente como correos, placas de vehículos y SKU de productos. Las relaciones están bien definidas entre tablas para mantener integridad referencial.</p>
+        
+        <h3>Capa de Servicios Externos</h3>
+        <p>Aunque no es una capa tradicional, el sistema depende de servicios externos que complementan su funcionalidad. El Servicio de Email utiliza Nodemailer con autenticación OAuth para enviar correos automatizados con reportes, facturas y notificaciones. La Criptografía implementa bcrypt versión 12 para el hashing seguro de contraseñas de forma irreversible. Los Tokens de Seguridad utilizan JWT con expiración configurada (actualmente 28800 segundos o 8 horas, pero requiere actualización a 86400 segundos o 24 horas según especificación).</p>
+        
+        <h2>3. Flujo de Comunicación</h2>
+        <p>Un flujo típico en MecanicCompany funciona como sigue. En primer lugar, el usuario (cualquier actor) abre la aplicación móvil o web. Luego, realiza autenticación cuando el frontend envía credenciales (email y contraseña) al backend. El backend autentica las credenciales contra la base de datos y genera un JWT. Durante la sesión activa, el frontend almacena el token localmente y lo incluye en todas las peticiones posteriores. El usuario realiza una acción, por ejemplo, solicitar mantenimiento.</p>
+        
+        <p>El backend valida que la acción sea permitida según el rol del usuario. Se ejecuta la lógica de negocio correspondiente. Los datos se guardan en PostgreSQL mediante Prisma. La operación realizada se registra en la auditoría. Se envía un correo electrónico si es necesario mediante Nodemailer. Finalmente, el frontend recibe una respuesta REST y actualiza la interfaz de usuario.</p>
+        
+        <h2>4. Seguridad</h2>
+        <p>La arquitectura implementa múltiples capas de seguridad. La Autenticación se realiza mediante JWT con expiración temporal. La Autorización valida roles en cada endpoint. La Encriptación protege las contraseñas hasheadas con bcrypt. La Validación asegura que todos los datos ingresados se validen antes de procesarlos. La Auditoría mantiene un registro completo de operaciones para detectar anomalías. El Aislamiento garantiza que cada usuario solo vea sus propios datos según su rol.</p>
+        
+        <h2>5. Ventajas de Esta Arquitectura</h2>
+        <p>La arquitectura de tres capas presenta varias ventajas significativas. La Escalabilidad permite que cada capa crezca independientemente. La Mantenibilidad asegura que cambios en una capa no afecten las otras. La Testabilidad permite que cada componente se pruebe aisladamente. El Rendimiento se optimiza gracias a la separación de responsabilidades. La Reusabilidad permite que componentes y servicios se reutilicen en diferentes contextos. La Seguridad se fortalece con múltiples niveles de validación y autenticación.</p>
+        
+        <h2>6. Tecnologías en Cada Capa</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Capa</th>
+                    <th>Tecnología</th>
+                    <th>Versión</th>
+                    <th>Lenguaje</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Presentación</td>
+                    <td>React Native + Expo</td>
+                    <td>54.0.8</td>
+                    <td>TypeScript 5.4.5</td>
+                </tr>
+                <tr>
+                    <td>Presentación</td>
+                    <td>expo-router</td>
+                    <td>6.23</td>
+                    <td>TypeScript</td>
+                </tr>
+                <tr>
+                    <td>Presentación</td>
+                    <td>React Navigation</td>
+                    <td>7.1.8</td>
+                    <td>TypeScript</td>
+                </tr>
+                <tr>
+                    <td>Negocio</td>
+                    <td>Node.js + Express</td>
+                    <td>4.19.2</td>
+                    <td>TypeScript 5.4.5</td>
+                </tr>
+                <tr>
+                    <td>Negocio</td>
+                    <td>Nodemailer</td>
+                    <td>Latest</td>
+                    <td>JavaScript</td>
+                </tr>
+                <tr>
+                    <td>Negocio</td>
+                    <td>bcrypt</td>
+                    <td>12</td>
+                    <td>Node.js</td>
+                </tr>
+                <tr>
+                    <td>Persistencia</td>
+                    <td>PostgreSQL</td>
+                    <td>14+</td>
+                    <td>SQL</td>
+                </tr>
+                <tr>
+                    <td>Persistencia</td>
+                    <td>Prisma</td>
+                    <td>5.14.0</td>
+                    <td>TypeScript</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>7. Conclusión</h2>
+        <p>La arquitectura de MecanicCompany es una solución moderna y profesional que utiliza tecnologías probadas en la industria. Esta estructura asegura que el sistema pueda manejar los requisitos actuales de una empresa de mantenimiento vehicular mientras proporciona flexibilidad para futuras expansiones y mejoras. La separación clara de responsabilidades entre capas facilita que múltiples desarrolladores trabajen en paralelo en diferentes componentes sin interferencias.</p>
+    </div>
+    
+    <div class="button-container">
+        <button onclick="descargarComoPDF()">⬇️ Descargar como PDF</button>
+    </div>
+    
+    <script>
+        function descargarComoPDF() {
+            window.print();
+        }
+    </script>
+</body>
+</html>

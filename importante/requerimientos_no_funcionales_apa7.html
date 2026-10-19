@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Requerimientos No Funcionales - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 12pt;
+            line-height: 2;
+            text-align: justify;
+            color: #000;
+            background-color: #fff;
+            padding: 1in;
+        }
+
+        @page {
+            margin: 1in;
+            @top-center {
+                content: "Requerimientos No Funcionales";
+            }
+            @bottom-center {
+                content: counter(page);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1in;
+            line-height: 1.5;
+        }
+
+        .header h1 {
+            font-size: 12pt;
+            font-weight: normal;
+            margin-bottom: 0.5in;
+            text-transform: uppercase;
+        }
+
+        .header p {
+            font-size: 12pt;
+            margin-bottom: 0.25in;
+        }
+
+        .table-of-contents {
+            margin-bottom: 1in;
+            page-break-after: always;
+        }
+
+        .table-of-contents h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.5in;
+            text-transform: uppercase;
+        }
+
+        .table-of-contents ul {
+            list-style: none;
+            margin-left: 0.5in;
+        }
+
+        .table-of-contents li {
+            margin-bottom: 0.25in;
+        }
+
+        .content {
+            margin-top: 1in;
+        }
+
+        .section-title {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 1in;
+            margin-bottom: 0.5in;
+            text-transform: uppercase;
+        }
+
+        .requirement-item {
+            margin-bottom: 0.5in;
+            page-break-inside: avoid;
+        }
+
+        .req-header {
+            margin-bottom: 0.25in;
+        }
+
+        .req-id {
+            font-weight: bold;
+            display: inline;
+        }
+
+        .req-name {
+            font-weight: bold;
+            display: inline;
+        }
+
+        .req-description {
+            margin-top: 0.1in;
+            text-align: justify;
+        }
+
+        .req-component {
+            margin-top: 0.05in;
+        }
+
+        .req-priority {
+            margin-top: 0.05in;
+        }
+
+        .component-label,
+        .priority-label {
+            font-weight: bold;
+            display: inline;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0.5in 0;
+            page-break-inside: avoid;
+        }
+
+        table, th, td {
+            border: 1px solid #000;
+        }
+
+        th, td {
+            padding: 0.1in;
+            text-align: left;
+            font-size: 11pt;
+            line-height: 1.5;
+        }
+
+        th {
+            font-weight: bold;
+            background-color: #f0f0f0;
+        }
+
+        .references {
+            margin-top: 1in;
+            page-break-before: always;
+        }
+
+        .references h2 {
+            font-size: 12pt;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 0.5in;
+            text-transform: uppercase;
+        }
+
+        .reference-item {
+            margin-left: 0.5in;
+            text-indent: -0.5in;
+            margin-bottom: 0.25in;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 10pt;
+            margin-top: 1in;
+            font-style: italic;
+        }
+
+        hr {
+            border: none;
+            border-top: 1px solid #000;
+            margin: 1in 0;
+        }
+
+        .page-break {
+            page-break-after: always;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- PORTADA -->
+    <div class="header">
+        <h1>Requerimientos No Funcionales</h1>
+        <p>Sistema de Gestión de Mantenimiento Vehicular</p>
+        <p>MecanicCompany</p>
+        <p style="margin-top: 0.5in;">Octubre de 2026</p>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- TABLA DE CONTENIDOS -->
+    <div class="table-of-contents">
+        <h2>Tabla de Contenidos</h2>
+        <ul>
+            <li>1. Introducción</li>
+            <li>2. Requerimientos No Funcionales</li>
+            <li>&nbsp;&nbsp;&nbsp;&nbsp;2.1 Rendimiento y Velocidad</li>
+            <li>&nbsp;&nbsp;&nbsp;&nbsp;2.2 Seguridad y Protección de Datos</li>
+            <li>&nbsp;&nbsp;&nbsp;&nbsp;2.3 Usabilidad e Interfaz</li>
+            <li>&nbsp;&nbsp;&nbsp;&nbsp;2.4 Confiabilidad y Disponibilidad</li>
+            <li>&nbsp;&nbsp;&nbsp;&nbsp;2.5 Mantenibilidad y Documentación</li>
+            <li>3. Tabla Resumida de Requerimientos</li>
+            <li>4. Referencias</li>
+        </ul>
+    </div>
+
+    <div class="page-break"></div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="content">
+
+        <!-- INTRODUCCIÓN -->
+        <div class="section-title">1. Introducción</div>
+
+        <p>
+            Los requerimientos no funcionales definen las características de calidad, rendimiento, seguridad y usabilidad 
+            que debe cumplir el sistema MecanicCompany. Estos requerimientos establecen los estándares de excelencia operativa 
+            y garantizan que la plataforma sea confiable, segura y fácil de usar para todos los usuarios: clientes, mecánicos, 
+            personal de inventario, personal financiero y administradores.
+        </p>
+
+        <p>
+            El presente documento enumera treinta requerimientos no funcionales organizados por categoría, detallando su descripción, 
+            componentes afectados y nivel de prioridad en la implementación del sistema.
+        </p>
+
+        <!-- REQUERIMIENTOS POR CATEGORÍA -->
+        <div class="section-title">2. Requerimientos No Funcionales</div>
+
+        <div style="margin-bottom: 0.5in;">
+            <h3 style="font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 0.25in;">
+                2.1 Rendimiento y Velocidad
+            </h3>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-001.</span>
+                    <span class="req-name">Tiempo de respuesta rápido</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe responder a las acciones del usuario en menos de 2 segundos para operaciones normales 
+                    como búsquedas, filtros y cargas de datos.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-002.</span>
+                    <span class="req-name">Contraseñas encriptadas</span>
+                </div>
+                <div class="req-description">
+                    Todas las contraseñas deben almacenarse protegidas usando encriptación bcrypt, nunca en texto plano.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-003.</span>
+                    <span class="req-name">Acceso por roles</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe mostrar diferentes funciones según el tipo de usuario: Cliente, Mecánico, Inventario, 
+                    Financiero o Administrador.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-004.</span>
+                    <span class="req-name">Validación de correos corporativos</span>
+                </div>
+                <div class="req-description">
+                    Solo permitir acceso si el correo coincide con el dominio correcto: clientes @gmail.com, mecánicos 
+                    @mecanic.com, inventario @inventariomecanic.com, financiero @finanzasmecanic.com.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-005.</span>
+                    <span class="req-name">Recuperación de contraseña segura</span>
+                </div>
+                <div class="req-description">
+                    Enviar código de seis dígitos que expira en quince minutos y solo se usa una vez, bloqueando la cuenta 
+                    después de cinco intentos fallidos.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-006.</span>
+                    <span class="req-name">Sesiones con límite de duración</span>
+                </div>
+                <div class="req-description">
+                    Los permisos de acceso deben expirar después de veinticuatro horas de inactividad, obligando al usuario 
+                    a iniciar sesión nuevamente.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 0.5in;">
+            <h3 style="font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 0.25in;">
+                2.2 Seguridad y Protección de Datos
+            </h3>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-007.</span>
+                    <span class="req-name">Fotos y documentos en la nube</span>
+                </div>
+                <div class="req-description">
+                    Las fotos de vehículos, reportes y perfiles deben almacenarse de forma segura en la base de datos 
+                    como archivos codificados.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-008.</span>
+                    <span class="req-name">Reportes automáticos por correo</span>
+                </div>
+                <div class="req-description">
+                    Enviar reportes técnicos de mantenimiento con fotos, costos y detalles al correo del cliente de forma automática.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-009.</span>
+                    <span class="req-name">Confirmación antes de acciones críticas</span>
+                </div>
+                <div class="req-description">
+                    Pedir confirmación mediante modal antes de eliminar usuarios, enviar reportes, registrar pagos o cambiar 
+                    el estado de solicitudes.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-010.</span>
+                    <span class="req-name">Validación de formularios en tiempo real</span>
+                </div>
+                <div class="req-description">
+                    Mostrar mensajes de error debajo de cada campo del formulario mientras el usuario escribe, sin esperar a enviar.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-011.</span>
+                    <span class="req-name">Base de datos organizada</span>
+                </div>
+                <div class="req-description">
+                    La base de datos debe tener búsquedas rápidas en correos, placas, productos y fechas mediante índices 
+                    que optimicen el desempeño.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-012.</span>
+                    <span class="req-name">Protección contra ataques</span>
+                </div>
+                <div class="req-description">
+                    Sanitizar y validar todas las entradas del usuario para prevenir inyección de código maligno en SQL, 
+                    JavaScript y otros lenguajes.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-013.</span>
+                    <span class="req-name">Información segura en sesión</span>
+                </div>
+                <div class="req-description">
+                    Los tokens de acceso deben guardarse de forma segura en el dispositivo, en memoria en la web, 
+                    sin exponerse en mensajes de error.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-014.</span>
+                    <span class="req-name">Bloqueo de capturas en móvil</span>
+                </div>
+                <div class="req-description">
+                    En dispositivos móviles, prohibir que los empleados mecánico, inventario, financiero y administrador 
+                    tomen capturas de pantalla de información sensible.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-015.</span>
+                    <span class="req-name">Conexión segura en producción</span>
+                </div>
+                <div class="req-description">
+                    En la versión final para usuarios reales, forzar conexión HTTPS con certificados válidos y rechazar 
+                    conexiones HTTP sin protección.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 0.5in;">
+            <h3 style="font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 0.25in;">
+                2.3 Usabilidad e Interfaz
+            </h3>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-016.</span>
+                    <span class="req-name">Estructura consistente de carpetas</span>
+                </div>
+                <div class="req-description">
+                    Organizar el código en carpetas claras para pantallas, componentes, estilos, validaciones y utilidades.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-017.</span>
+                    <span class="req-name">Documentación en el código</span>
+                </div>
+                <div class="req-description">
+                    Cada archivo debe incluir comentarios explicando qué hace y para qué sirven las funciones principales.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-018.</span>
+                    <span class="req-name">Navegación personalizada</span>
+                </div>
+                <div class="req-description">
+                    No mostrar la barra de navegación nativa del sistema operativo. Crear barras propias personalizadas 
+                    que se adapten a cada rol de usuario.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-019.</span>
+                    <span class="req-name">Mensajes de error claros</span>
+                </div>
+                <div class="req-description">
+                    Los errores deben ser específicos y útiles, como "El correo no existe" en lugar de "Error en el servidor".
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-020.</span>
+                    <span class="req-name">Variables de configuración seguras</span>
+                </div>
+                <div class="req-description">
+                    Guardar datos sensibles como contraseñas de correo y URLs del servidor en archivos ocultos de configuración, 
+                    nunca en el código visible.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 0.5in;">
+            <h3 style="font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 0.25in;">
+                2.4 Confiabilidad y Disponibilidad
+            </h3>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-021.</span>
+                    <span class="req-name">Historial de auditoría</span>
+                </div>
+                <div class="req-description">
+                    Registrar cuándo se crean, editan o eliminan solicitudes, usuarios y pagos para investigar problemas 
+                    y auditar la actividad del sistema.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Baja
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-022.</span>
+                    <span class="req-name">Sincronización de datos</span>
+                </div>
+                <div class="req-description">
+                    Si el usuario pierde conexión a internet, la aplicación debe permitir funciones offline básicas 
+                    y sincronizar los cambios cuando regrese la conexión.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Baja
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-023.</span>
+                    <span class="req-name">Tamaño de archivos controlado</span>
+                </div>
+                <div class="req-description">
+                    Las fotos y documentos no deben exceder límites de tamaño para no saturar el servidor ni ralentizar 
+                    la descarga en dispositivos móviles.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend y Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-024.</span>
+                    <span class="req-name">Respuestas consistentes</span>
+                </div>
+                <div class="req-description">
+                    Las respuestas del servidor siempre deben seguir el mismo formato JavaScript Object Notation con 
+                    estructuras predecibles.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-025.</span>
+                    <span class="req-name">Manejo de zonas horarias</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe entender correctamente fechas y horas en cualquier zona geográfica donde se use, 
+                    convirtiendo automáticamente al horario local.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Baja
+                </div>
+            </div>
+        </div>
+
+        <div style="margin-bottom: 0.5in;">
+            <h3 style="font-size: 11pt; font-weight: bold; text-decoration: underline; margin-bottom: 0.25in;">
+                2.5 Mantenibilidad y Escalabilidad
+            </h3>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-026.</span>
+                    <span class="req-name">Accesibilidad de la aplicación</span>
+                </div>
+                <div class="req-description">
+                    La interfaz debe ser accesible para usuarios con discapacidades visuales o motoras, permitiendo navegación 
+                    con teclado y compatibilidad con lectores de pantalla.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-027.</span>
+                    <span class="req-name">Compatibilidad multi-plataforma</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe funcionar correctamente en dispositivos móviles con sistemas operativos Android e iOS, 
+                    y en navegadores web modernos en computadoras.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Frontend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-028.</span>
+                    <span class="req-name">Escalabilidad del sistema</span>
+                </div>
+                <div class="req-description">
+                    La arquitectura debe permitir crecer el número de usuarios, solicitudes y datos sin degradar significativamente 
+                    el rendimiento del sistema.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Alta
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-029.</span>
+                    <span class="req-name">Copias de seguridad automáticas</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe realizar copias de seguridad automáticas de la base de datos al menos una vez al día, 
+                    permitiendo recuperar datos en caso de pérdida.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+
+            <div class="requirement-item">
+                <div class="req-header">
+                    <span class="req-id">RNF-030.</span>
+                    <span class="req-name">Monitoreo y alertas de errores</span>
+                </div>
+                <div class="req-description">
+                    El sistema debe monitorear continuamente el rendimiento y enviar alertas automáticas cuando ocurran errores 
+                    críticos o caídas del servicio.
+                </div>
+                <div class="req-component">
+                    <span class="component-label">Componente:</span> Backend
+                </div>
+                <div class="req-priority">
+                    <span class="priority-label">Prioridad:</span> Media
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- TABLA RESUMIDA -->
+    <div class="page-break"></div>
+    <div class="section-title">3. Tabla Resumida de Requerimientos</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Requerimiento</th>
+                <th>Componente</th>
+                <th>Prioridad</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>RNF-001</td>
+                <td>Tiempo de respuesta rápido</td>
+                <td>Frontend y Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-002</td>
+                <td>Contraseñas encriptadas</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-003</td>
+                <td>Acceso por roles</td>
+                <td>Frontend y Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-004</td>
+                <td>Validación de correos corporativos</td>
+                <td>Frontend y Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-005</td>
+                <td>Recuperación de contraseña segura</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-006</td>
+                <td>Sesiones con límite de duración</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-007</td>
+                <td>Fotos y documentos en la nube</td>
+                <td>Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-008</td>
+                <td>Reportes automáticos por correo</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-009</td>
+                <td>Confirmación antes de acciones críticas</td>
+                <td>Frontend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-010</td>
+                <td>Validación de formularios en tiempo real</td>
+                <td>Frontend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-011</td>
+                <td>Base de datos organizada</td>
+                <td>Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-012</td>
+                <td>Protección contra ataques</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-013</td>
+                <td>Información segura en sesión</td>
+                <td>Frontend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-014</td>
+                <td>Bloqueo de capturas en móvil</td>
+                <td>Frontend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-015</td>
+                <td>Conexión segura en producción</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-016</td>
+                <td>Estructura consistente de carpetas</td>
+                <td>Frontend y Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-017</td>
+                <td>Documentación en el código</td>
+                <td>Frontend y Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-018</td>
+                <td>Navegación personalizada</td>
+                <td>Frontend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-019</td>
+                <td>Mensajes de error claros</td>
+                <td>Frontend y Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-020</td>
+                <td>Variables de configuración seguras</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-021</td>
+                <td>Historial de auditoría</td>
+                <td>Backend</td>
+                <td>Baja</td>
+            </tr>
+            <tr>
+                <td>RNF-022</td>
+                <td>Sincronización de datos</td>
+                <td>Frontend</td>
+                <td>Baja</td>
+            </tr>
+            <tr>
+                <td>RNF-023</td>
+                <td>Tamaño de archivos controlado</td>
+                <td>Frontend y Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-024</td>
+                <td>Respuestas consistentes</td>
+                <td>Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-025</td>
+                <td>Manejo de zonas horarias</td>
+                <td>Backend</td>
+                <td>Baja</td>
+            </tr>
+            <tr>
+                <td>RNF-026</td>
+                <td>Accesibilidad de la aplicación</td>
+                <td>Frontend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-027</td>
+                <td>Compatibilidad multi-plataforma</td>
+                <td>Frontend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-028</td>
+                <td>Escalabilidad del sistema</td>
+                <td>Backend</td>
+                <td>Alta</td>
+            </tr>
+            <tr>
+                <td>RNF-029</td>
+                <td>Copias de seguridad automáticas</td>
+                <td>Backend</td>
+                <td>Media</td>
+            </tr>
+            <tr>
+                <td>RNF-030</td>
+                <td>Monitoreo y alertas de errores</td>
+                <td>Backend</td>
+                <td>Media</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- REFERENCIAS -->
+    <div class="references">
+        <h2>4. Referencias</h2>
+
+        <div class="reference-item">
+            IEEE Standard 730-2014. IEEE Standard for Software Quality Assurance Processes. Institute of Electrical 
+            and Electronics Engineers.
+        </div>
+
+        <div class="reference-item">
+            ISO/IEC/IEEE 42010:2011. Systems and software engineering — Architecture description. International Organization 
+            for Standardization.
+        </div>
+
+        <div class="reference-item">
+            Sommerville, I. (2015). Software Engineering (10th ed.). Pearson Education.
+        </div>
+
+        <div class="reference-item">
+            Bass, L., Clements, P., & Kazman, R. (2012). Software Architecture in Practice (3rd ed.). Addison-Wesley Professional.
+        </div>
+
+        <div class="reference-item">
+            MecanicCompany Team. (2026). Especificaciones de proyecto del sistema de gestión de mantenimiento vehicular.
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>Documento generado con formato APA 7 — MecanicCompany 2026</p>
+    </div>
+
+</body>
+</html>

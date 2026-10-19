@@ -4,6 +4,7 @@
 import { useEffect } from 'react';
 import {
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -24,8 +25,10 @@ export default function VisualizarSolicitud({
   solicitud,
   onClose,
 }: VisualizarSolicitudProps) {
-  // Bloquear capturas de pantalla cuando el modal está visible
+  // Bloquear capturas de pantalla cuando el modal está visible (solo en móvil)
   useEffect(() => {
+    if (Platform.OS === 'web') return;
+    
     if (visible) {
       const preventCapture = async () => {
         await ScreenCapture.preventScreenCaptureAsync();
@@ -143,6 +146,14 @@ export default function VisualizarSolicitud({
               <Text style={styles.value}>{solicitud.horaCita || 'No especificada'}</Text>
             </View>
 
+            {/* Mostrar motivo de emergencia si existe */}
+            {solicitud.motivoEmergencia && (
+              <View style={styles.field}>
+                <Text style={styles.label}>Motivo de Emergencia (Obligatorio):</Text>
+                <Text style={styles.value}>{solicitud.motivoEmergencia}</Text>
+              </View>
+            )}
+
             <View style={styles.field}>
               <Text style={styles.label}>Provincia de la Visita:</Text>
               <Text style={styles.value}>{solicitud.provincia || 'No especificada'}</Text>
@@ -177,9 +188,12 @@ export default function VisualizarSolicitud({
               style={({ pressed }) => [styles.closeBtn, pressed && styles.closeBtnPressed]}
             >
               {({ pressed }) => (
-                <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
-                  CERRAR
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+                  <FontAwesome name="times-circle" size={16} color={pressed ? '#FFFFFF' : '#000000'} />
+                  <Text style={[styles.closeBtnText, pressed && styles.closeBtnTextPressed]}>
+                    CERRAR
+                  </Text>
+                </View>
               )}
             </Pressable>
           </ScrollView>

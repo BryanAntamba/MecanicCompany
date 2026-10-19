@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modelo Estrella - MecanicCompany</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+            background: #1e2235;
+            min-height: 100vh;
+            padding: 30px;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.2em;
+            margin-bottom: 40px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        .diagram-wrapper {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            background: rgba(30, 34, 53, 0.5);
+            border-radius: 8px;
+        }
+
+        /* SVG para las líneas */
+        svg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .connector-line {
+            stroke: #d4af37;
+            stroke-width: 2.5;
+            fill: none;
+            filter: drop-shadow(0 0 4px rgba(212, 175, 55, 0.3));
+        }
+
+        /* Tabla de Hechos Central */
+        .fact-table {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #8b86d8 0%, #7d78c6 100%);
+            border: 3px solid #d4af37;
+            border-radius: 12px;
+            padding: 22px 32px;
+            min-width: 220px;
+            box-shadow: 0 8px 30px rgba(139, 134, 216, 0.4);
+            z-index: 10;
+        }
+
+        .fact-table h2 {
+            color: #fff;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin-bottom: 10px;
+            text-align: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 8px;
+        }
+
+        .fact-table ul {
+            list-style: none;
+        }
+
+        .fact-table li {
+            color: #fff;
+            font-size: 0.88em;
+            padding: 2px 0;
+            line-height: 1.6;
+        }
+
+        /* Dimensiones (círculos) */
+        .dimension {
+            position: absolute;
+            width: 160px;
+            height: 160px;
+            border: 3px solid #d4af37;
+            border-radius: 50%;
+            background: rgba(20, 24, 40, 0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+            z-index: 5;
+        }
+
+        .dimension h3 {
+            color: #d4af37;
+            font-size: 1.05em;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-align: center;
+            width: 100%;
+        }
+
+        .dimension ul {
+            list-style: none;
+            width: 100%;
+        }
+
+        .dimension li {
+            color: #b8b8c0;
+            font-size: 0.78em;
+            padding: 1px 0;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        /* Posiciones específicas */
+        .dim-tiempo {
+            left: 50%;
+            top: 60px;
+            transform: translateX(-50%);
+        }
+
+        .dim-cliente {
+            left: 120px;
+            top: 180px;
+        }
+
+        .dim-vehiculo {
+            left: 180px;
+            bottom: 130px;
+        }
+
+        .dim-estado {
+            left: 50%;
+            bottom: 60px;
+            transform: translateX(-50%);
+        }
+
+        .dim-servicio {
+            right: 180px;
+            bottom: 130px;
+        }
+
+        .dim-mecanico {
+            right: 120px;
+            top: 180px;
+        }
+
+        /* Caja de descripción */
+        .info-box {
+            position: absolute;
+            right: 50px;
+            top: 60px;
+            background: rgba(35, 40, 60, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 10px;
+            padding: 20px 24px;
+            max-width: 350px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+        }
+
+        .info-box h3 {
+            color: #d4af37;
+            font-size: 1.15em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .info-box p {
+            color: #d0d0d8;
+            font-size: 0.88em;
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+
+        .info-box .highlight {
+            color: #fff;
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .info-box {
+                position: relative;
+                right: auto;
+                top: auto;
+                margin: 30px auto 0;
+                max-width: 600px;
+            }
+
+            .diagram-wrapper {
+                height: 800px;
+            }
+        }
+
+        @media (max-width: 1100px) {
+            h1 {
+                font-size: 1.8em;
+                text-align: center;
+            }
+
+            .diagram-wrapper {
+                height: 900px;
+            }
+
+            .dim-cliente {
+                left: 60px;
+                top: 160px;
+            }
+
+            .dim-mecanico {
+                right: 60px;
+                top: 160px;
+            }
+
+            .dim-vehiculo {
+                left: 100px;
+            }
+
+            .dim-servicio {
+                right: 100px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 20px 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .diagram-wrapper {
+                height: 950px;
+            }
+
+            .fact-table {
+                min-width: 190px;
+                padding: 18px 24px;
+            }
+
+            .fact-table h2 {
+                font-size: 1.3em;
+            }
+
+            .fact-table li {
+                font-size: 0.8em;
+            }
+
+            .dimension {
+                width: 140px;
+                height: 140px;
+                padding: 12px;
+            }
+
+            .dimension h3 {
+                font-size: 0.95em;
+            }
+
+            .dimension li {
+                font-size: 0.7em;
+            }
+
+            .dim-cliente {
+                left: 30px;
+                top: 150px;
+            }
+
+            .dim-mecanico {
+                right: 30px;
+                top: 150px;
+            }
+
+            .dim-vehiculo {
+                left: 60px;
+            }
+
+            .dim-servicio {
+                right: 60px;
+            }
+
+            .connector-line {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Modelo Estrella — Star Schema</h1>
+        
+        <div class="diagram-wrapper">
+            <!-- SVG para líneas conectoras -->
+            <svg id="connections">
+                <!-- Las líneas se generarán con JavaScript -->
+            </svg>
+
+            <!-- Tabla de Hechos Central -->
+            <div class="fact-table" id="fact">
+                <h2>Mantenimientos</h2>
+                <ul>
+                    <li>id_mantenimiento</li>
+                    <li>id_cliente</li>
+                    <li>id_mecanico</li>
+                    <li>id_vehiculo</li>
+                    <li>id_tiempo</li>
+                    <li>id_servicio</li>
+                    <li>id_estado</li>
+                    <li>costoManoObra</li>
+                    <li>costoRepuestos</li>
+                    <li>tiempoServicio</li>
+                    <li>fechaInicio</li>
+                    <li>fechaFin</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión Tiempo -->
+            <div class="dimension dim-tiempo" id="dim-tiempo">
+                <h3>Tiempo</h3>
+                <ul>
+                    <li>id_tiempo</li>
+                    <li>fecha</li>
+                    <li>año</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión Cliente -->
+            <div class="dimension dim-cliente" id="dim-cliente">
+                <h3>Cliente</h3>
+                <ul>
+                    <li>id_cliente</li>
+                    <li>nombre</li>
+                    <li>email</li>
+                    <li>telefono</li>
+                    <li>ciudad</li>
+                    <li>region</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión Vehículo -->
+            <div class="dimension dim-vehiculo" id="dim-vehiculo">
+                <h3>Vehículo</h3>
+                <ul>
+                    <li>id_vehiculo</li>
+                    <li>marca</li>
+                    <li>modelo</li>
+                    <li>año</li>
+                    <li>placa</li>
+                    <li>tipo</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión Estado -->
+            <div class="dimension dim-estado" id="dim-estado">
+                <h3>Estado</h3>
+                <ul>
+                    <li>id_estado</li>
+                    <li>estado</li>
+                    <li>descripcion</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión TipoServicio -->
+            <div class="dimension dim-servicio" id="dim-servicio">
+                <h3>TipoServicio</h3>
+                <ul>
+                    <li>id_servicio</li>
+                    <li>nombre</li>
+                    <li>categoria</li>
+                    <li>descripcion</li>
+                    <li>duracionEst</li>
+                </ul>
+            </div>
+
+            <!-- Dimensión Mecánico -->
+            <div class="dimension dim-mecanico" id="dim-mecanico">
+                <h3>Mecánico</h3>
+                <ul>
+                    <li>id_mecanico</li>
+                    <li>nombre</li>
+                    <li>especialidad</li>
+                    <li>experiencia</li>
+                    <li>estadoLaboral</li>
+                </ul>
+            </div>
+
+            <!-- Caja de descripción -->
+            <div class="info-box">
+                <h3>Estructura y componentes</h3>
+                <p>
+                    Una tabla de <span class="highlight">hechos central</span> conectada directamente a tablas de 
+                    dimensiones <span class="highlight">desnormalizadas</span>. La forma resultante recuerda a una estrella.
+                </p>
+                <p>
+                    <span class="highlight">MecanicCompany</span> utiliza este modelo para análisis de 
+                    mantenimientos, costos, tiempos de servicio y productividad de mecánicos.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para obtener el centro de un elemento
+        function getCenter(element) {
+            const rect = element.getBoundingClientRect();
+            const parent = element.offsetParent.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2 - parent.left,
+                y: rect.top + rect.height / 2 - parent.top
+            };
+        }
+
+        // Dibujar líneas conectoras
+        function drawConnections() {
+            const svg = document.getElementById('connections');
+            svg.innerHTML = ''; // Limpiar líneas existentes
+
+            const fact = document.getElementById('fact');
+            const dimensions = [
+                'dim-tiempo',
+                'dim-cliente', 
+                'dim-vehiculo',
+                'dim-estado',
+                'dim-servicio',
+                'dim-mecanico'
+            ];
+
+            const factCenter = getCenter(fact);
+
+            dimensions.forEach(dimId => {
+                const dim = document.getElementById(dimId);
+                if (dim && window.innerWidth > 768) {
+                    const dimCenter = getCenter(dim);
+                    
+                    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    line.setAttribute('x1', factCenter.x);
+                    line.setAttribute('y1', factCenter.y);
+                    line.setAttribute('x2', dimCenter.x);
+                    line.setAttribute('y2', dimCenter.y);
+                    line.setAttribute('class', 'connector-line');
+                    
+                    svg.appendChild(line);
+                }
+            });
+        }
+
+        // Dibujar al cargar y al redimensionar
+        window.addEventListener('load', drawConnections);
+        window.addEventListener('resize', drawConnections);
+    </script>
+</body>
+</html>

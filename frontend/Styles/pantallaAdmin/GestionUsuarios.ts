@@ -280,6 +280,12 @@ export default StyleSheet.create({
   badgeRolAdmin: {
     backgroundColor: '#DBEAFE', // Azul claro
   },
+  badgeRolInventario: {
+    backgroundColor: '#D1FAE5', // Verde claro
+  },
+  badgeRolFinanciero: {
+    backgroundColor: '#FED7AA', // Naranja claro
+  },
   // Botones
   // Botón principal (Ver Perfil)
   btnPerfil: {
@@ -445,5 +451,17 @@ export default StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#F1F5F9',
+  },
+
+  // Estilos para iconos en botones
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+    width: 16,
+    textAlign: 'center',
   },
 });

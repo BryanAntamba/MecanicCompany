@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arquitectura de Business Intelligence - MecanicCompany</title>
+</head>
+<body style="font-family: 'Times New Roman', Times, serif; font-size: 12pt; line-height: 2; margin: 1in; text-align: justify;">
+
+    <div style="text-align: center; margin-bottom: 2em;">
+        <h1 style="font-size: 14pt; font-weight: bold; margin: 0;">Arquitectura de Business Intelligence</h1>
+        <p style="margin: 0.5em 0;">MecanicCompany - Sistema de Gestión Inteligente de Servicios Automotrices</p>
+        <p style="margin: 0.5em 0;">Junio 2026</p>
+    </div>
+
+    <h2 style="font-size: 12pt; font-weight: bold; margin-top: 2em;">1. Fuentes de Datos (Data Sources)</h2>
+    
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">1.1 Base de Datos Operacional</h3>
+    <p>El sistema utiliza PostgreSQL como motor de base de datos relacional, gestionado mediante Prisma ORM. Las tablas principales incluyen:</p>
+    <ul>
+        <li>Tabla Solicitudes: registro de peticiones de servicio</li>
+        <li>Tabla Mantenimientos: servicios completados</li>
+        <li>Tabla Mecánicos: personal técnico y especialidades</li>
+        <li>Tabla Clientes: información de usuarios del servicio</li>
+        <li>Tabla Administradores: gestión del sistema</li>
+    </ul>
+    <p><em>Tecnologías:</em> PostgreSQL, Prisma ORM</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">1.2 Datos Transaccionales</h3>
+    <p>La información de operación diaria capturada por el sistema incluye:</p>
+    <ul>
+        <li>Estados de solicitudes (Pendiente, En_proceso, Completado)</li>
+        <li>Tiempos de servicio (fecha inicio y finalización)</li>
+        <li>Costos de mano de obra</li>
+        <li>Costos de repuestos</li>
+        <li>Asignaciones de mecánicos a servicios</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">1.3 Datos de Comunicación</h3>
+    <p>El sistema de emails y notificaciones genera datos de:</p>
+    <ul>
+        <li>Reportes enviados a clientes</li>
+        <li>Confirmaciones de citas</li>
+        <li>Notificaciones de cambio de estado</li>
+        <li>Logs de comunicación SMTP</li>
+    </ul>
+    <p><em>Tecnología:</em> Nodemailer</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">1.4 Datos de Usuarios</h3>
+    <p>Información de acceso y actividad del sistema:</p>
+    <ul>
+        <li>Sesiones JWT con duración de 8 horas</li>
+        <li>Roles de usuario: Administrador, Mecánico, Cliente</li>
+        <li>Estados laborales de mecánicos</li>
+        <li>Disponibilidad en tiempo real</li>
+        <li>Especialidades técnicas del personal</li>
+    </ul>
+    <p><em>Tecnología:</em> JSON Web Tokens (JWT) para autenticación</p>
+
+    <h2 style="font-size: 12pt; font-weight: bold; margin-top: 2em;">2. Procesos ETL/ELT (Extract, Transform, Load)</h2>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">2.1 Extracción (Extract)</h3>
+    <p>Las consultas desde PostgreSQL se realizan mediante:</p>
+    <ul>
+        <li>Extracción incremental diaria de datos operacionales</li>
+        <li>Consultas estructuradas con Prisma ORM</li>
+        <li>Filtros por rangos de fechas y estados de servicios</li>
+        <li>Operaciones JOIN entre tablas relacionadas</li>
+        <li>Captura de datos históricos para análisis temporal</li>
+    </ul>
+    <p><em>Tecnologías:</em> Prisma Queries, TypeScript</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">2.2 Transformación (Transform)</h3>
+    <p>El procesamiento y cálculo de métricas incluye:</p>
+    <ul>
+        <li>Cálculo de tiempos de servicio (diferencia entre fecha inicio y fin)</li>
+        <li>Agregación de costos totales (mano de obra + repuestos)</li>
+        <li>Conversión de estados categóricos a métricas numéricas</li>
+        <li>Identificación de tendencias mediante análisis temporal</li>
+        <li>Clasificación de servicios por categorías</li>
+        <li>Cálculo de KPIs de productividad por mecánico</li>
+    </ul>
+    <p><em>Tecnologías:</em> Node.js, lógica de negocio en TypeScript</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">2.3 Carga (Load)</h3>
+    <p>La inserción en el Data Warehouse se realiza mediante:</p>
+    <ul>
+        <li>Carga batch nocturna programada</li>
+        <li>Actualización de tablas dimensionales</li>
+        <li>Inserción de nuevos hechos (mantenimientos, solicitudes)</li>
+        <li>Validación de integridad referencial</li>
+        <li>Registro de auditoría de procesos ETL</li>
+    </ul>
+    <p><em>Tecnologías:</em> Scheduled Jobs, Cron</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">2.4 Limpieza de Datos</h3>
+    <p>Los procesos de calidad y validación incluyen:</p>
+    <ul>
+        <li>Eliminación de registros duplicados</li>
+        <li>Normalización de campos de texto</li>
+        <li>Validación de formatos (fechas, correos, teléfonos)</li>
+        <li>Manejo de valores nulos y missing data</li>
+        <li>Estandarización de formatos de fecha y hora</li>
+    </ul>
+
+    <h2 style="font-size: 12pt; font-weight: bold; margin-top: 2em;">3. Data Warehouse (Almacén de Datos)</h2>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">3.1 Tablas Dimensionales</h3>
+    <p>Las dimensiones del negocio incluyen:</p>
+    <ul>
+        <li><strong>Dim_Tiempo:</strong> fechas, días de la semana, meses, trimestres, años</li>
+        <li><strong>Dim_Mecanico:</strong> ID, nombre completo, especialidad, años de experiencia, estado laboral</li>
+        <li><strong>Dim_Cliente:</strong> ID, nombre, información de contacto, historial de servicios</li>
+        <li><strong>Dim_Vehiculo:</strong> marca, modelo, año de fabricación, tipo de vehículo</li>
+        <li><strong>Dim_TipoServicio:</strong> categorías de mantenimiento (frenos, motor, transmisión, etc.)</li>
+        <li><strong>Dim_Estado:</strong> estados del ciclo de vida (Pendiente, En_proceso, Completado)</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">3.2 Tablas de Hechos</h3>
+    <p>Los eventos medibles del negocio se almacenan en:</p>
+    <ul>
+        <li><strong>Fact_Mantenimientos:</strong> servicios completados, costos totales, tiempos de ejecución</li>
+        <li><strong>Fact_Solicitudes:</strong> peticiones recibidas, estados actuales, asignaciones a mecánicos</li>
+        <li><strong>Fact_Ingresos:</strong> ventas diarias, ingresos por mecánico, ingresos por tipo de servicio</li>
+        <li><strong>Fact_Productividad:</strong> métricas de eficiencia de mecánicos, tiempos promedio</li>
+    </ul>
+    <p><em>Modelo de datos:</em> Star Schema (Esquema Estrella), Snowflake Schema</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">3.3 Modelo Relacional</h3>
+    <p>El esquema estrella (Star Schema) implementado incluye:</p>
+    <ul>
+        <li>Tabla central de hechos con métricas cuantitativas</li>
+        <li>Dimensiones conectadas mediante claves foráneas</li>
+        <li>Claves foráneas optimizadas para consultas OLAP</li>
+        <li>Índices en columnas de filtrado frecuente</li>
+        <li>Agregaciones pre-calculadas para reportes comunes</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">3.4 Optimización</h3>
+    <p>Estrategias de performance y escalabilidad:</p>
+    <ul>
+        <li>Índices B-tree en columnas clave de búsqueda</li>
+        <li>Particionamiento de tablas por fecha (mensual, anual)</li>
+        <li>Vistas materializadas para consultas frecuentes</li>
+        <li>Compresión de datos históricos mayores a 1 año</li>
+        <li>Caché de consultas mediante Redis o similar</li>
+    </ul>
+    <p><em>Tecnología:</em> PostgreSQL Data Warehouse</p>
+
+    <h2 style="font-size: 12pt; font-weight: bold; margin-top: 2em;">4. Análisis y Visualización (Analytics & Reporting)</h2>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.1 Dashboard de Productividad</h3>
+    <p>Los KPIs de operación incluyen:</p>
+    <ul>
+        <li>Número de solicitudes atendidas por mecánico</li>
+        <li>Tiempo promedio de servicio por tipo de mantenimiento</li>
+        <li>Tasa de conversión (solicitudes recibidas vs. completadas)</li>
+        <li>Utilización de capacidad instalada del taller</li>
+        <li>Eficiencia por especialidad técnica</li>
+    </ul>
+    <p><strong>Métricas clave:</strong> Reducción del 70% en tiempo de registro; precisión de datos del 98%.</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.2 Análisis de Demanda</h3>
+    <p>Tendencias y patrones identificados:</p>
+    <ul>
+        <li>Top 10 de servicios más solicitados</li>
+        <li>Marcas y modelos de vehículos más atendidos</li>
+        <li>Horarios pico de demanda de servicios</li>
+        <li>Estacionalidad de tipos de mantenimiento</li>
+        <li>Predicción de demanda futura mediante series temporales</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.3 Dashboard Financiero</h3>
+    <p>Análisis de rentabilidad del negocio:</p>
+    <ul>
+        <li>Ingresos totales (desagregados por día, semana, mes)</li>
+        <li>Margen de contribución: mano de obra vs. repuestos</li>
+        <li>Ticket promedio por servicio</li>
+        <li>Ingresos generados por mecánico</li>
+        <li>Rentabilidad por tipo de servicio</li>
+        <li>Proyección de ingresos basada en tendencias históricas</li>
+    </ul>
+    <p><strong>Resultados esperados:</strong> Incremento del 25% en capacidad de atención; aumento del 30% en clientes recurrentes.</p>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.4 Análisis de Clientes</h3>
+    <p>Customer Intelligence aplicado:</p>
+    <ul>
+        <li>Segmentación de clientes por tipo de vehículo</li>
+        <li>Frecuencia de visitas y patrones de retorno</li>
+        <li>Valor de vida del cliente (LTV - Lifetime Value)</li>
+        <li>Patrones de mantenimiento preventivo vs. correctivo</li>
+        <li>Tasa de retención y análisis de churn</li>
+        <li>Net Promoter Score (NPS) para medir satisfacción</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.5 Reportes Estratégicos</h3>
+    <p>Decisiones basadas en datos mediante:</p>
+    <ul>
+        <li>Reporte mensual ejecutivo para dirección</li>
+        <li>Análisis de competitividad en el mercado</li>
+        <li>Optimización de inventario de repuestos</li>
+        <li>Planificación de personal según demanda</li>
+        <li>Identificación de oportunidades de mejora</li>
+    </ul>
+
+    <h3 style="font-size: 12pt; font-weight: bold; font-style: italic; margin-top: 1em;">4.6 Herramientas de Visualización</h3>
+    <p>Tecnologías recomendadas para la capa de presentación:</p>
+    <ul>
+        <li>Power BI de Microsoft</li>
+        <li>Tableau para análisis visual avanzado</li>
+        <li>Metabase como solución open-source</li>
+        <li>Chart.js para gráficos web interactivos</li>
+        <li>React Charts para integración con frontend</li>
+        <li>D3.js para visualizaciones personalizadas</li>
+    </ul>
+    <p>Funcionalidades incluyen: dashboards interactivos en tiempo real, reportes exportables en PDF y Excel, y alertas automáticas de KPIs críticos.</p>
+
+    <hr style="margin-top: 3em; margin-bottom: 1em; border: none; border-top: 1px solid black;">
+    
+    <p style="text-align: center; margin-top: 2em;">
+        <strong>MecanicCompany - Arquitectura de Business Intelligence</strong><br>
+        Transformando datos en decisiones estratégicas
+    </p>
+
+</body>
+</html>
