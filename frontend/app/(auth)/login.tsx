@@ -13,6 +13,7 @@ import { useAuth } from '@/context/AuthContext';
 import { verificarUsuario } from '@/utils/datosSimulados';
 import { useCliente } from '@/context/ClienteContext';
 import ResponsiveContainer from '@/components/ResponsiveContainer';
+import { API_URL } from '@/config';
 
 export default function LoginScreen() {
   const router = useRouter();

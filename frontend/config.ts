@@ -11,7 +11,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 // ⚠️ IMPORTANTE: Cambia esta IP a la IP local de tu computadora donde corre el backend
-const BACKEND_IP = '192.168.100.64';
+const BACKEND_IP = '172.17.0.215';
 const BACKEND_PORT = 3000;
 
 /**
@@ -25,6 +25,11 @@ function getApiUrl(): string {
     // Extraer solo la IP (sin el puerto de Metro)
     const ip = debuggerHost.split(':')[0];
     return `http://${ip}:${BACKEND_PORT}/api`;
+  }
+  
+  // Web - usar IP real en lugar de localhost
+  if (Platform.OS === 'web') {
+    return `http://${BACKEND_IP}:${BACKEND_PORT}/api`;
   }
   
   // Emulador de Android Studio
