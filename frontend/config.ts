@@ -11,7 +11,7 @@ import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 // ⚠️ IMPORTANTE: Cambia esta IP a la IP local de tu computadora donde corre el backend
-const BACKEND_IP = '172.17.0.215';
+const BACKEND_IP = '192.168.1.12';
 const BACKEND_PORT = 3000;
 
 /**
