@@ -139,6 +139,65 @@ export default function ConfirmacionReporte({
     }
   };
 
+  // Función para confirmar y descontar inventario
+  const confirmarYDescontar = () => {
+    // Si hay repuestos seleccionados, descontarlos del inventario
+    if (repuestosSeleccionados.length > 0) {
+      const repuestosParaDescontar = repuestosSeleccionados.map(r => ({
+        id: r.id,
+        cantidad: r.cantidad
+      }));
+      
+      const exito = descontarRepuestos(repuestosParaDescontar);
+      
+      if (!exito) {
+        console.error('Error al descontar repuestos del inventario');
+        // Aún así continuar con el envío
+      }
+    }
+    
+    // Generar automáticamente el registro de pago para el sistema financiero
+    const fechaActual = new Date();
+    const fechaFormateada = `${fechaActual.getDate().toString().padStart(2, '0')}/${(fechaActual.getMonth() + 1).toString().padStart(2, '0')}/${fechaActual.getFullYear()}`;
+    
+    // Generar ID único para el pago
+    const nuevoPagoId = `#${String(Date.now()).slice(-6)}`;
+    
+    // Obtener el servicio (trabajo realizado)
+    const servicio = solicitud.trabajoRealizado === 'Otros' 
+      ? solicitud.otroTrabajo || 'Mantenimiento' 
+      : solicitud.trabajoRealizado || 'Mantenimiento';
+    
+    // Crear el registro de pago
+    const nuevoPago = {
+      id: nuevoPagoId,
+      fecha: fechaFormateada,
+      clienteNombre: solicitud.nombreCliente,
+      clienteTelefono: solicitud.telefono,
+      clienteCorreo: solicitud.correoCliente,
+      vehiculo: `${solicitud.marca} ${solicitud.modelo} ${solicitud.anio}`,
+      marca: solicitud.marca,
+      modelo: solicitud.modelo,
+      placa: solicitud.placa,
+      anio: solicitud.anio,
+      kilometraje: solicitud.kilometraje,
+      servicio: servicio,
+      mecanico: solicitud.mecanicoAsignado || 'No asignado',
+      costoManoObra: costoManoObra,
+      costoRepuestos: costoTotalRepuestos,
+      total: costoTotal,
+      estado: 'PENDIENTE' as const,
+      solicitudId: solicitud.id || String(Date.now()),
+    };
+    
+    // Agregar el pago al sistema financiero
+    agregarPago(nuevoPago);
+    console.log('Pago generado automáticamente:', nuevoPago);
+    
+    // Llamar a la función de confirmación original
+    onConfirmar();
+  };
+
   if (!solicitud) return null;
 
   return (

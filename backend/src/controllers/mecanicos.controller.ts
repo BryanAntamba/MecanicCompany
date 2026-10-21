@@ -21,12 +21,20 @@ export async function listarMecanicos(_req: Request, res: Response): Promise<voi
                 estadoLaboral: true,
                 cuentaActiva: true,
                 fotoPerfil: true,
+                tipoPersonal: true,
                 createdAt: true,
             },
             orderBy: { createdAt: 'desc' },
         });
 
-        res.json(mecanicos);
+        // Mapear estadoLaboral a estadoConexion para compatibilidad con el frontend
+        const mecanicosConEstado = mecanicos.map(m => ({
+            ...m,
+            estadoConexion: m.estadoLaboral === 'Disponible' ? 'DESCONECTADO' : 
+                           m.estadoLaboral === 'Ocupado' ? 'LÍNEA' : 'DESCONECTADO'
+        }));
+
+        res.json(mecanicosConEstado);
     } catch (err: any) {
         console.error('[listarMecanicos]', err?.message);
         res.status(500).json({ message: 'Error al obtener los mecánicos' });
@@ -82,9 +90,12 @@ export async function crearMecanico(req: Request, res: Response): Promise<void> 
                 telefono: telefono || null,
                 correo: correoNormalizado,
                 correoEmpresarial: correoEmpresarialNormalizado,
-                especialidad,
-                anosExperiencia: Number(anosExperiencia),
+                especialidad: especialidad || 'N/A',
+                anosExperiencia: Number(anosExperiencia) || 0,
                 contrasena: hash,
+                tipoPersonal: tipoPersonal || 'Mecánico',
+                cuentaActiva: req.body.cuentaActiva ?? true,
+                estadoLaboral: 'Disponible',
                 ...(fotoPerfil && { fotoPerfil }),
             },
         });

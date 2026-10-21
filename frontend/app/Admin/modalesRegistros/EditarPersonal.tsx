@@ -460,6 +460,78 @@ export default function EditarPersonal({
             contentContainerStyle={styles.modalScrollContent}
             keyboardShouldPersistTaps="handled"
           >
+            {/* Selección de Tipo de Personal */}
+            <Text style={styles.label}>Tipo de Personal</Text>
+            <View style={styles.roleButtonsContainer}>
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Mecánico' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Mecánico' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Mecánico' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Mecánico
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Inventario' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Inventario' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Inventario' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Inventario
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Financiero' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Financiero' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Financiero' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Financiero
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => setForm({ ...form, tipoPersonal: 'Administrador' })}
+                style={[
+                  styles.roleButton,
+                  form.tipoPersonal === 'Administrador' && styles.roleButtonActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    form.tipoPersonal === 'Administrador' && styles.roleButtonTextActive,
+                  ]}
+                >
+                  Administrador
+                </Text>
+              </Pressable>
+            </View>
+
             {/* Foto de perfil */}
             <Pressable onPress={pickImage} style={styles.fotoContainer}>
               {fotoUri ? (
